@@ -10,7 +10,10 @@ val generatedWebAssetsRoot = generatedWebAssetsDir.get().asFile
 
 val syncWebAssets by tasks.registering(Sync::class) {
     from(webProjectDir) {
-        include("index.html", "app.js", "content.js", "styles.css")
+        include("index.html", "app.js", "styles.css")
+    }
+    from(File(webProjectDir, "modules")) {
+        into("modules")
     }
     from(File(webProjectDir, "assets")) {
         into("assets")
@@ -51,7 +54,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            assets.setSrcDirs(listOf(generatedWebAssetsRoot))
+            assets.srcDir(generatedWebAssetsRoot)
         }
     }
 

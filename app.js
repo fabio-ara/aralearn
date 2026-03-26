@@ -1,4 +1,4 @@
-﻿
+
 (function () {
   "use strict";
 
@@ -18,95 +18,245 @@
   // Elemento raiz onde toda a aplicacao sera renderizada.
   const root = document.getElementById("app-root");
   if (!root) throw new Error("#app-root not found.");
+  const appUtils = window.AraLearnAppUtils;
+  const blockRegistry = window.AraLearnBlockRegistry;
+  const codeInputTools = window.AraLearnCodeInput;
+  const createFileHelpers = window.AraLearnFileHelpers && window.AraLearnFileHelpers.createFileHelpers;
+  const createContentModelTools =
+    window.AraLearnContentModel && window.AraLearnContentModel.createContentModelTools;
+  const createProgressHelpers =
+    window.AraLearnProgressHelpers && window.AraLearnProgressHelpers.createProgressHelpers;
+  const flowchartShapeLibrary = window.AraLearnFlowchartShapes;
+  const createRenderStateTools =
+    window.AraLearnRenderState && window.AraLearnRenderState.createRenderStateTools;
+  const createFlowchartLayoutEngine =
+    window.AraLearnFlowchartLayout && window.AraLearnFlowchartLayout.createFlowchartLayoutEngine;
+  if (
+    !appUtils ||
+    !blockRegistry ||
+    !codeInputTools ||
+    !createFileHelpers ||
+    !createContentModelTools ||
+    !createProgressHelpers ||
+    !flowchartShapeLibrary ||
+    !createRenderStateTools ||
+    !createFlowchartLayoutEngine
+  ) {
+    throw new Error("AraLearn modules not loaded.");
+  }
+  const idTools = appUtils.createIdTools();
+  const clean = appUtils.clean;
+  const clamp = appUtils.clamp;
+  const clone = appUtils.clone;
+  const safeHtml = appUtils.safeHtml;
+  const esc = appUtils.esc;
+  const escAttr = appUtils.escAttr;
+  const cssEsc = appUtils.cssEsc;
+  const uid = idTools.uid;
+  const slug = idTools.slug;
+  const fileHelpers = createFileHelpers();
+  const progressHelpers = createProgressHelpers({ clamp: clamp });
+  const renderStateTools = createRenderStateTools();
+  const AUTHORING_BLOCK_KINDS = blockRegistry.authoringKinds;
+  const POPUP_BLOCK_KINDS = blockRegistry.popupKinds;
+  const SUPPORTED_BLOCK_KINDS = blockRegistry.supportedKinds;
+  const BLOCK_META = blockRegistry.meta;
+  const getBlockMeta = blockRegistry.getBlockMeta;
+  const isHeadingKind = blockRegistry.isHeadingKind;
+  const isParagraphKind = blockRegistry.isParagraphKind;
+  const isImageKind = blockRegistry.isImageKind;
+  const isTableKind = blockRegistry.isTableKind;
+  const isSimulatorKind = blockRegistry.isSimulatorKind;
+  const isEditorKind = blockRegistry.isEditorKind;
+  const isMultipleChoiceKind = blockRegistry.isMultipleChoiceKind;
+  const isFlowchartKind = blockRegistry.isFlowchartKind;
+  const isButtonKind = blockRegistry.isButtonKind;
+  const normalizeEditorInteractionMode = codeInputTools.normalizeInteractionMode;
+  const normalizeCodeInputVariants = codeInputTools.normalizeVariants;
+  const validateTypedCodeInputAttempt = codeInputTools.validateTypedAttempt;
 
   // Tipos de step suportados pela licao.
-  const STEP_TYPES = ["content", "content_with_inline_popup", "token_fill", "lesson_complete"];
-  // Tipos de bloco suportados dentro do editor visual.
-  const BLOCK_TYPES = ["heading", "paragraph", "image", "editor"];
+  const STEP_TYPES = ["content", "lesson_complete"];
   // Nome padrao exibido para o app quando nenhum titulo personalizado foi salvo.
   const DEFAULT_APP_TITLE = "AraLearn";
   // Chave principal de persistencia completa do projeto (conteudo + progresso).
   const PROJECT_STORAGE_KEY = "aralearn_project_v1";
   // Chave de armazenamento do progresso no navegador.
   const PROGRESS_STORAGE_KEY = "aralearn_progress_v1";
-  // Nome atual do arquivo JSON principal ao exportar/sincronizar.
-  const DEFAULT_PROJECT_JSON_FILE_NAME = "aralearn-content.json";
+  // Nome do manifesto JSON dentro do pacote ZIP do projeto.
+  const PROJECT_PACKAGE_JSON_FILE_NAME = "project.json";
   // Nome sugerido do pacote exportado pelo app.
   const DEFAULT_EXPORT_FILE_NAME = "aralearn-project.zip";
-  // Identificador interno do painel explicativo inline.
-  const INLINE_POPUP_BLOCK_ID = "__inline-popup__";
-
-  // Metadados visuais/textuais usados na paleta do editor.
-  const BLOCK_META = {
-    heading: { icon: "&#72;", label: "Título", placeholder: "Título" },
-    paragraph: { icon: "&#182;", label: "Parágrafo", placeholder: "Texto" },
-    bold: { icon: "&#66;", label: "Negrito", placeholder: "Texto em negrito" },
-    italic: { icon: "&#73;", label: "Itálico", placeholder: "Texto em itálico" },
-    image: { icon: "&#9635;", label: "Imagem", placeholder: "assets/images/arquivo.jpg" },
-    editor: { icon: "&gt;_", label: "Editor", placeholder: "Digite texto e use [[...]] para lacunas" },
-    button: { icon: "&#10140;", label: "Botão", placeholder: "CONTINUAR" }
+  // Formato atual dos pacotes ZIP/JSON exportados pelo app.
+  const PACKAGE_FORMAT = "aralearn-package-v3";
+  const INLINE_TONE_CLASSES = [
+    "inline-tone-gold",
+    "inline-tone-mint",
+    "inline-tone-coral",
+    "inline-tone-blue",
+    "inline-tone-red"
+  ];
+  const FLOWCHART_COLUMNS = ["left", "center", "right"];
+  const FLOWCHART_SHAPES = flowchartShapeLibrary.pickerShapes || flowchartShapeLibrary.shapes;
+  const normalizeFlowchartShapeKey = flowchartShapeLibrary.normalizeShapeKey;
+  const getFlowchartShapeMeta = flowchartShapeLibrary.getShapeMeta;
+  const getFlowchartShapeLabel = flowchartShapeLibrary.getShapeLabel;
+  const getFlowchartShapePickerLabel = flowchartShapeLibrary.getShapePickerLabel;
+  const renderFlowchartShapeSvg = flowchartShapeLibrary.renderShapeSvg;
+  const utf8Encode = fileHelpers.utf8Encode;
+  const utf8Decode = fileHelpers.utf8Decode;
+  const blobToDataUrl = fileHelpers.blobToDataUrl;
+  const dataUrlMimeType = fileHelpers.dataUrlMimeType;
+  const dataUrlToBytes = fileHelpers.dataUrlToBytes;
+  const bytesToDataUrl = fileHelpers.bytesToDataUrl;
+  const bytesToBase64 = fileHelpers.bytesToBase64;
+  const isAndroidHostAvailable = fileHelpers.isAndroidHostAvailable;
+  const mimeToExtension = fileHelpers.mimeToExtension;
+  const mimeFromExtension = fileHelpers.mimeFromExtension;
+  const inferExtensionFromPath = fileHelpers.inferExtensionFromPath;
+  const cleanAssetExtension = fileHelpers.cleanAssetExtension;
+  const normalizeZipPath = fileHelpers.normalizeZipPath;
+  const createZip = fileHelpers.createZip;
+  const parseZip = fileHelpers.parseZip;
+  const FLOWCHART_LAYOUT = {
+    columns: 3,
+    cellWidth: 88,
+    cellHeight: 98,
+    gapX: 12,
+    gapY: 18,
+    shapeWidth: 80,
+    shapeHeight: 48,
+    textWidth: 80,
+    textHeight: 42,
+    textTop: 55,
+    boardPaddingX: 32,
+    boardPaddingY: 24,
+    routeStep: 10,
+    routePortOffset: 18,
+    routeTurnPenalty: 4,
+    routeReusePenalty: 3
   };
-
-  // Sequencia simples para gerar IDs unicos durante a sessao.
-  let idSeq = 0;
+  const contentModelTools = createContentModelTools({
+    STEP_TYPES: STEP_TYPES,
+    DEFAULT_APP_TITLE: DEFAULT_APP_TITLE,
+    clone: clone,
+    clean: clean,
+    uid: uid,
+    slug: slug,
+    safeHtml: safeHtml,
+    esc: esc,
+    isHeadingKind: isHeadingKind,
+    isParagraphKind: isParagraphKind,
+    isImageKind: isImageKind,
+    isEditorKind: isEditorKind,
+    isFlowchartKind: isFlowchartKind,
+    isSimulatorKind: isSimulatorKind,
+    isButtonKind: isButtonKind,
+    SUPPORTED_BLOCK_KINDS: SUPPORTED_BLOCK_KINDS,
+    normalizeEditorOptions: normalizeEditorOptions,
+    normalizeTerminalEditorBlock: normalizeTerminalEditorBlock,
+    normalizeFlowchartNode: normalizeFlowchartNode,
+    normalizeFlowchartLink: normalizeFlowchartLink,
+    normalizeFlowchartShapeOptions: normalizeFlowchartShapeOptions,
+    normalizeFlowchartTextOptions: normalizeFlowchartTextOptions,
+    normalizeFlowchartEditorBlock: normalizeFlowchartEditorBlock,
+    ensureEditorButtonBlock: ensureEditorButtonBlock,
+    isTableKind: isTableKind,
+    isMultipleChoiceKind: isMultipleChoiceKind,
+    normalizeSimulatorBlock: normalizeSimulatorBlock,
+    normalizeTableBlock: normalizeTableBlock,
+    normalizeMultipleChoiceBlock: normalizeMultipleChoiceBlock,
+    normalizePopupBlocks: normalizePopupBlocks
+  });
+  const normalizeContent = contentModelTools.normalizeContent;
+  const normalizeCourse = contentModelTools.normalizeCourse;
+  const normalizeModule = contentModelTools.normalizeModule;
+  const normalizeLesson = contentModelTools.normalizeLesson;
+  const normalizeStep = contentModelTools.normalizeStep;
+  const normalizeStepBlock = contentModelTools.normalizeStepBlock;
+  const defaultCourse = contentModelTools.defaultCourse;
+  const defaultModule = contentModelTools.defaultModule;
+  const defaultLesson = contentModelTools.defaultLesson;
+  const defaultContentStep = contentModelTools.defaultContentStep;
+  const defaultCompleteStep = contentModelTools.defaultCompleteStep;
+  const textToInlineRichTextHtml = contentModelTools.textToInlineRichTextHtml;
+  const sanitizeInlineRichText = contentModelTools.sanitizeInlineRichText;
+  const inlineRichTextToPlainText = contentModelTools.inlineRichTextToPlainText;
+  const normalizeParagraphBlockData = contentModelTools.normalizeParagraphBlockData;
+  const firstValue = contentModelTools.firstValue;
+  const emptyContent = contentModelTools.emptyContent;
+  const hasProgressEntries = progressHelpers.hasProgressEntries;
+  const lessonProgressKey = progressHelpers.lessonProgressKey;
+  const normalizeImportedProgress = progressHelpers.normalizeImportedProgress;
+  const normalizeProgressRecordForLesson = progressHelpers.normalizeProgressRecordForLesson;
+  const resolveProgressIndex = progressHelpers.resolveProgressIndex;
+  const normalizeIndexHint = progressHelpers.normalizeIndexHint;
   // Controle simples para salvar em tempo real sem bloquear a digitacao.
   let persistTimer = null;
-  // Debounce/lock para sincronizacao opcional em pasta local (File System Access API).
-  let fsPersistTimer = null;
-  let fsPersistInFlight = false;
-  let fsPersistQueued = false;
   // Conteudo inicial ja considerando recuperacao persistida.
   const bootstrap = loadProjectBootstrap();
+  const initialContent = normalizeContent(bootstrap.content || emptyContent());
+  const storedProgress = loadProgressStore();
+  const bootstrapProgress = normalizeImportedProgress(bootstrap.progress);
+  const initialProgress = hasProgressEntries(storedProgress) ? storedProgress : bootstrapProgress;
 
   // Estado central da aplicacao (single source of truth da UI).
   // Sempre que este objeto muda, a interface e re-renderizada via renderApp().
   const state = {
-    content: normalizeContent(bootstrap.content || window.APP_CONTENT || {}),
-    progress: normalizeImportedProgress(bootstrap.progress || loadProgressStore()),
+    content: initialContent,
+    progress: initialProgress,
     assets: normalizeAssetStore(bootstrap.assets),
-    fs: {
-      supported: isFileSystemAccessSupported(),
-      enabled: false,
-      handle: null,
-      folderName: "",
-      lastError: "",
-      lastSavedAt: ""
-    },
     currentView: "main_menu",
     currentCourseId: null,
     currentLessonId: null,
     currentStepIndex: 0,
     inlinePopupOpen: null,
-    feedback: null,
+    flowchartPopupOpen: null,
     tokenByStepId: {},
     ui: {
       sideOpen: false,
       contextMenu: null,
-      lessonQuickOpen: false
+      lessonQuickOpen: false,
+      pendingImport: null,
+      flowchartLayoutCacheByBlockId: {},
+      flowchartViewportByKey: {},
+      flowchartPinch: null,
+      tonePicker: null
     },
     editor: {
       open: false,
       mode: "edit",
       anchorIndex: 0,
+      activeBlockId: null,
+      activeTableCell: null,
+      pendingTableFocus: null,
       editingStepId: null,
       keepStepId: null,
       draftByStepId: {},
       form: null,
+      popupBuilder: {
+        open: false,
+        ownerBlockId: null,
+        mainForm: null,
+        saving: false,
+        pendingPromise: null
+      },
       dragType: null,
       pointerDrag: null,
       blockDragId: null,
-      imageTargetBlockId: null,
+      imageTarget: null,
       pendingScrollBlockId: null,
       terminalGuardByBlockId: {},
       dragOverTargetId: null,
       dragOverPosition: null
     }
   };
-
-  if (!hasProgressEntries(state.progress)) {
-    state.progress = normalizeImportedProgress((window.APP_CONTENT || {}).progress);
-  }
+  const bundledSeedChanged = applyBundledProjectSeed();
   pruneProgressStore();
+  if (bundledSeedChanged) {
+    saveProgressStore();
+    persistProjectSnapshot();
+  }
 
 
   // ============================================================================
@@ -114,6 +264,7 @@
   // ============================================================================
   // Renderiza a tela principal conforme o estado atual e injeta overlays (menu lateral, contexto, editor etc.).
   function renderApp() {
+    const renderSnapshot = renderStateTools.captureRenderState(root);
     const body =
       state.currentView === "main_menu"
         ? renderMainMenu()
@@ -130,15 +281,32 @@
       renderContextMenu() +
       renderLessonQuickPanel() +
       (state.editor.open ? renderEditorOverlay() : "") +
+      (state.editor.popupBuilder && state.editor.popupBuilder.open ? renderPopupBuilderOverlay() : "") +
+      renderTonePicker() +
       "</div>";
 
-    if (state.currentView === "lesson_step") updateProgressBar();
+    renderStateTools.restoreRenderState(root, renderSnapshot);
+    syncEditorActiveBlockVisualState();
+    if (state.editor.open) syncAllTableEditorColumnWidths();
+    if (state.editor.open && state.editor.activeBlockId) syncBlockAlignTools(state.editor.activeBlockId);
+    if (state.editor.open && state.editor.activeBlockId) syncBlockTextStyleTools(state.editor.activeBlockId);
+    if (state.editor.open && state.editor.activeTableCell && state.editor.activeTableCell.blockId) {
+      syncTableFormatTools(state.editor.activeTableCell.blockId);
+    }
 
+    if (state.currentView === "lesson_step") updateProgressBar();
     if (state.editor.open && state.editor.pendingScrollBlockId) {
       const blockId = state.editor.pendingScrollBlockId;
       state.editor.pendingScrollBlockId = null;
       requestAnimationFrame(function () {
         scrollEditorBlockIntoView(blockId);
+      });
+    }
+    if (state.editor.open && state.editor.pendingTableFocus) {
+      const cellRef = clone(state.editor.pendingTableFocus);
+      state.editor.pendingTableFocus = null;
+      requestAnimationFrame(function () {
+        focusTableEditorCell(cellRef);
       });
     }
 
@@ -183,7 +351,7 @@
 
     return (
       '<section class="screen">' +
-      renderTopBar({ title: state.content.appTitle || DEFAULT_APP_TITLE, showBack: false }) +
+      renderTopBar({ title: state.content.appTitle || DEFAULT_APP_TITLE, showBack: false, showBrandMark: true }) +
       '<main class="screen-content">' +
       (cards || '<article class="clean-card"><p class="card-subtitle">Nenhum curso.</p></article>') +
       "</main>" +
@@ -221,6 +389,8 @@
               '<div class="lesson-actions">' +
               '<button class="icon-ghost" data-action="open-context" data-kind="lesson" data-module-id="' +
               escAttr(moduleItem.id) +
+              '" data-course-id="' +
+              escAttr(course.id) +
               '" data-lesson-id="' +
               escAttr(lesson.id) +
               '" title="Ações da lição" aria-label="Ações da lição">&ctdot;</button>' +
@@ -242,6 +412,8 @@
           "</h3>" +
           '<button class="icon-ghost" data-action="open-context" data-kind="module" data-module-id="' +
           escAttr(moduleItem.id) +
+          '" data-course-id="' +
+          escAttr(course.id) +
           '" title="Ações do módulo" aria-label="Ações do módulo">&ctdot;</button>' +
           "</div>" +
           '<p class="muted tiny progress-meta">' +
@@ -287,16 +459,7 @@
     const step = getCurrentStep();
     if (!step) return renderError("Card não encontrado.");
     const exerciseLayout = isExerciseDrivenStep(step);
-
-    const hasBlocks = Array.isArray(step.blocks) && step.blocks.length > 0;
-    const stepHtml =
-      step.type === "token_fill" && !hasBlocks
-        ? renderStepToken(step)
-        : step.type === "lesson_complete" && !hasBlocks
-          ? renderStepComplete(step)
-          : step.type === "content_with_inline_popup" && !hasBlocks
-            ? renderStepPopup(step)
-            : renderStepContent(step);
+    const stepHtml = renderStepContent(step);
 
     return (
       '<section class="screen lesson-screen">' +
@@ -312,186 +475,51 @@
       "</div>" +
       "</header>" +
       '<main class="screen-content' + (exerciseLayout ? " lesson-exercise-layout" : "") + '">' +
-      '<p class="muted tiny">' +
+      '<section class="lesson-stage">' +
+      '<p class="muted tiny lesson-stage-meta">' +
       esc(lessonEntry.module.title + " - " + lessonEntry.lesson.title) +
       "</p>" +
       stepHtml +
+      "</section>" +
       "</main>" +
+      renderStepActionDock(step) +
       "</section>"
     );
   }
 
   // Renderiza um card de conteudo comum.
   function renderStepContent(step) {
-    if (Array.isArray(step.blocks) && step.blocks.length) {
-      const completeClass = step.type === "lesson_complete" ? " complete" : "";
-      const exerciseClass = stepHasEditorExercise(step) ? " exercise-card" : "";
-      return (
-        '<article class="clean-card lesson-card' +
-        completeClass +
-        exerciseClass +
-        '">' +
-        (step.type === "lesson_complete" ? '<div class="complete-mark">&#10003;</div>' : "") +
-        renderStepBlocks(step) +
-        "</article>"
-      );
-    }
-
+    const completeClass = step.type === "lesson_complete" ? " complete" : "";
+    const exerciseClass = stepHasEditorExercise(step) ? " exercise-card" : "";
     return (
-      '<article class="clean-card lesson-card">' +
-      (step.title ? '<h2 class="lesson-title">' + esc(step.title) + "</h2>" : "") +
-      renderImage(step.image) +
-      renderBody(step) +
-      renderTerminal(step.terminal) +
-      '<div class="lesson-next-wrap"><button class="next-icon" data-action="continue-step" title="Continuar" aria-label="Continuar">&#10140;</button></div>' +
-      "</article>"
-    );
-  }
-
-  // Renderiza um card que abre popup inline antes de avancar.
-  function renderStepPopup(step) {
-    if (Array.isArray(step.blocks) && step.blocks.length) {
-      return renderStepContent(step);
-    }
-
-    return (
-      '<article class="clean-card lesson-card">' +
-      (step.title ? '<h2 class="lesson-title">' + esc(step.title) + "</h2>" : "") +
-      renderImage(step.image) +
-      renderBody(step) +
-      renderTerminal(step.terminal) +
-      '<div class="popup-actions">' +
-      '<button class="icon-pill" data-action="popup-open" title="' +
-      escAttr(step.popupTriggerLabel || "Abrir popup") +
-      '" aria-label="' +
-      escAttr(step.popupTriggerLabel || "Abrir popup") +
-      '">&#9432;</button>' +
-      (state.inlinePopupOpen && state.inlinePopupOpen.blockId === INLINE_POPUP_BLOCK_ID
-        ? '<div class="inline-popup">' +
-          '<div class="popup-copy card-subtitle">' +
-          textToParagraphHtml(step.popupText || "", "") +
-          "</div>" +
-          '<button class="next-icon" data-action="popup-continue" title="Continuar" aria-label="Continuar">&#10140;</button>' +
-          "</div>"
-        : "") +
+      '<article class="clean-card lesson-card' +
+      completeClass +
+      exerciseClass +
+      '">' +
+      '<div class="lesson-card-body">' +
+      (step.type === "lesson_complete" ? '<div class="complete-mark">&#10003;</div>' : "") +
+      renderStepBlocks(step) +
       "</div>" +
       "</article>"
-    );
-  }
-
-  // Renderiza exercicio de preencher lacunas com opções.
-  function renderStepToken(step) {
-    const exercise = getExerciseState(step);
-    const slotHtml = exercise.slots
-      .map(function (value, index) {
-        return (
-          '<button class="token-slot ' +
-          (value ? "filled" : "") +
-          '" data-action="token-slot" data-slot-index="' +
-          index +
-          '">' +
-          (value ? esc(value) : '<span class="slot-placeholder">&#9633;</span>') +
-          "</button>"
-        );
-      })
-      .join("");
-
-    const options = getAvailableOptions(step, exercise.slots)
-      .map(function (token) {
-        return (
-          '<button class="token-option" data-action="token-option" data-option="' +
-          encodeURIComponent(token) +
-          '">' +
-          esc(token) +
-          "</button>"
-        );
-      })
-      .join("");
-
-    return (
-      '<article class="clean-card lesson-card token-fill-card">' +
-      '<h2 class="lesson-title">' +
-      esc(step.title || "PREENCHA") +
-      "</h2>" +
-      '<p class="card-subtitle">' +
-      esc(step.prompt || "") +
-      "</p>" +
-      '<div class="token-area">' +
-      '<div class="token-terminal-wrap"><div class="terminal-box token-terminal token-slots">' +
-      slotHtml +
-      "</div></div>" +
-      '<div class="token-bottom">' +
-      '<div class="token-options">' +
-      (options || '<p class="muted tiny">Sem opções.</p>') +
-      "</div>" +
-      '<div class="token-actions equal-actions">' +
-      '<button class="next-icon next-icon-secondary" data-action="token-reset" title="Limpar" aria-label="Limpar">&#8635;</button>' +
-      '<button class="next-icon" data-action="token-continue" title="Continuar" aria-label="Continuar">&#10140;</button>' +
-      "</div>" +
-      "</div>" +
-      "</div>" +
-      "</article>" +
-      renderFeedback(step)
-    );
-  }
-
-  // Renderiza a tela de conclusao da licao.
-  function renderStepComplete(step) {
-    return (
-      '<article class="clean-card lesson-card complete">' +
-      '<div class="complete-mark">&#10003;</div>' +
-      '<h2 class="lesson-title">' +
-      esc(step.title || "Lição concluída") +
-      "</h2>" +
-      (step.subtitle ? '<p class="card-subtitle">' + esc(step.subtitle) + "</p>" : "") +
-      renderBody(step) +
-      '<div class="lesson-next-wrap"><button class="next-icon" data-action="complete-continue" title="Voltar ao curso" aria-label="Voltar ao curso">&#10140;</button></div>' +
-      "</article>"
-    );
-  }
-
-  // Renderiza feedback de acerto ou erro para exercicios de lacuna.
-  function renderFeedback(step) {
-    if (!state.feedback || state.feedback.stepId !== step.id) return "";
-
-    if (state.feedback.type === "correct") {
-      return (
-        '<section class="feedback-overlay">' +
-        '<div class="feedback-card">' +
-        '<h3>Correto</h3>' +
-        renderTerminal(step.correct && step.correct.output) +
-        (step.correct && step.correct.explanation
-          ? '<p class="card-subtitle">' + esc(step.correct.explanation) + "</p>"
-          : "") +
-        '<button class="next-icon" data-action="feedback-next" title="Próximo" aria-label="Próximo">&#10140;</button>' +
-        "</div></section>"
-      );
-    }
-
-    return (
-      '<section class="feedback-overlay">' +
-      '<div class="feedback-card">' +
-      '<h3>Incorreto</h3>' +
-      '<p class="card-subtitle">' +
-      esc(state.feedback.message || (step.incorrect && step.incorrect.message) || "Tente novamente") +
-      "</p>" +
-      '<div class="feedback-icons">' +
-      '<button class="icon-pill" data-action="feedback-view-answer" title="Ver resposta" aria-label="Ver resposta">&#128065;</button>' +
-      '<button class="icon-pill primary" data-action="feedback-try-again" title="Tentar de novo" aria-label="Tentar de novo">&#8635;</button>' +
-      "</div>" +
-      "</div></section>"
     );
   }
 
   // Monta o topo padrao das telas de menu.
   function renderTopBar(config) {
+    const showBrandMark = !!config.showBrandMark;
+    const titleHtml = showBrandMark
+      ? '<span class="brand-title"><span class="brand-mark" aria-hidden="true">荒</span><span class="brand-text">' +
+        esc(config.title || "") +
+        "</span></span>"
+      : esc(config.title || "");
+
     return (
       '<header class="topbar">' +
       (config.showBack
         ? '<button class="icon-ghost" data-action="go-main" title="Menu principal" aria-label="Menu principal">&larr;</button>'
         : '<div class="topbar-space"></div>') +
       '<h1 class="topbar-title">' +
-      esc(config.title || "") +
+      titleHtml +
       "</h1>" +
       '<button class="icon-ghost" data-action="toggle-side" title="Ações" aria-label="Ações">&#9776;</button>' +
       "</header>"
@@ -521,17 +549,6 @@
       })
       .join("");
 
-    const fsStatus = state.fs.supported
-      ? '<p class="tiny muted side-status">' +
-        (state.fs.enabled
-          ? "Pasta local: " + esc(state.fs.folderName || "(sem nome)")
-          : "Pasta local: desativada") +
-        "</p>" +
-        (state.fs.lastError
-          ? '<p class="tiny side-status-error">' + esc(state.fs.lastError) + "</p>"
-          : "")
-      : '<p class="tiny muted side-status">' + esc(getFileSystemUnavailableMessage()) + "</p>";
-
     return (
       '<section class="side-overlay ' +
       (state.ui.sideOpen ? "open" : "") +
@@ -540,7 +557,6 @@
       '<div class="side-grid">' +
       actions +
       "</div>" +
-      fsStatus +
       "</aside>" +
       "</section>"
     );
@@ -557,28 +573,8 @@
     if (state.currentView === "course_menu") {
       list.push({ action: "create-module", label: "Novo módulo", icon: "&#9638;" });
     }
-    list.push({ action: "import-json-trigger", label: "Importar ZIP/JSON", icon: "&#8681;" });
-    list.push({ action: "export-json", label: "Exportar ZIP", icon: "&#8679;" });
-
-    if (state.fs.supported) {
-      list.push({
-        action: "fs-pick-folder",
-        label: state.fs.enabled ? "Trocar pasta local" : "Ativar pasta local",
-        icon: "&#128193;"
-      });
-      list.push({
-        action: "fs-save-now",
-        label: "Sincronizar agora",
-        icon: "&#128190;",
-        disabled: !state.fs.enabled
-      });
-      list.push({
-        action: "fs-disconnect",
-        label: "Desativar pasta local",
-        icon: "&#10005;",
-        disabled: !state.fs.enabled
-      });
-    }
+    list.push({ action: "import-json-trigger", label: "Importar", icon: "&#8681;" });
+    list.push({ action: "export-json", label: "Exportar", icon: "&#8679;" });
 
     return list;
   }
@@ -616,6 +612,8 @@
     if (context.kind === "course") {
       return [
         { action: "context-edit", label: "Editar curso", icon: "&#9998;" },
+        { action: "context-import-course", label: "Importar", icon: "&#8681;" },
+        { action: "context-export-course", label: "Exportar", icon: "&#8679;" },
         { action: "context-reset", label: "Zerar progresso do curso", icon: "&#8635;" },
         { action: "context-delete", label: "Excluir curso", icon: "&#128465;" }
       ];
@@ -628,6 +626,8 @@
         { action: "context-module-down", label: "Mover módulo para baixo", icon: "&darr;", disabled: !move.canMoveDown },
         { action: "context-edit", label: "Editar módulo", icon: "&#9998;" },
         { action: "context-create-lesson", label: "Nova lição", icon: "&#43;" },
+        { action: "context-import-module", label: "Importar", icon: "&#8681;" },
+        { action: "context-export-module", label: "Exportar", icon: "&#8679;" },
         { action: "context-reset", label: "Zerar progresso do módulo", icon: "&#8635;" },
         { action: "context-delete", label: "Excluir módulo", icon: "&#128465;" }
       ];
@@ -639,6 +639,8 @@
         { action: "context-move-up", label: "Mover lição para cima", icon: "&uarr;", disabled: !move.canMoveUp },
         { action: "context-move-down", label: "Mover lição para baixo", icon: "&darr;", disabled: !move.canMoveDown },
         { action: "context-edit", label: "Editar lição", icon: "&#9998;" },
+        { action: "context-import-lesson", label: "Importar", icon: "&#8681;" },
+        { action: "context-export-lesson", label: "Exportar", icon: "&#8679;" },
         { action: "context-reset", label: "Zerar progresso da lição", icon: "&#8635;" },
         { action: "context-delete", label: "Excluir lição", icon: "&#128465;" }
       ];
@@ -779,12 +781,764 @@
     );
   }
 
-  // Renderiza a area de montagem (paleta lateral e canvas de blocos).
-  function renderCanvasEditor(form) {
-    const palette = BLOCK_TYPES.map(function (type) {
-      const meta = BLOCK_META[type];
+  // Renderiza editor dedicado para os blocos que vivem dentro do popup do botão.
+  function renderPopupBuilderOverlay() {
+    return (
+      '<section class="editor-overlay popup-builder-overlay">' +
+      '<article class="editor-sheet popup-builder-sheet">' +
+      '<header class="editor-head">' +
+      '<button class="icon-ghost" data-action="popup-builder-close" title="Fechar">&times;</button>' +
+      '<p class="tiny muted editor-title">Conteúdo do popup</p>' +
+      '<button class="icon-ghost" data-action="popup-builder-save" title="Salvar">&#10003;</button>' +
+      '</header>' +
+      '<div class="editor-body popup-builder-body">' +
+      renderCanvasEditor(state.editor.form || blankEditorForm("content"), {
+        paletteTypes: POPUP_BLOCK_KINDS,
+        hideFinalButton: true,
+        popupMode: true
+      }) +
+      '<footer class="popup-builder-footer-preview">' +
+      '<div class="block-fixed block-fixed-button popup-builder-button-shell">' +
+      '<div class="lesson-next-wrap">' +
+      '<button class="next-icon step-main-btn" type="button" disabled aria-disabled="true" tabindex="-1" title="Continuar" aria-label="Continuar">&#10140;</button>' +
+      "</div>" +
+      "</div>" +
+      "</footer>" +
+      "</div>" +
+      "</article>" +
+      "</section>"
+    );
+  }
+
+  // Renderiza paleta simples de cores para o trecho selecionado.
+  function renderTonePicker() {
+    const picker = state.ui.tonePicker;
+    if (!picker || !state.editor.open) return "";
+
+    const tones = [
+      { id: "tone-default", label: "Padrão", swatchClass: "tone-swatch-default" },
+      { id: "tone-gold", label: "Dourado", swatchClass: "tone-swatch-gold" },
+      { id: "tone-mint", label: "Menta", swatchClass: "tone-swatch-mint" },
+      { id: "tone-coral", label: "Coral", swatchClass: "tone-swatch-coral" }
+    ];
+
+    return (
+      '<section class="tone-picker-overlay">' +
+      '<button class="tone-picker-backdrop" data-action="tone-picker-close" aria-label="Fechar paleta"></button>' +
+      '<article class="tone-picker-sheet">' +
+      '<div class="tone-picker-grid">' +
+      tones.map(function (tone) {
+        return (
+          '<button class="tone-picker-option" data-action="tone-picker-apply" data-block-id="' +
+          escAttr(picker.blockId || "") +
+          '" data-tone-id="' +
+          escAttr(tone.id) +
+          '">' +
+          '<span class="tone-swatch ' + tone.swatchClass + '" aria-hidden="true"></span>' +
+          '<span class="tiny">' + esc(tone.label) + "</span>" +
+          "</button>"
+        );
+      }).join("") +
+      "</div>" +
+      "</article>" +
+      "</section>"
+    );
+  }
+
+  // Compara duas referências de célula da tabela.
+  function isSameTableCellRef(left, right) {
+    return !!left &&
+      !!right &&
+      left.blockId === right.blockId &&
+      left.role === right.role &&
+      Number(left.rowIndex) === Number(right.rowIndex) &&
+      Number(left.columnIndex) === Number(right.columnIndex);
+  }
+
+  // Retorna a célula atualmente ativa da tabela, com fallback para o primeiro cabeçalho.
+  function getActiveTableCellRef(blockId, table) {
+    const width = table && Array.isArray(table.headers) && table.headers.length ? table.headers.length : 1;
+    const fallback = {
+      blockId: blockId,
+      role: "title",
+      rowIndex: -1,
+      columnIndex: 0
+    };
+    const current = state.editor.activeTableCell;
+    if (!current || current.blockId !== blockId) return fallback;
+    if (current.role === "title") {
+      return {
+        blockId: blockId,
+        role: "title",
+        rowIndex: -1,
+        columnIndex: 0
+      };
+    }
+    const role = current.role === "body" ? "body" : "header";
+    const safeColumn = clamp(Number(current.columnIndex) || 0, 0, width - 1);
+    if (role === "body") {
+      const rowCount = table && Array.isArray(table.rows) && table.rows.length ? table.rows.length : 1;
+      return {
+        blockId: blockId,
+        role: "body",
+        rowIndex: clamp(Number(current.rowIndex) || 0, 0, rowCount - 1),
+        columnIndex: safeColumn
+      };
+    }
+    return {
+      blockId: blockId,
+      role: "header",
+      rowIndex: -1,
+      columnIndex: safeColumn
+    };
+  }
+
+  // Busca a célula estilizada da tabela a partir da referência ativa.
+  function getTableCellFromDraft(table, cellRef) {
+    if (!table) return createBlankTableCell("body");
+    if (cellRef && cellRef.role === "title") {
+      return normalizeTableCell(table.titleStyle, "header");
+    }
+    if (cellRef && cellRef.role === "body") {
+      return normalizeTableCell(
+        table.rows[cellRef.rowIndex] && table.rows[cellRef.rowIndex][cellRef.columnIndex],
+        "body"
+      );
+    }
+    return normalizeTableCell(table.headers[cellRef && cellRef.columnIndex], "header");
+  }
+
+  // Desenha ícone simples de alinhamento para os controles da tabela.
+  function renderAlignGlyph(align) {
+    const mode =
+      align === "left" || align === "center" || align === "right"
+        ? align
+        : "left";
+    const x = mode === "left" ? ["1", "1", "1"] : mode === "center" ? ["3", "1", "2"] : ["5", "3", "1"];
+    return (
+      '<svg class="table-align-glyph table-align-glyph-' +
+      escAttr(mode) +
+      '" viewBox="0 0 16 12" aria-hidden="true" focusable="false">' +
+      '<rect x="' + x[0] + '" y="1" width="10" height="1.5" rx="0.75"></rect>' +
+      '<rect x="' + x[1] + '" y="5" width="14" height="1.5" rx="0.75"></rect>' +
+      '<rect x="' + x[2] + '" y="9" width="12" height="1.5" rx="0.75"></rect>' +
+      "</svg>"
+    );
+  }
+
+  // Sincroniza os botões de formatação da tabela conforme a célula ativa no DOM.
+  function syncTableFormatTools(blockId) {
+    if (!state.editor.open || !blockId) return;
+    const blockNode = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
+    if (!blockNode) return;
+
+    const activeField = getTableEditorCellField(state.editor.activeTableCell);
+    blockNode.querySelectorAll("[data-table-header-cell], [data-table-cell], [data-table-title]").forEach(function (field) {
+      field.classList.toggle("is-active-cell", !!activeField && field === activeField);
+    });
+    if (!activeField) return;
+
+    const bold = activeField.getAttribute("data-table-bold") === "1";
+    const italic = activeField.getAttribute("data-table-italic") === "1";
+    const tone = activeField.getAttribute("data-table-tone") || "default";
+    const align = activeField.getAttribute("data-table-align") || "left";
+
+    const setActive = function (selector, value) {
+      const button = blockNode.querySelector(selector);
+      if (button) button.classList.toggle("active", !!value);
+    };
+
+    setActive('[data-action="table-style-bold"]', bold);
+    setActive('[data-action="table-style-italic"]', italic);
+    setActive('[data-action="table-open-tone-picker"]', tone !== "default");
+    setActive('[data-action="table-align-left"]', align === "left");
+    setActive('[data-action="table-align-center"]', align === "center");
+    setActive('[data-action="table-align-right"]', align === "right");
+  }
+
+  // Renderiza a barra de formatação por célula da tabela.
+  function renderTableFormatTools(block, table) {
+    const activeCell = getActiveTableCellRef(block.id, table);
+    const cell = getTableCellFromDraft(table, activeCell);
+    return (
+      '<div class="builder-subtools builder-subtools-text table-format-tools">' +
+      '<button class="icon-ghost tiny-icon text-style-toggle' +
+      (cell.bold ? " active" : "") +
+      '" data-action="table-style-bold" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Aplicar negrito" aria-label="Aplicar negrito"><span class="text-style-glyph text-style-glyph-bold">B</span></button>' +
+      '<button class="icon-ghost tiny-icon text-style-toggle' +
+      (cell.italic ? " active" : "") +
+      '" data-action="table-style-italic" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Aplicar itálico" aria-label="Aplicar itálico"><span class="text-style-glyph text-style-glyph-italic">I</span></button>' +
+      '<button class="icon-ghost tiny-icon text-style-toggle text-style-toggle-tone' +
+      (cell.tone !== "default" ? " active" : "") +
+      '" data-action="table-open-tone-picker" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Escolher cor" aria-label="Escolher cor"><span class="text-style-glyph">A</span></button>' +
+      '<button class="icon-ghost tiny-icon text-style-toggle' +
+      (cell.align === "left" ? " active" : "") +
+      '" data-action="table-align-left" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">' +
+      renderAlignGlyph("left") +
+      "</button>" +
+      '<button class="icon-ghost tiny-icon text-style-toggle' +
+      (cell.align === "center" ? " active" : "") +
+      '" data-action="table-align-center" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Centralizar" aria-label="Centralizar">' +
+      renderAlignGlyph("center") +
+      "</button>" +
+      '<button class="icon-ghost tiny-icon text-style-toggle' +
+      (cell.align === "right" ? " active" : "") +
+      '" data-action="table-align-right" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Alinhar à direita" aria-label="Alinhar à direita">' +
+      renderAlignGlyph("right") +
+      "</button>" +
+      "</div>"
+    );
+  }
+
+  // Renderiza UI de edição do bloco de tabela como grade direta.
+  function renderTableBuilder(block) {
+    const table = normalizeTableDraft(block);
+    const activeCell = getActiveTableCellRef(block.id, table);
+    const columnWidths = getTableEditorColumnWidths(table);
+    const colgroupHtml =
+      '<col class="table-editor-row-control-col" style="width:22px">' +
+      columnWidths.map(function (widthCh, columnIndex) {
+        return (
+          '<col data-table-column-width="true" data-column-index="' +
+          String(columnIndex) +
+          '" style="width:' +
+          "calc(" + String(widthCh) + "ch + 1.1rem)" +
+          '">'
+        );
+      }).join("") +
+      '<col class="table-editor-add-control-col" style="width:22px">';
+
+    const headerHtml = table.headers.map(function (header, columnIndex) {
+      const cellRef = {
+        blockId: block.id,
+        role: "header",
+        rowIndex: -1,
+        columnIndex: columnIndex
+      };
+      const activeClass = isSameTableCellRef(activeCell, cellRef) ? " is-active-cell" : "";
       return (
-        '<button class="palette-icon" draggable="true" data-action="palette-add" data-block-type="' +
+        "<th>" +
+        '<div class="table-editor-cell-shell table-editor-header-shell">' +
+        '<input class="block-input table-editor-input ' +
+        getTableCellClassNames(header) +
+        activeClass +
+        '" type="text" data-table-header-cell="true" data-column-index="' +
+        String(columnIndex) +
+        '" data-table-cell-role="header" data-table-align="' +
+        escAttr(header.align) +
+        '" data-table-bold="' +
+        (header.bold ? "1" : "0") +
+        '" data-table-italic="' +
+        (header.italic ? "1" : "0") +
+        '" data-table-tone="' +
+        escAttr(header.tone) +
+        '" value="' +
+        escAttr(header.value || "") +
+        '" placeholder="Coluna">' +
+        '<button class="icon-ghost tiny-icon table-editor-remove table-editor-remove-column" data-action="table-remove-column" data-block-id="' +
+        escAttr(block.id) +
+        '" data-column-index="' +
+        String(columnIndex) +
+        '" title="Remover coluna" aria-label="Remover coluna"><span class="table-editor-remove-glyph" aria-hidden="true">&times;</span></button>' +
+        "</div>" +
+        "</th>"
+      );
+    }).join("");
+
+    const rowsHtml = table.rows.map(function (row, rowIndex) {
+      const cellsHtml = row.map(function (cell, columnIndex) {
+        const cellRef = {
+          blockId: block.id,
+          role: "body",
+          rowIndex: rowIndex,
+          columnIndex: columnIndex
+        };
+        const activeClass = isSameTableCellRef(activeCell, cellRef) ? " is-active-cell" : "";
+        return (
+          "<td>" +
+          '<div class="table-editor-cell-shell">' +
+          '<input class="block-input table-editor-input ' +
+          getTableCellClassNames(cell) +
+          activeClass +
+          '" type="text" data-table-cell="true" data-row-index="' +
+          String(rowIndex) +
+          '" data-column-index="' +
+          String(columnIndex) +
+          '" data-table-cell-role="body" data-table-align="' +
+          escAttr(cell.align) +
+          '" data-table-bold="' +
+          (cell.bold ? "1" : "0") +
+          '" data-table-italic="' +
+          (cell.italic ? "1" : "0") +
+          '" data-table-tone="' +
+          escAttr(cell.tone) +
+          '" value="' +
+          escAttr(cell.value || "") +
+          '" placeholder="Valor">' +
+          "</div>" +
+          "</td>"
+        );
+      }).join("");
+
+      return (
+        '<tr data-table-body-row="true" data-row-index="' +
+        String(rowIndex) +
+        '">' +
+        '<th class="table-editor-row-head">' +
+        '<div class="table-editor-row-head-shell">' +
+        '<button class="icon-ghost tiny-icon table-editor-remove" data-action="table-remove-row" data-block-id="' +
+        escAttr(block.id) +
+        '" data-row-index="' +
+        String(rowIndex) +
+        '" title="Remover linha" aria-label="Remover linha"><span class="table-editor-remove-glyph" aria-hidden="true">&times;</span></button>' +
+        "</div>" +
+        "</th>" +
+        cellsHtml +
+        '<td class="table-editor-side-spacer" aria-hidden="true"><div class="table-editor-cell-shell"></div></td>' +
+        "</tr>"
+      );
+    }).join("");
+
+    const addRowSpacerHtml = table.headers.map(function () {
+      return '<td class="table-editor-add-row-spacer" aria-hidden="true"><div class="table-editor-cell-shell"></div></td>';
+    }).join("");
+    const titleActiveClass = activeCell.role === "title" ? " is-active-cell" : "";
+
+    return (
+      '<section class="table-config">' +
+      renderTableFormatTools(block, table) +
+      '<input class="block-input table-editor-input table-editor-title-input ' +
+      getTableCellClassNames(table.titleStyle) +
+      titleActiveClass +
+      '" type="text" data-table-title="true" data-table-cell-role="title" data-table-align="' +
+      escAttr(table.titleStyle.align) +
+      '" data-table-bold="' +
+      (table.titleStyle.bold ? "1" : "0") +
+      '" data-table-italic="' +
+      (table.titleStyle.italic ? "1" : "0") +
+      '" data-table-tone="' +
+      escAttr(table.titleStyle.tone) +
+      '" value="' +
+      escAttr(table.title || "") +
+      '" placeholder="Título">' +
+      '<div class="table-editor-scroll">' +
+      '<table class="table-editor-grid">' +
+      "<colgroup>" +
+      colgroupHtml +
+      "</colgroup>" +
+      "<thead>" +
+      "<tr>" +
+      '<th class="table-editor-corner" aria-hidden="true"><div class="table-editor-row-head-shell table-editor-corner-shell"></div></th>' +
+      headerHtml +
+      '<th class="table-editor-add-head"><div class="table-editor-row-head-shell"><button class="icon-ghost tiny-icon table-editor-add" data-action="table-add-column" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Adicionar coluna" aria-label="Adicionar coluna"><span class="table-editor-remove-glyph" aria-hidden="true">+</span></button></div></th>' +
+      "</tr>" +
+      "</thead>" +
+      "<tbody>" +
+      rowsHtml +
+      '<tr class="table-editor-add-row">' +
+      '<th class="table-editor-row-head table-editor-row-head-add"><div class="table-editor-row-head-shell"><button class="icon-ghost tiny-icon table-editor-add" data-action="table-add-row" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Adicionar linha" aria-label="Adicionar linha"><span class="table-editor-remove-glyph" aria-hidden="true">+</span></button></div></th>' +
+      addRowSpacerHtml +
+      '<td class="table-editor-add-corner" aria-hidden="true"><div class="table-editor-cell-shell"></div></td>' +
+      "</tr>" +
+      "</tbody>" +
+      "</table>" +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  // Renderiza UI de edição do bloco de múltipla escolha.
+  function renderMultipleChoiceBuilder(block) {
+    const normalized = normalizeMultipleChoiceBlock(block);
+    const answerState = normalized.answerState;
+    const optionsHtml = normalized.options.map(function (option, optionIndex) {
+      const answer = !!option.answer;
+      return (
+        '<div class="choice-row choice-row-multiple" data-choice-option-row="true" data-option-id="' +
+        escAttr(option.id || "") +
+        '" data-option-answer="' +
+        (answer ? "1" : "0") +
+        '">' +
+        '<button class="icon-ghost tiny-icon option-toggle' +
+        (answer ? " active" : "") +
+        '" data-action="choice-toggle-answer" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" title="' +
+        escAttr(answer ? "Desmarcar resposta" : "Marcar como resposta") +
+        '">' +
+        (answer ? "&#9679;" : "&#9675;") +
+        "</button>" +
+        '<input type="text" data-choice-option="true" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" value="' +
+        escAttr(option.value || "") +
+        '" placeholder="Alternativa">' +
+        '<button class="icon-ghost tiny-icon" data-action="choice-remove-option" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" title="Remover alternativa">&times;</button>' +
+        "</div>"
+      );
+    }).join("");
+
+    return (
+      '<section class="multiple-choice-config">' +
+      '<div class="editor-mode-choice-options choice-answer-mode-options" role="radiogroup" aria-label="Tipo de resposta">' +
+      '<label class="editor-mode-option choice-answer-option">' +
+      '<input type="radio" name="choice-answer-state-' +
+      escAttr(block.id) +
+      '" data-choice-answer-state="true" data-block-id="' +
+      escAttr(block.id) +
+      '" value="correct"' +
+      (answerState === "correct" ? " checked" : "") +
+      ">" +
+      '<span>Corretas</span>' +
+      "</label>" +
+      '<label class="editor-mode-option choice-answer-option">' +
+      '<input type="radio" name="choice-answer-state-' +
+      escAttr(block.id) +
+      '" data-choice-answer-state="true" data-block-id="' +
+      escAttr(block.id) +
+      '" value="incorrect"' +
+      (answerState === "incorrect" ? " checked" : "") +
+      ">" +
+      '<span>Incorretas</span>' +
+      "</label>" +
+      "</div>" +
+      '<div class="config-actions">' +
+      '<button class="icon-ghost tiny-icon" data-action="choice-add-option" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Adicionar alternativa">+</button>' +
+      "</div>" +
+      '<div class="choice-list">' +
+      optionsHtml +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  // Renderiza UI de edição do bloco de opções com resultado.
+  function renderSimulatorBuilder(block) {
+    const normalized = normalizeSimulatorBlock(block);
+    const optionsHtml = normalized.options.map(function (option, optionIndex) {
+      return (
+        '<div class="choice-row choice-row-simulator" data-simulator-row="true" data-option-id="' +
+        escAttr(option.id || "") +
+        '">' +
+        '<div class="simulator-fields">' +
+        '<input type="text" class="block-input" data-simulator-label="true" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" value="' +
+        escAttr(option.value || "") +
+        '" placeholder="Opção">' +
+        '<textarea class="block-input" rows="3" data-simulator-output="true" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" placeholder="Resultado exibido no painel inferior">' +
+        esc(option.result || "") +
+        "</textarea>" +
+        "</div>" +
+        '<button class="icon-ghost tiny-icon" data-action="simulator-remove-option" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" title="Remover opção">&times;</button>' +
+        "</div>"
+      );
+    }).join("");
+
+    return (
+      '<section class="simulator-config">' +
+      renderTemplateBuilderInput(normalized) +
+      '<div class="config-actions">' +
+      '<button class="icon-ghost tiny-icon" data-action="simulator-add-option" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Adicionar opção">+</button>' +
+      "</div>" +
+      '<div class="choice-list">' +
+      optionsHtml +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  // Renderiza configuracoes essenciais do bloco Editor sem expor estrategia tecnica demais ao autor.
+  function renderEditorModeBuilder(block) {
+    const normalizedBlock = clone(block);
+    normalizeTerminalEditorBlock(normalizedBlock);
+    const interactionMode = getEditorInteractionMode(normalizedBlock);
+
+    return (
+      '<section class="editor-mode-config">' +
+      '<div class="editor-mode-choice-options" role="radiogroup" aria-label="Modo do editor">' +
+      '<label class="editor-mode-option">' +
+      '<input type="radio" name="editor-interaction-' + escAttr(block.id) + '" data-editor-interaction="true" data-block-id="' + escAttr(block.id) + '" value="choice"' +
+      (interactionMode === "choice" ? " checked" : "") +
+      ">" +
+      "<span>Opções</span>" +
+      "</label>" +
+      '<label class="editor-mode-option">' +
+      '<input type="radio" name="editor-interaction-' + escAttr(block.id) + '" data-editor-interaction="true" data-block-id="' + escAttr(block.id) + '" value="input"' +
+      (interactionMode === "input" ? " checked" : "") +
+      ">" +
+      "<span>Digitação</span>" +
+      "</label>" +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  // Localiza uma opção do Editor pelo id.
+  function getEditorOptionById(options, optionId) {
+    return normalizeEditorOptions(options).find(function (option) {
+      return option.id === optionId;
+    }) || null;
+  }
+
+  // Normaliza variantes do modo Digitação preservando linhas vazias enquanto o autor edita.
+  function normalizeEditorInputVariantsForAuthor(list) {
+    return normalizeCodeInputVariants(list).map(function (variant, index) {
+      return {
+        id: String(variant.id || "variant-" + index),
+        value: String(variant.value || ""),
+        regex: !!variant.regex
+      };
+    });
+  }
+
+  // Renderiza o toggle visual de regex como um pequeno chip "(.*)".
+  function renderEditorRegexToggleButton(config) {
+    const options = config || {};
+    const isActive = !!options.active;
+    const action = String(options.action || "");
+    const blockId = String(options.blockId || "");
+    const optionId = String(options.optionId || "");
+    const slotIndex = Number.isInteger(options.slotIndex) ? options.slotIndex : 0;
+    const variantIndex = Number.isInteger(options.variantIndex) ? options.variantIndex : null;
+    const disabled = !!options.disabled;
+    const label = "(.*)";
+
+    return (
+      '<button class="icon-ghost tiny-icon editor-regex-toggle' +
+      (isActive ? " active" : "") +
+      '" data-action="' +
+      escAttr(action) +
+      '" data-block-id="' +
+      escAttr(blockId) +
+      '"' +
+      (optionId ? ' data-option-id="' + escAttr(optionId) + '"' : ' data-slot-index="' + escAttr(String(slotIndex)) + '"') +
+      (variantIndex !== null
+        ? ' data-variant-index="' + escAttr(String(variantIndex)) + '"'
+        : "") +
+      ' title="' +
+      escAttr(disabled ? "Ative a lacuna para usar regex" : (isActive ? "Desativar regex" : "Ativar regex")) +
+      '" aria-pressed="' +
+      (isActive ? "true" : "false") +
+      '"' +
+      (disabled ? ' disabled aria-disabled="true"' : "") +
+      '">' +
+      esc(label) +
+      "</button>"
+    );
+  }
+
+  // Monta as linhas do modo Digitação reaproveitando a mesma estrutura visual do modo Opções.
+  function buildEditorInputAnswerRowsHtml(block) {
+    const options = sortEditorOptionsForDisplay(block && block.options);
+    if (!options.length) {
+      return "";
+    }
+    return options.map(function (option) {
+      const enabled = option.enabled !== false;
+      const variants = normalizeEditorInputVariantsForAuthor(option.variants);
+      const variantHtml = variants.map(function (variant, variantIndex) {
+        return (
+          '<div class="choice-row choice-row-editor-variant" data-editor-slot-variant-row="true" data-slot-index="' +
+          escAttr(String(option.displayOrder || 0)) +
+          '" data-option-id="' +
+          escAttr(option.id || "") +
+          '" data-variant-index="' +
+          escAttr(String(variantIndex)) +
+          '">' +
+          '<span class="choice-row-spacer" aria-hidden="true"></span>' +
+          '<span class="choice-row-spacer" aria-hidden="true"></span>' +
+          renderEditorRegexToggleButton({
+            active: !!variant.regex,
+            action: "editor-slot-toggle-variant-regex",
+            blockId: block.id,
+            optionId: option.id,
+            variantIndex: variantIndex
+          }) +
+          '<input type="text" data-editor-slot-variant="true" data-block-id="' +
+          escAttr(block.id) +
+          '" data-option-id="' +
+          escAttr(option.id || "") +
+          '" data-variant-index="' +
+          escAttr(String(variantIndex)) +
+           '" value="' +
+           escAttr(variant.value || "") +
+           '" placeholder="Variante">' +
+           '<span class="choice-row-spacer" aria-hidden="true"></span>' +
+           '<button class="icon-ghost tiny-icon" data-action="editor-slot-remove-variant" data-block-id="' +
+          escAttr(block.id) +
+          '" data-option-id="' +
+          escAttr(option.id || "") +
+          '" data-variant-index="' +
+          escAttr(String(variantIndex)) +
+          '" title="Remover variante">&times;</button>' +
+          "</div>"
+        );
+      }).join("");
+
+      return (
+        '<div class="editor-input-slot-group" data-editor-option-group="true" data-option-id="' +
+        escAttr(option.id || "") +
+        '">' +
+        '<div class="choice-row choice-row-editor-input" data-editor-slot-row="true" data-slot-index="' +
+        escAttr(String(option.displayOrder || 0)) +
+        '" data-terminal-option-row="true" data-option-id="' +
+        escAttr(option.id || "") +
+        '" data-option-enabled="' +
+        (enabled ? "1" : "0") +
+        '" data-option-display-order="' +
+        escAttr(String(option.displayOrder || 0)) +
+        '">' +
+        '<button class="icon-ghost tiny-icon option-drag-handle" draggable="true" data-action="terminal-start-drag" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" title="Arrastar opção">&#9776;</button>' +
+        '<button class="icon-ghost tiny-icon option-toggle' +
+        (enabled ? " active" : "") +
+        '" data-action="terminal-toggle-option" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" title="' +
+        escAttr(enabled ? "Desabilitar lacuna" : "Habilitar lacuna") +
+        '">' +
+        (enabled ? "&#9679;" : "&#9675;") +
+        "</button>" +
+        renderEditorRegexToggleButton({
+          active: !!option.regex,
+          action: "editor-slot-toggle-regex",
+          blockId: block.id,
+          optionId: option.id,
+          disabled: !enabled
+        }) +
+        '<input type="text" data-editor-slot-answer="true" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" value="' +
+        escAttr(option.value || "") +
+        '" placeholder="Opção">' +
+        '<button class="icon-ghost tiny-icon" data-action="editor-slot-add-variant" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" title="Adicionar variante"' +
+        (enabled ? "" : ' disabled aria-disabled="true"') +
+        ">+</button>" +
+        '<button class="icon-ghost tiny-icon" data-action="terminal-remove-option" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id || "") +
+        '" title="Remover opção">&times;</button>' +
+        "</div>" +
+        (enabled ? variantHtml : "") +
+        "</div>"
+      );
+    }).join("");
+  }
+
+  // Renderiza a configuração do modo Digitação logo abaixo do preview, com a mesma lógica visual de Opções.
+  function renderEditorInputAnswerBuilder(block) {
+    const normalizedBlock = clone(block);
+    normalizeTerminalEditorBlock(normalizedBlock);
+
+    return (
+      '<section class="terminal-config terminal-config-input">' +
+      '<div class="config-actions">' +
+      '<button class="icon-ghost tiny-icon" data-action="terminal-add-option" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Adicionar opção">+</button>' +
+      "</div>" +
+      '<div class="choice-list" data-editor-slot-list="true">' +
+      buildEditorInputAnswerRowsHtml(normalizedBlock) +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  // Renderiza controles de alinhamento para blocos textuais inteiros.
+  function renderBlockAlignTools(block) {
+    const align = normalizeTextBlockAlign(block && block.align);
+    return (
+      '<div class="builder-subtools builder-subtools-text block-align-tools">' +
+      '<button class="icon-ghost tiny-icon text-style-toggle' +
+      (align === "left" ? " active" : "") +
+      '" data-action="block-align-left" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Alinhar à esquerda" aria-label="Alinhar à esquerda">' +
+      renderAlignGlyph("left") +
+      "</button>" +
+      '<button class="icon-ghost tiny-icon text-style-toggle' +
+      (align === "center" ? " active" : "") +
+      '" data-action="block-align-center" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Centralizar" aria-label="Centralizar">' +
+      renderAlignGlyph("center") +
+      "</button>" +
+      '<button class="icon-ghost tiny-icon text-style-toggle' +
+      (align === "right" ? " active" : "") +
+      '" data-action="block-align-right" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Alinhar à direita" aria-label="Alinhar à direita">' +
+      renderAlignGlyph("right") +
+      "</button>" +
+      "</div>"
+    );
+  }
+
+  // Renderiza a area de montagem (paleta lateral e canvas de blocos).
+  function renderCanvasEditor(form, options) {
+    const renderOptions = options || {};
+    const paletteTypes = Array.isArray(renderOptions.paletteTypes) && renderOptions.paletteTypes.length
+      ? renderOptions.paletteTypes
+      : AUTHORING_BLOCK_KINDS;
+    const hideFinalButton = !!renderOptions.hideFinalButton;
+
+    const palette = paletteTypes.map(function (type) {
+      const meta = getBlockMeta(type);
+      return (
+        '<button class="palette-icon' +
+        (renderOptions.popupMode ? " popup-palette-icon" : "") +
+        '" draggable="true" data-action="palette-add" data-block-type="' +
         escAttr(type) +
         '" title="' +
         escAttr(meta.label) +
@@ -798,16 +1552,59 @@
 
     const blocks = (form.blocks || [])
       .map(function (block) {
+        if (hideFinalButton && block.kind === "button") return "";
         if (isEditorKind(block.kind)) {
           normalizeTerminalEditorBlock(block);
           state.editor.terminalGuardByBlockId[block.id] = block.value;
         }
+        if (isHeadingKind(block.kind)) {
+          normalizeHeadingEditorBlock(block);
+        }
+        if (isFlowchartKind(block.kind)) {
+          normalizeFlowchartEditorBlock(block);
+        }
+        const paragraphTextBlock = isParagraphKind(block.kind);
+        if (paragraphTextBlock) {
+          normalizeParagraphEditorBlock(block);
+        }
         const meta = isEditorKind(block.kind)
-          ? BLOCK_META.editor
-          : (BLOCK_META[block.kind] || BLOCK_META.paragraph);
-        const multiline = block.kind === "paragraph" || isEditorKind(block.kind);
-        const input = multiline
-          ? '<textarea class="block-input" data-block-input="true" rows="' +
+          ? getBlockMeta("editor")
+          : isFlowchartKind(block.kind)
+            ? getBlockMeta("flowchart")
+            : paragraphTextBlock
+              ? getBlockMeta("paragraph")
+              : getBlockMeta(block.kind);
+        const multiline = isEditorKind(block.kind);
+        let input = "";
+
+        if (isFlowchartKind(block.kind)) {
+          input = renderFlowchartBuilder(block);
+        } else if (isTableKind(block.kind)) {
+          input = renderTableBuilder(block);
+        } else if (isMultipleChoiceKind(block.kind)) {
+          input = renderMultipleChoiceBuilder(block);
+        } else if (isSimulatorKind(block.kind)) {
+          input = renderSimulatorBuilder(block);
+        } else if (paragraphTextBlock) {
+          input = '<div class="block-rich-input block-input block-align-' +
+            escAttr(normalizeTextBlockAlign(block.align)) +
+            '" data-block-input="true" data-block-rich-input="true" contenteditable="true" spellcheck="true" tabindex="0" role="textbox" aria-multiline="true" data-placeholder="' +
+            escAttr(meta.placeholder) +
+            '">' +
+            (block.richText || "") +
+            "</div>";
+        } else if (isHeadingKind(block.kind)) {
+          input = '<input class="block-input title-block-input block-align-' +
+            escAttr(normalizeTextBlockAlign(block.align)) +
+            '" data-block-input="true" data-heading-input="true" type="text" value="' +
+            escAttr(block.value || "") +
+            '" placeholder="' +
+            escAttr(meta.placeholder) +
+            '">';
+        } else if (isEditorKind(block.kind)) {
+          input = renderTemplateBuilderInput(block);
+        } else if (multiline) {
+          input = '<textarea class="block-input" data-block-input="true" rows="' +
             (isEditorKind(block.kind) ? "5" : "4") +
             (isEditorKind(block.kind)
               ? '" data-terminal-template="true" data-block-id="' + escAttr(block.id)
@@ -816,40 +1613,83 @@
             escAttr(meta.placeholder) +
             '">' +
             esc(block.value || "") +
-            "</textarea>"
-          : block.kind === "button"
-            ? '<div class="block-fixed block-fixed-button">' +
-              '<p class="tiny muted">Botão final fixo</p>' +
-              '<div class="lesson-next-wrap"><button class="next-icon step-main-btn" type="button" disabled aria-disabled="true" tabindex="-1">&#10140;</button></div>' +
-              "</div>"
-            : '<input class="block-input" data-block-input="true" type="text" value="' +
+            "</textarea>";
+        } else if (isButtonKind(block.kind)) {
+          input = '<div class="block-fixed block-fixed-button">' +
+            '<div class="lesson-next-wrap"><button class="next-icon step-main-btn" type="button" disabled aria-disabled="true" tabindex="-1">&#10140;</button></div>' +
+            "</div>";
+        } else {
+          input = '<input class="block-input" data-block-input="true" type="text" value="' +
             escAttr(block.value || "") +
             '" placeholder="' +
             escAttr(meta.placeholder) +
             '">';
+        }
 
         const imageUpload =
-          block.kind === "image"
+          isImageKind(block.kind)
             ? '<button class="icon-ghost tiny-icon" data-action="block-pick-image" data-block-id="' +
               escAttr(block.id) +
               '" title="Upload de imagem">&#8682;</button>'
             : "";
 
+        const textStyleTools =
+          paragraphTextBlock || isEditorKind(block.kind) || isSimulatorKind(block.kind)
+            ? '<div class="builder-subtools builder-subtools-text">' +
+              '<button class="icon-ghost tiny-icon text-style-toggle" data-action="block-style-bold" data-block-id="' +
+              escAttr(block.id) +
+              '" title="Aplicar negrito" aria-label="Aplicar negrito"><span class="text-style-glyph text-style-glyph-bold">B</span></button>' +
+              '<button class="icon-ghost tiny-icon text-style-toggle" data-action="block-style-italic" data-block-id="' +
+              escAttr(block.id) +
+              '" title="Aplicar itálico" aria-label="Aplicar itálico"><span class="text-style-glyph text-style-glyph-italic">I</span></button>' +
+              '<button class="icon-ghost tiny-icon text-style-toggle text-style-toggle-tone" data-action="open-tone-picker" data-block-id="' +
+              escAttr(block.id) +
+              '" title="Escolher cor" aria-label="Escolher cor"><span class="text-style-glyph">A</span></button>' +
+              ((isEditorKind(block.kind) || isSimulatorKind(block.kind))
+                ? '<button class="icon-ghost tiny-icon text-style-toggle text-style-toggle-indent" data-action="block-style-indent" data-block-id="' +
+                  escAttr(block.id) +
+                  '" title="Aplicar indentação" aria-label="Aplicar indentação"><span class="text-style-glyph text-style-glyph-indent">&gt;&gt;</span></button>'
+                : "") +
+              (paragraphTextBlock ? renderBlockAlignTools(block) : "") +
+              "</div>"
+            : "";
+
+        const headingAlignTools = isHeadingKind(block.kind)
+          ? renderBlockAlignTools(block)
+          : "";
+
+        const editorModeConfig = isEditorKind(block.kind)
+          ? renderEditorModeBuilder(block)
+          : "";
+
+        const editorInputConfig =
+          isEditorKind(block.kind) && getEditorInteractionMode(block) === "input"
+            ? renderEditorInputAnswerBuilder(block)
+            : "";
+
         const terminalOptions = isEditorKind(block.kind)
-          ? (normalizeEditorOptions(block.options).map(function (option, optionIndex) {
+          && getEditorInteractionMode(block) === "choice"
+          ? (sortEditorOptionsForDisplay(block.options).map(function (option) {
             const enabled = option.enabled !== false;
             return (
-              '<div class="choice-row" data-terminal-option-row="true" data-option-id="' +
+              '<div class="choice-row choice-row-editor" data-terminal-option-row="true" data-option-id="' +
               escAttr(option.id || "") +
               '" data-option-enabled="' +
               (enabled ? "1" : "0") +
+              '" data-option-display-order="' +
+              escAttr(String(option.displayOrder || 0)) +
               '">' +
+              '<button class="icon-ghost tiny-icon option-drag-handle" draggable="true" data-action="terminal-start-drag" data-block-id="' +
+              escAttr(block.id) +
+              '" data-option-id="' +
+              escAttr(option.id || "") +
+              '" title="Arrastar opção">&#9776;</button>' +
               '<button class="icon-ghost tiny-icon option-toggle' +
               (enabled ? " active" : "") +
               '" data-action="terminal-toggle-option" data-block-id="' +
               escAttr(block.id) +
-              '" data-option-index="' +
-              optionIndex +
+              '" data-option-id="' +
+              escAttr(option.id || "") +
               '" title="' +
               escAttr(enabled ? "Desabilitar lacuna" : "Habilitar lacuna") +
               '">' +
@@ -857,15 +1697,15 @@
               "</button>" +
               '<input type="text" data-terminal-option="true" data-block-id="' +
               escAttr(block.id) +
-              '" data-option-index="' +
-              optionIndex +
+              '" data-option-id="' +
+              escAttr(option.id || "") +
               '" value="' +
               escAttr(option.value || "") +
               '" placeholder="Opção">' +
               '<button class="icon-ghost tiny-icon" data-action="terminal-remove-option" data-block-id="' +
               escAttr(block.id) +
-              '" data-option-index="' +
-              optionIndex +
+              '" data-option-id="' +
+              escAttr(option.id || "") +
               '" title="Remover opção">&times;</button>' +
               "</div>"
             );
@@ -873,9 +1713,8 @@
           : "";
 
         const terminalConfig =
-          isEditorKind(block.kind)
+          isEditorKind(block.kind) && getEditorInteractionMode(block) === "choice"
             ? '<section class="terminal-config">' +
-              '<p class="tiny muted">Adicionar opção cria [[ ]] no cursor. Apenas opções habilitadas viram lacunas.</p>' +
               '<div class="config-actions">' +
               '<button class="icon-ghost tiny-icon" data-action="terminal-add-option" data-block-id="' +
               escAttr(block.id) +
@@ -888,45 +1727,63 @@
             : "";
 
         const buttonConfig =
-          block.kind === "button"
+          isButtonKind(block.kind)
             ? '<section class="button-config">' +
               '<label class="toggle-row tiny">' +
               '<input type="checkbox" data-button-popup="true" ' +
               (block.popupEnabled ? "checked" : "") +
-              "> Abrir popup antes de avancar" +
+              "> Abrir popup antes de avançar" +
               "</label>" +
-              '<label class="tiny muted">Texto do popup</label>' +
-              '<textarea rows="3" data-button-popup-text="true" ' +
-              (block.popupEnabled ? "" : "disabled") +
-              ' placeholder="Texto do popup">' +
-              esc(block.popupText || "") +
-              "</textarea>" +
+              '<div class="button-popup-meta' +
+              (block.popupEnabled ? "" : " disabled") +
+              '">' +
+              '<p class="tiny muted">' +
+              String(getButtonPopupBlockCount(block)) +
+              " bloco" +
+              (getButtonPopupBlockCount(block) === 1 ? "" : "s") +
+              "</p>" +
+              '<button class="icon-ghost tiny-icon' +
+              (block.popupEnabled ? "" : " disabled-icon") +
+              '" data-action="button-edit-popup" data-block-id="' +
+              escAttr(block.id) +
+              '" ' +
+              (block.popupEnabled ? "" : "disabled aria-disabled=\"true\"") +
+              ' title="Editar conteúdo do popup" aria-label="Editar conteúdo do popup">&#9998;</button>' +
+              "</div>" +
               "</section>"
             : "";
 
         const draggingThisBlock =
           (state.editor.pointerDrag && state.editor.pointerDrag.active && state.editor.pointerDrag.blockId === block.id) ||
           state.editor.blockDragId === block.id;
+        const activeBlockId = state.editor.activeBlockId;
+        const isActiveBlock = !!activeBlockId && activeBlockId === block.id;
+        const muteThisBlock = !!activeBlockId && activeBlockId !== block.id && !draggingThisBlock;
 
         return (
           '<article class="builder-block ' +
-          (draggingThisBlock ? "drag-source" : "") +
+          'builder-block-kind-' + escAttr(block.kind) + ' ' +
+          (draggingThisBlock ? "drag-source " : "") +
+          (isActiveBlock ? "is-active " : "") +
+          (muteThisBlock ? "is-muted " : "") +
           '" data-block-id="' +
           escAttr(block.id) +
           '" data-block-kind="' +
           escAttr(block.kind) +
           '">' +
           '<div class="builder-tools">' +
-          (block.kind === "button"
-            ? '<button class="icon-ghost tiny-icon disabled-icon" type="button" disabled title="Bloco fixo">&#128274;</button>'
-            : '<button class="icon-ghost tiny-icon" draggable="true" data-action="block-start-drag" data-block-id="' +
+          (isButtonKind(block.kind)
+            ? '<button class="icon-ghost tiny-icon builder-tool-handle disabled-icon" type="button" disabled title="Bloco fixo">&#128274;</button>'
+            : '<button class="icon-ghost tiny-icon builder-tool-handle" draggable="true" data-action="block-start-drag" data-block-id="' +
               escAttr(block.id) +
               '" title="Arrastar bloco">&#9776;</button>') +
-          '<span class="tiny muted">' +
+          '<div class="builder-meta">' +
+          '<span class="builder-kind-pill">' +
           meta.label +
           "</span>" +
+          "</div>" +
           '<div class="builder-tool-right">' +
-          (block.kind === "button"
+          (isButtonKind(block.kind)
             ? ""
             : '<button class="icon-ghost tiny-icon" data-action="block-up" data-block-id="' +
               escAttr(block.id) +
@@ -935,14 +1792,18 @@
               escAttr(block.id) +
               '" title="Descer">&darr;</button>') +
           imageUpload +
-          (block.kind === "button"
+          (isButtonKind(block.kind)
             ? ""
             : '<button class="icon-ghost tiny-icon" data-action="block-remove" data-block-id="' +
               escAttr(block.id) +
               '" title="Remover bloco">&times;</button>') +
           "</div>" +
           "</div>" +
+          headingAlignTools +
+          editorModeConfig +
+          textStyleTools +
           input +
+          editorInputConfig +
           terminalConfig +
           buttonConfig +
           '<input class="block-id-hidden" type="hidden" value="' +
@@ -962,39 +1823,10 @@
       palette +
       "</aside>" +
       '<section class="canvas-col" data-dropzone="canvas">' +
-      (blocks || '<div class="canvas-empty">Arraste ou toque nos icones para inserir blocos.</div>') +
+      (blocks || '<div class="canvas-empty"></div>') +
       "</section>" +
       "</div>"
     );
-  }
-
-  // Renderiza corpo textual (HTML seguro) de um step.
-  function renderBody(step) {
-    const html = stepBodyHtml(step);
-    return html ? '<div class="rich-text">' + html + "</div>" : "";
-  }
-
-  // Mensagem contextual para recursos de pasta local indisponiveis nesta plataforma.
-  function getFileSystemUnavailableMessage() {
-    if (isAndroidHostAvailable()) {
-      return "Sincronizacao com pasta local indisponivel no Android. Use Importar/Exportar ZIP.";
-    }
-    return "File System Access API indisponivel neste navegador.";
-  }
-
-  // Gera HTML do corpo do step, priorizando bodyHtml e caindo para text[].
-  function stepBodyHtml(step) {
-    if (typeof step.bodyHtml === "string" && step.bodyHtml.trim()) {
-      return safeHtml(step.bodyHtml);
-    }
-    if (Array.isArray(step.text) && step.text.length) {
-      return step.text
-        .map(function (line) {
-          return "<p>" + esc(line) + "</p>";
-        })
-        .join("");
-    }
-    return "";
   }
 
   // Renderiza imagem opcional do step.
@@ -1007,16 +1839,359 @@
   // Renderiza bloco visual de terminal somente leitura.
   function renderTerminal(text) {
     if (!text) return "";
-    return '<pre class="terminal-box">' + esc(text) + "</pre>";
+    return '<pre class="terminal-box">' + renderTerminalRichText(text) + "</pre>";
   }
 
-  // Identifica se um bloco eh do tipo "Editor".
-  function isEditorKind(kind) {
-    return kind === "editor";
+  // Sanitiza um fragmento inline preservando quebras nas bordas, usadas antes/depois de lacunas.
+  function renderInlineRichTextFragment(text) {
+    const source = String(text || "").replace(/\r/g, "");
+    const leadingBreaks = (source.match(/^\n+/) || [""])[0].length;
+    const trailingBreaks = (source.match(/\n+$/) || [""])[0].length;
+    const safe = sanitizeInlineRichText(source.replace(/\n/g, "<br>"));
+    return "<br>".repeat(leadingBreaks) + safe + "<br>".repeat(trailingBreaks);
   }
 
-  // Retorna array de opções do bloco Editor no formato padrao { id, value, enabled }.
-  function normalizeEditorOptions(options) {
+  // Sanitiza texto do Editor/terminal preservando apenas formatação inline aprovada e quebras.
+  function renderTerminalRichText(text) {
+    return renderInlineRichTextFragment(text);
+  }
+
+  // Sanitiza um segmento textual do template rico preservando apenas markup inline permitido.
+  function renderTemplateSegmentRichText(text) {
+    return renderInlineRichTextFragment(text);
+  }
+
+  // Define como a lacuna aparece para o autor conforme o tipo de bloco e o modo de interação.
+  function getAuthorPlaceholderDisplayStyle(block) {
+    if (block && isSimulatorKind(block.kind)) return "empty";
+    return "value";
+  }
+
+  // Renderiza chip visual de placeholder no editor autoral.
+  function renderAuthorPlaceholderChip(value, options) {
+    const config = options || {};
+    const mode = config.mode === "simulator" ? "simulator" : "editor";
+    const editable = !!config.editable;
+    const actualValue = String(mode === "simulator" ? "" : value || "");
+    const displayStyle = String(config.displayStyle || "");
+    const safeValue = String(mode === "simulator" ? "" : actualValue);
+    return (
+      '<span class="author-placeholder author-placeholder-' +
+      mode +
+      (editable ? " author-placeholder-editable" : "") +
+      '" data-template-placeholder="true"' +
+      ' data-template-value="' +
+      escAttr(actualValue) +
+      '"' +
+      (editable ? "" : ' contenteditable="false"') +
+      ">" +
+      '<span class="author-placeholder-value' +
+      (safeValue ? "" : " is-empty") +
+      '">' +
+      (safeValue ? esc(safeValue) : "&nbsp;") +
+      "</span>" +
+      "</span>"
+    );
+  }
+
+  // Converte valor bruto do template em HTML de autoria com destaque visual dos placeholders.
+  function renderAuthorTemplateHtml(text, options) {
+    const source = String(text || "").replace(/\r/g, "");
+    const markers = parseOptionMarkers(source);
+    if (!markers.length) return renderTemplateSegmentRichText(source);
+
+    let html = "";
+    let last = 0;
+    markers.forEach(function (marker, markerIndex) {
+      html += renderTemplateSegmentRichText(source.slice(last, marker.start));
+      html += renderAuthorPlaceholderChip(marker.value, Object.assign({}, options, {
+        slotIndex: markerIndex
+      }));
+      last = marker.end;
+    });
+    html += renderTemplateSegmentRichText(source.slice(last));
+    return html;
+  }
+
+  // Serializa o HTML do template autoral de volta para o formato salvo com [[...]].
+  function serializeAuthorTemplateNode(node) {
+    if (!node) return "";
+    if (node.nodeType === 3) return String(node.textContent || "");
+    if (node.nodeType !== 1) return "";
+
+    const tag = String(node.tagName || "").toLowerCase();
+    if (node.hasAttribute("data-template-placeholder")) {
+      return "[[" + String(node.getAttribute("data-template-value") || node.textContent || "").replace(/\u00a0/g, " ") + "]]";
+    }
+    if (tag === "br") return "\n";
+
+    const inner = Array.from(node.childNodes || []).map(serializeAuthorTemplateNode).join("");
+    if (tag === "strong" || tag === "b") return "<strong>" + inner + "</strong>";
+    if (tag === "em" || tag === "i") return "<em>" + inner + "</em>";
+    if (tag === "span") {
+      const toneClass = Array.from(node.classList || []).find(function (className) {
+        return INLINE_TONE_CLASSES.indexOf(className) > -1;
+      });
+      return toneClass ? '<span class="' + toneClass + '">' + inner + "</span>" : inner;
+    }
+    if (tag === "p" || tag === "div" || tag === "li") return inner + "\n";
+    return inner;
+  }
+
+  // Serializa o contêiner rico de template autoral.
+  function serializeAuthorTemplateHtml(node) {
+    return Array.from((node && node.childNodes) || [])
+      .map(serializeAuthorTemplateNode)
+      .join("")
+      .replace(/\r/g, "")
+      .replace(/\u00a0/g, " ")
+      .replace(/\n{3,}/g, "\n\n");
+  }
+
+  // Regras visuais do campo rico de template por tipo de bloco.
+  function getTemplateBuilderOptions(kind) {
+    if (isSimulatorKind(kind)) {
+      return {
+        mode: "simulator",
+        editablePlaceholders: false,
+        placeholder: "Escreva o enunciado e mantenha uma única lacuna."
+      };
+    }
+    return {
+      mode: "editor",
+      editablePlaceholders: false,
+      placeholder: "Digite o texto do terminal e use lacunas para as respostas."
+    };
+  }
+
+  // Renderiza o campo rico do template de Editor/Simulador na autoria.
+  function renderTemplateBuilderInput(block) {
+    const config = getTemplateBuilderOptions(block.kind);
+    return (
+      '<div class="block-rich-input block-input block-template-input" data-block-input="true" data-template-rich-input="true" contenteditable="true" spellcheck="true" tabindex="0" role="textbox" aria-multiline="true" data-block-id="' +
+      escAttr(block.id) +
+      '" data-template-mode="' +
+      escAttr(config.mode) +
+      (config.mode === "editor" ? '" data-terminal-template="true' : '" data-simulator-template="true') +
+      '" data-placeholder="' +
+      escAttr(config.placeholder) +
+      '">' +
+      renderAuthorTemplateHtml(block.value || "", {
+        mode: config.mode,
+        editable: config.editablePlaceholders,
+        displayStyle: getAuthorPlaceholderDisplayStyle(block)
+      }) +
+      "</div>"
+    );
+  }
+
+  // Identifica o contêiner textual de parágrafo.
+  function isParagraphTextKind(kind) {
+    return isParagraphKind(kind);
+  }
+
+  // Normaliza alinhamento textual de blocos e campos inteiros.
+  function normalizeTextBlockAlign(value) {
+    const safe = String(value || "").trim().toLowerCase();
+    return safe === "center" || safe === "right" ? safe : "left";
+  }
+
+  // Normaliza alinhamento de célula de tabela para um dos três valores aceitos.
+  function normalizeTableCellAlign(value) {
+    const safe = String(value || "").trim().toLowerCase();
+    return safe === "center" || safe === "right" ? safe : "left";
+  }
+
+  // Normaliza cor semântica de texto usada em células de tabela.
+  function normalizeTableCellTone(value) {
+    const safe = String(value || "").trim().toLowerCase();
+    if (safe === "gold" || safe === "mint" || safe === "coral") return safe;
+    if (safe === "tone-gold") return "gold";
+    if (safe === "tone-mint") return "mint";
+    if (safe === "tone-coral") return "coral";
+    return "default";
+  }
+
+  // Cria célula vazia no formato canônico da tabela.
+  function createBlankTableCell(role) {
+    return {
+      value: "",
+      bold: role === "header",
+      italic: false,
+      tone: "default",
+      align: "left"
+    };
+  }
+
+  // Normaliza célula individual da tabela com estilo por célula inteira.
+  function normalizeTableCell(raw, role) {
+    const cellRole = role === "header" ? "header" : "body";
+    const fallback = createBlankTableCell(cellRole);
+
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      return {
+        value: String(raw.value || raw.text || "").trim(),
+        bold: raw.bold === undefined ? fallback.bold : !!raw.bold,
+        italic: !!raw.italic,
+        tone: normalizeTableCellTone(raw.tone),
+        align: normalizeTableCellAlign(raw.align)
+      };
+    }
+
+    return {
+      value: String(raw || "").trim(),
+      bold: fallback.bold,
+      italic: false,
+      tone: "default",
+      align: "left"
+    };
+  }
+
+  // Verifica se a célula realmente contém texto útil.
+  function tableCellHasContent(cell) {
+    return !!String((cell && cell.value) || "").trim();
+  }
+
+  // Gera HTML inline seguro para a célula já com os estilos globais da própria célula.
+  function renderTableCellStyledValue(cell) {
+    const normalized = normalizeTableCell(cell, "body");
+    let html = esc(normalized.value || "").replace(/\n/g, "<br>");
+    if (!html) return "";
+    if (normalized.bold) html = "<strong>" + html + "</strong>";
+    if (normalized.italic) html = "<em>" + html + "</em>";
+    if (normalized.tone !== "default") {
+      html = '<span class="inline-tone-' + normalized.tone + '">' + html + "</span>";
+    }
+    return html;
+  }
+
+  // Monta classes utilitárias da célula de tabela para autoria e runtime.
+  function getTableCellClassNames(cell) {
+    const normalized = normalizeTableCell(cell, "body");
+    return [
+      "table-align-" + normalized.align,
+      normalized.bold ? "is-bold" : "",
+      normalized.italic ? "is-italic" : "",
+      normalized.tone !== "default" ? "tone-" + normalized.tone : ""
+    ].filter(Boolean).join(" ");
+  }
+
+  // Normaliza cabeçalhos da tabela preservando colunas intermediárias vazias.
+  function normalizeTableHeaders(headers) {
+    const normalized = (Array.isArray(headers) ? headers : []).map(function (item) {
+      return normalizeTableCell(item, "header");
+    });
+    while (normalized.length && !tableCellHasContent(normalized[normalized.length - 1])) normalized.pop();
+    return normalized;
+  }
+
+  // Normaliza linhas da tabela mantendo células preenchidas e aparando excesso de colunas vazias.
+  function normalizeTableRows(rows) {
+    const list = Array.isArray(rows) ? rows : [];
+    return list
+      .map(function (row) {
+        const cells = Array.isArray(row) ? row : [];
+        const normalized = cells.map(function (cell) {
+          return normalizeTableCell(cell, "body");
+        });
+        while (normalized.length && !tableCellHasContent(normalized[normalized.length - 1])) normalized.pop();
+        return normalized;
+      })
+      .filter(function (row) {
+        return row.some(tableCellHasContent);
+      });
+  }
+
+  // Preserva a grade autoral da tabela, mesmo quando existem células vazias em edição.
+  function normalizeTableDraft(raw) {
+    const source = raw && typeof raw === "object" ? raw : {};
+    const headers = (Array.isArray(source.headers) ? source.headers : []).map(function (item) {
+      return normalizeTableCell(item, "header");
+    });
+    const rows = (Array.isArray(source.rows) ? source.rows : []).map(function (row) {
+      return (Array.isArray(row) ? row : []).map(function (cell) {
+        return normalizeTableCell(cell, "body");
+      });
+    });
+
+    let width = headers.length;
+    rows.forEach(function (row) {
+      if (row.length > width) width = row.length;
+    });
+    if (width < 1) width = 1;
+
+    const draftHeaders = headers.slice(0, width);
+    while (draftHeaders.length < width) draftHeaders.push(createBlankTableCell("header"));
+
+    const draftRows = rows.length
+      ? rows.map(function (row) {
+        const cells = row.slice(0, width);
+        while (cells.length < width) cells.push(createBlankTableCell("body"));
+        return cells;
+      })
+      : [Array.from({ length: width }, function () { return createBlankTableCell("body"); })];
+
+    return {
+      id: source.id || uid("block"),
+      kind: "table",
+      title: String(source.title || source.value || "").trim(),
+      titleStyle: normalizeTableCell(source.titleStyle, "header"),
+      headers: draftHeaders,
+      rows: draftRows
+    };
+  }
+
+  // Calcula larguras autorais da tabela com base no conteúdo mais largo de cada coluna.
+  function getTableEditorColumnWidths(raw) {
+    const table = normalizeTableDraft(raw);
+    return table.headers.map(function (header, columnIndex) {
+      let maxLength = String((header && header.value) || "").trim().length;
+      table.rows.forEach(function (row) {
+        const cellLength = String((row && row[columnIndex] && row[columnIndex].value) || "").trim().length;
+        if (cellLength > maxLength) maxLength = cellLength;
+      });
+      return Math.max(3, Math.min(24, maxLength || 1));
+    });
+  }
+
+  // Garante estrutura consistente do bloco de tabela.
+  function normalizeTableBlock(raw) {
+    const source = raw && typeof raw === "object" ? raw : {};
+    const headers = normalizeTableHeaders(source.headers);
+    const rows = normalizeTableRows(source.rows);
+    let width = headers.length;
+    rows.forEach(function (row) {
+      if (row.length > width) width = row.length;
+    });
+    if (width < 1) width = 1;
+
+    const alignedHeaders = headers.slice(0, width);
+    while (alignedHeaders.length < width) alignedHeaders.push(createBlankTableCell("header"));
+
+    const alignedRows = (rows.length ? rows : [Array.from({ length: width }, function () { return createBlankTableCell("body"); })])
+      .map(function (row) {
+        const cells = row.slice(0, width);
+        while (cells.length < width) cells.push(createBlankTableCell("body"));
+        return cells;
+      });
+
+    return {
+      id: source.id || uid("block"),
+      kind: "table",
+      title: String(source.title || source.value || "").trim(),
+      titleStyle: normalizeTableCell(source.titleStyle, "header"),
+      headers: alignedHeaders,
+      rows: alignedRows
+    };
+  }
+
+  // Normaliza o estado visual das respostas da múltipla escolha.
+  function normalizeMultipleChoiceAnswerState(value) {
+    return String(value || "").trim().toLowerCase() === "incorrect" ? "incorrect" : "correct";
+  }
+
+  // Normaliza lista de opções da múltipla escolha.
+  function normalizeMultipleChoiceOptions(options) {
     if (!Array.isArray(options)) return [];
 
     return options.map(function (item) {
@@ -1024,48 +2199,348 @@
         return {
           id: String(item.id || uid("opt")),
           value: String(item.value || ""),
-          enabled: item.enabled !== false
+          answer: !!(item.answer || item.correct)
         };
       }
       return {
         id: uid("opt"),
         value: String(item || ""),
-        enabled: true
+        answer: false
       };
     });
+  }
+
+  // Garante estrutura consistente do bloco de múltipla escolha.
+  function normalizeMultipleChoiceBlock(raw) {
+    const source = raw && typeof raw === "object" ? raw : {};
+    return {
+      id: source.id || uid("block"),
+      kind: "multiple_choice",
+      value: "",
+      answerState: normalizeMultipleChoiceAnswerState(source.answerState),
+      options: normalizeMultipleChoiceOptions(source.options)
+    };
+  }
+
+  // Normaliza lista de pares opção -> resultado.
+  function normalizeSimulatorOptions(options) {
+    if (!Array.isArray(options)) return [];
+
+    return options.map(function (item) {
+      if (item && typeof item === "object" && !Array.isArray(item)) {
+        return {
+          id: String(item.id || uid("opt")),
+          value: String(item.value || item.label || "").trim(),
+          result: String(item.result || "").replace(/\r/g, "")
+        };
+      }
+      return {
+        id: uid("opt"),
+        value: String(item || "").trim(),
+        result: ""
+      };
+    });
+  }
+
+  // Garante estrutura consistente do bloco de opções com resultado.
+  function normalizeSimulatorBlock(raw) {
+    const source = raw && typeof raw === "object" ? raw : {};
+    return {
+      id: source.id || uid("block"),
+      kind: "simulator",
+      value: normalizeSimulatorTemplateValue(source.value || source.prompt || ""),
+      options: normalizeSimulatorOptions(source.options)
+    };
+  }
+
+  // Normaliza blocos permitidos dentro do popup do botão.
+  function normalizePopupBlocks(blocks) {
+    const list = Array.isArray(blocks) ? blocks : [];
+    return list.map(function (item) {
+      if (!item || typeof item !== "object") return null;
+
+      if (isParagraphTextKind(item.kind)) {
+        return normalizeParagraphBlockData(item);
+      }
+      if (item.kind === "heading") {
+        return {
+          id: item.id || uid("block"),
+          kind: "heading",
+          value: String(item.value || "").trim(),
+          align: normalizeTextBlockAlign(item.align)
+        };
+      }
+      if (item.kind === "image") {
+        return {
+          id: item.id || uid("block"),
+          kind: "image",
+          value: String(item.value || "")
+        };
+      }
+      if (isTableKind(item.kind)) {
+        return normalizeTableBlock(item);
+      }
+      if (isEditorKind(item.kind)) {
+        const block = {
+          id: item.id || uid("block"),
+          kind: "editor",
+          value: String(item.value || ""),
+          options: normalizeEditorOptions(item.options),
+          interactionMode: item.interactionMode
+        };
+        normalizeTerminalEditorBlock(block);
+        return block;
+      }
+      if (isMultipleChoiceKind(item.kind)) {
+        return normalizeMultipleChoiceBlock(item);
+      }
+      if (isSimulatorKind(item.kind)) {
+        return normalizeSimulatorBlock(item);
+      }
+      if (isFlowchartKind(item.kind)) {
+        const block = {
+          id: item.id || uid("block"),
+          kind: "flowchart",
+          value: "",
+          nodes: Array.isArray(item.nodes) ? item.nodes.map(normalizeFlowchartNode) : [],
+          links: Array.isArray(item.links) ? item.links.map(normalizeFlowchartLink).filter(Boolean) : [],
+          shapeOptions: normalizeFlowchartShapeOptions(item.shapeOptions),
+          textOptions: normalizeFlowchartTextOptions(item.textOptions)
+        };
+        normalizeFlowchartEditorBlock(block);
+        return block;
+      }
+      return null;
+    }).filter(Boolean);
+  }
+
+  // Normaliza blocos de parágrafo para o formato atual com texto rico inline.
+  function normalizeParagraphEditorBlock(block) {
+    if (!block || !isParagraphTextKind(block.kind)) return block;
+    const normalized = normalizeParagraphBlockData(block);
+    block.kind = "paragraph";
+    block.value = normalized.value;
+    block.richText = normalized.richText;
+    block.align = normalizeTextBlockAlign(normalized.align);
+    return block;
+  }
+
+  // Normaliza bloco de título para manter alinhamento canônico.
+  function normalizeHeadingEditorBlock(block) {
+    if (!block || !isHeadingKind(block.kind)) return block;
+    block.kind = "heading";
+    block.value = String(block.value || "");
+    block.align = normalizeTextBlockAlign(block.align);
+    return block;
+  }
+
+  // Normaliza coluna em uma das tres faixas fixas do fluxograma.
+  function normalizeFlowchartColumn(value) {
+    if (typeof value === "number") {
+      return FLOWCHART_COLUMNS[clamp(value, 0, FLOWCHART_COLUMNS.length - 1)] || "center";
+    }
+    const source = String(value || "").toLowerCase();
+    if (source === "0" || source === "left" || source === "esquerda") return "left";
+    if (source === "2" || source === "right" || source === "direita") return "right";
+    return "center";
+  }
+
+  // Normaliza lista de símbolos extras do popup do fluxograma.
+  function normalizeFlowchartShapeOptions(options) {
+    const list = Array.isArray(options) ? options : [];
+    const result = [];
+
+    list.forEach(function (item) {
+      const key = normalizeFlowchartShapeKey(item);
+      if (result.indexOf(key) === -1) result.push(key);
+    });
+
+    return result;
+  }
+
+  // Retorna array de opções do bloco Editor no formato padrao { id, value, enabled }.
+  function normalizeEditorOptions(options) {
+    if (!Array.isArray(options)) return [];
+
+    return options.map(function (item, index) {
+      if (item && typeof item === "object" && !Array.isArray(item)) {
+        return {
+          id: String(item.id || uid("opt")),
+          value: String(item.value || ""),
+          enabled: item.enabled !== false,
+          displayOrder: Number.isFinite(Number(item.displayOrder)) ? Number(item.displayOrder) : index,
+          slotOrder: Number.isFinite(Number(item.slotOrder)) ? Number(item.slotOrder) : index,
+          regex: !!item.regex,
+          variants: normalizeCodeInputVariants(item.variants)
+        };
+      }
+      return {
+        id: uid("opt"),
+        value: String(item || ""),
+        enabled: true,
+        displayOrder: index,
+        slotOrder: index,
+        regex: false,
+        variants: []
+      };
+    });
+  }
+
+  // Ordena opções do Editor pela ordem visível definida pelo autor.
+  function sortEditorOptionsForDisplay(options) {
+    return normalizeEditorOptions(options).slice().sort(function (a, b) {
+      const orderA = Number.isFinite(Number(a.displayOrder)) ? Number(a.displayOrder) : 0;
+      const orderB = Number.isFinite(Number(b.displayOrder)) ? Number(b.displayOrder) : 0;
+      if (orderA !== orderB) return orderA - orderB;
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    });
+  }
+
+  // Ordena opções pela ordem estrutural das lacunas, independente do embaralhamento visual.
+  function sortEditorOptionsBySlotOrder(options) {
+    return normalizeEditorOptions(options).slice().sort(function (a, b) {
+      const orderA = Number.isFinite(Number(a.slotOrder)) ? Number(a.slotOrder) : 0;
+      const orderB = Number.isFinite(Number(b.slotOrder)) ? Number(b.slotOrder) : 0;
+      if (orderA !== orderB) return orderA - orderB;
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    });
+  }
+
+  // Identifica como o bloco Editor coleta resposta do estudante.
+  function getEditorInteractionMode(block) {
+    return normalizeEditorInteractionMode(block && block.interactionMode);
+  }
+
+  // Indica se o bloco Editor usa digitação livre nas lacunas.
+  function isTypedEditorBlock(block) {
+    return !!block && isEditorKind(block.kind) && getEditorInteractionMode(block) === "input";
+  }
+
+  // Normaliza lista de opções de texto do fluxograma.
+  function normalizeFlowchartTextOptions(options) {
+    return normalizeEditorOptions(options).map(function (option) {
+      return {
+        id: option.id || uid("opt"),
+        value: String(option.value || "").trim(),
+        enabled: option.enabled !== false
+      };
+    });
+  }
+
+  // Normaliza lista extra de opções de símbolo por nó.
+  function normalizeFlowchartNodeShapeOptions(options, currentShape) {
+    const current = normalizeFlowchartShapeKey(currentShape);
+    return normalizeFlowchartShapeOptions(options).filter(function (shape) {
+      return shape !== current;
+    });
+  }
+
+  // Normaliza lista extra de opções de texto por nó.
+  function normalizeFlowchartNodeTextOptions(options, currentText) {
+    const current = String(currentText || "").trim();
+    return normalizeFlowchartTextOptions(options).filter(function (option) {
+      return option.value !== current;
+    });
+  }
+
+  // Cria nó padrão de fluxograma.
+  function createFlowchartNode(row, column, shape, text, shapeBlank, textBlank) {
+    return {
+      id: uid("flow-node"),
+      row: Math.max(0, Number(row) || 0),
+      column: normalizeFlowchartColumn(column),
+      shape: normalizeFlowchartShapeKey(shape),
+      text: String(text || "").trim(),
+      shapeBlank: !!shapeBlank,
+      textBlank: !!textBlank,
+      shapeOptions: [],
+      textOptions: []
+    };
+  }
+
+  // Calcula a próxima linha lógica do nó a partir da maior linha já usada.
+  function getNextFlowchartRow(nodes) {
+    return (Array.isArray(nodes) ? nodes : []).reduce(function (maxRow, node, index) {
+      const value = Math.max(0, Number(node && node.row));
+      return Math.max(maxRow, Number.isFinite(value) ? value : index);
+    }, -1) + 1;
+  }
+
+  // Normaliza nó de fluxograma lido do JSON/editor.
+  function normalizeFlowchartNode(raw, index) {
+    const fallbackRow = Math.max(0, Number(index) || 0);
+    return {
+      id: raw && raw.id ? String(raw.id) : uid("flow-node"),
+      row: Math.max(0, Number(raw && raw.row) || fallbackRow),
+      column: normalizeFlowchartColumn(raw && raw.column),
+      shape: normalizeFlowchartShapeKey(raw && raw.shape),
+      text: String(raw && raw.text ? raw.text : "").trim(),
+      shapeBlank: raw && Object.prototype.hasOwnProperty.call(raw, "shapeBlank") ? !!raw.shapeBlank : true,
+      textBlank: raw && Object.prototype.hasOwnProperty.call(raw, "textBlank") ? !!raw.textBlank : true,
+      shapeOptions: normalizeFlowchartNodeShapeOptions(raw && raw.shapeOptions, raw && raw.shape),
+      textOptions: normalizeFlowchartNodeTextOptions(raw && raw.textOptions, raw && raw.text)
+    };
+  }
+
+  // Normaliza seta/conexao do fluxograma.
+  function normalizeFlowchartLink(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const slot = Number(raw.outputSlot);
+    return {
+      id: raw.id || uid("flow-link"),
+      fromNodeId: String(raw.fromNodeId || ""),
+      toNodeId: String(raw.toNodeId || ""),
+      outputSlot: slot === 0 || slot === 1 ? slot : null,
+      label: String(raw.label || "").trim()
+    };
   }
 
   // Lista indices de opções atualmente habilitadas para gerar lacunas no texto.
   function getEnabledOptionIndexes(options) {
     const list = normalizeEditorOptions(options);
-    const enabled = [];
-    for (let i = 0; i < list.length; i += 1) {
-      if (list[i].enabled !== false) enabled.push(i);
-    }
-    return enabled;
+    return list
+      .map(function (option, index) {
+        return { option: option, index: index };
+      })
+      .filter(function (entry) {
+        return entry.option.enabled !== false;
+      })
+      .sort(function (a, b) {
+        const orderA = Number.isFinite(Number(a.option.slotOrder)) ? Number(a.option.slotOrder) : 0;
+        const orderB = Number.isFinite(Number(b.option.slotOrder)) ? Number(b.option.slotOrder) : 0;
+        if (orderA !== orderB) return orderA - orderB;
+        return String(a.option.id || "").localeCompare(String(b.option.id || ""));
+      })
+      .map(function (entry) {
+        return entry.index;
+      });
   }
 
   // Renderiza todos os blocos estruturados de um step.
   function renderStepBlocks(step) {
     const blocks = Array.isArray(step.blocks) ? step.blocks : [];
     let html = "";
-    let hasButton = false;
 
     blocks.forEach(function (block) {
       if (block.kind === "heading") {
         if (String(block.value || "").trim()) {
-          html += '<h2 class="lesson-title">' + esc(block.value) + "</h2>";
+          html += '<h2 class="lesson-title block-align-' + escAttr(normalizeTextBlockAlign(block.align)) + '">' + esc(block.value) + "</h2>";
         }
         return;
       }
 
-      if (block.kind === "paragraph" || block.kind === "bold" || block.kind === "italic") {
-        html += renderTextBlock(block.kind, block.value);
+      if (isParagraphKind(block.kind)) {
+        html += renderTextBlock(block);
         return;
       }
 
-      if (block.kind === "image") {
+      if (isImageKind(block.kind)) {
         html += renderImage(block.value);
+        return;
+      }
+
+      if (isTableKind(block.kind)) {
+        html += renderTableBlock(block);
         return;
       }
 
@@ -1074,29 +2549,454 @@
         return;
       }
 
-      if (block.kind === "button") {
-        hasButton = true;
-        html += renderStepButton(step, block);
+      if (isMultipleChoiceKind(block.kind)) {
+        html += renderMultipleChoiceBlock(step, block);
+        return;
+      }
+
+      if (isSimulatorKind(block.kind)) {
+        html += renderSimulatorBlock(step, block);
+        return;
+      }
+
+      if (isFlowchartKind(block.kind)) {
+        html += renderFlowchartBlock(step, block);
+        return;
+      }
+
+      if (isButtonKind(block.kind)) {
+        return;
       }
     });
-
-    if (!hasButton) {
-      const defaultAction = step.type === "lesson_complete" ? "complete-continue" : "continue-step";
-      html += '<div class="lesson-next-wrap"><button class="next-icon" data-action="' +
-        defaultAction +
-        '" title="Continuar" aria-label="Continuar">&#10140;</button></div>';
-    }
 
     return html;
   }
 
-  // Renderiza bloco textual (titulo/paragrafo/negrito/italico).
-  function renderTextBlock(kind, value) {
-    const text = String(value || "").trim();
-    if (!text) return "";
+  // Renderiza tabela responsiva com título opcional.
+  function renderTableBlock(block) {
+    const table = normalizeTableBlock(block);
+    const headers = table.headers.length ? table.headers : [createBlankTableCell("header")];
+    const rows = table.rows.length ? table.rows : [[createBlankTableCell("body")]];
 
-    const inlineTag = kind === "bold" ? "strong" : kind === "italic" ? "em" : "";
-    return '<div class="rich-text">' + textToParagraphHtml(text, inlineTag) + "</div>";
+    const headHtml = headers.map(function (header) {
+      return (
+        '<th class="' +
+        escAttr(getTableCellClassNames(header)) +
+        '">' +
+        '<div class="table-cell-content">' +
+        renderTableCellStyledValue(header) +
+        "</div>" +
+        "</th>"
+      );
+    }).join("");
+
+    const rowHtml = rows.map(function (row) {
+      const cells = headers.map(function (_header, index) {
+        const cell = normalizeTableCell(row[index], "body");
+        return (
+          '<td class="' +
+          escAttr(getTableCellClassNames(cell)) +
+          '">' +
+          '<div class="table-cell-content">' +
+          renderTableCellStyledValue(cell) +
+          "</div>" +
+          "</td>"
+        );
+      }).join("");
+      return "<tr>" + cells + "</tr>";
+    }).join("");
+
+    return (
+      '<section class="table-block">' +
+      (table.title
+        ? '<p class="table-block-title ' +
+          escAttr(getTableCellClassNames(table.titleStyle)) +
+          '"><span class="table-cell-content">' +
+          renderTableCellStyledValue(Object.assign({}, table.titleStyle, { value: table.title })) +
+          "</span></p>"
+        : "") +
+      '<div class="table-scroll">' +
+      '<table class="lesson-table">' +
+      "<thead><tr>" + headHtml + "</tr></thead>" +
+      "<tbody>" + rowHtml + "</tbody>" +
+      "</table>" +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  // Gera chave única do bloco de opções com resultado.
+  function simulatorExerciseKey(stepId, blockId) {
+    return "simulator::" + stepId + "::" + blockId;
+  }
+
+  // Obtém ou cria estado do bloco de opções com resultado.
+  function getSimulatorState(step, block) {
+    const key = simulatorExerciseKey(step.id, block.id);
+    const options = normalizeSimulatorOptions(block.options).filter(function (option) {
+      return !!String(option.value || "").trim();
+    });
+    if (!state.tokenByStepId[key]) {
+      state.tokenByStepId[key] = { selected: options[0] ? options[0].id : null };
+    }
+
+    const current = state.tokenByStepId[key];
+    const validIds = options.map(function (option) { return option.id; });
+    if (current.selected && validIds.indexOf(current.selected) === -1) {
+      current.selected = options[0] ? options[0].id : null;
+    }
+    if (!current.selected && options[0]) {
+      current.selected = options[0].id;
+    }
+    return current;
+  }
+
+  // Obtém contexto do bloco de opções com resultado atualmente renderizado.
+  function getCurrentSimulatorEntry(blockId) {
+    const entry = findCurrentStepBlockById(blockId, function (item) {
+      return isSimulatorKind(item.kind);
+    });
+    if (!entry) return null;
+
+    const options = normalizeSimulatorOptions(entry.block.options).filter(function (option) {
+      return !!String(option.value || "").trim();
+    });
+
+    return {
+      step: entry.step,
+      block: entry.block,
+      options: options,
+      exercise: getSimulatorState(entry.step, entry.block)
+    };
+  }
+
+  // Seleciona uma opção e atualiza o painel de resultado associado.
+  function simulatorSelect(blockId, optionId) {
+    const entry = getCurrentSimulatorEntry(blockId);
+    if (!entry || !optionId) return;
+    if (!entry.options.some(function (option) { return option.id === optionId; })) return;
+    entry.exercise.selected = optionId;
+    renderApp();
+  }
+
+  // Renderiza o bloco de opções com resultado associado no painel inferior.
+  function renderSimulatorBlock(step, block) {
+    const normalized = normalizeSimulatorBlock(block);
+    normalized.options = normalized.options.filter(function (option) {
+      return !!String(option.value || "").trim();
+    });
+    const exercise = getSimulatorState(step, normalized);
+    const selectedOption = normalized.options.find(function (option) {
+      return option.id === exercise.selected;
+    }) || normalized.options[0] || null;
+
+    const templateHtml = parseTerminalTemplate(normalized.value || "").parts
+      .map(function (part) {
+        if (part.type === "text") return renderTerminalRichText(part.value);
+        return '<span class="simulator-slot">' + esc(selectedOption ? selectedOption.value : "") + "</span>";
+      })
+      .join("");
+
+    const optionsHtml = normalized.options.map(function (option) {
+      const selected = selectedOption && option.id === selectedOption.id;
+      return (
+        '<button class="token-option' +
+        (selected ? " active" : "") +
+        '" data-action="simulator-select" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id) +
+        '">' +
+        esc(option.value) +
+        "</button>"
+      );
+    }).join("");
+
+    const resultHtml =
+      selectedOption && String(selectedOption.result || "")
+        ? '<pre class="terminal-box simulator-output">' + renderTerminalRichText(selectedOption.result) + "</pre>"
+        : '<pre class="terminal-box simulator-output simulator-output-empty"><span class="muted tiny">Sem resultado.</span></pre>';
+
+    return (
+      '<section class="simulator-exercise">' +
+      '<div class="terminal-box simulator-template">' +
+      templateHtml +
+      "</div>" +
+      '<div class="token-options simulator-list">' +
+      optionsHtml +
+      "</div>" +
+      '<div class="simulator-output-wrap">' +
+      resultHtml +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  // Gera chave única do exercício de múltipla escolha.
+  function multipleChoiceExerciseKey(stepId, blockId) {
+    return "multiple-choice::" + stepId + "::" + blockId;
+  }
+
+  // Obtém ou cria estado do exercício de múltipla escolha.
+  function getMultipleChoiceExerciseState(step, block) {
+    const key = multipleChoiceExerciseKey(step.id, block.id);
+    const options = normalizeMultipleChoiceOptions(block.options);
+    if (!state.tokenByStepId[key]) {
+      state.tokenByStepId[key] = { selected: [], feedback: null };
+    }
+
+    const current = state.tokenByStepId[key];
+    if (!Array.isArray(current.selected)) current.selected = [];
+    const validIds = options.map(function (option) { return option.id; });
+    current.selected = current.selected.filter(function (id) {
+      return validIds.indexOf(id) > -1;
+    });
+    return current;
+  }
+
+  // Procura um bloco interativo pelo ID tanto no card principal quanto no popup aberto.
+  function findCurrentStepBlockById(blockId, predicate) {
+    const step = getCurrentStep();
+    if (!step || !blockId) return null;
+
+    const accept = typeof predicate === "function" ? predicate : function () { return true; };
+    const mainBlock = (step.blocks || []).find(function (item) {
+      return item && item.id === blockId && accept(item);
+    });
+    if (mainBlock) return { step: step, block: mainBlock };
+
+    if (!state.inlinePopupOpen || state.inlinePopupOpen.stepId !== step.id) return null;
+
+    const buttonBlock = (step.blocks || []).find(function (item) {
+      return item && item.id === state.inlinePopupOpen.blockId && isButtonKind(item.kind);
+    });
+    if (!buttonBlock || !Array.isArray(buttonBlock.popupBlocks)) return null;
+
+    const popupBlocks = normalizePopupBlocks(buttonBlock.popupBlocks);
+    const popupBlock = popupBlocks.find(function (item) {
+      return item && item.id === blockId && accept(item);
+    });
+    return popupBlock ? { step: step, block: popupBlock } : null;
+  }
+
+  // Alterna uma alternativa selecionada na múltipla escolha.
+  function multipleChoiceToggleOption(blockId, optionId) {
+    const entry = getCurrentMultipleChoiceExercise(blockId);
+    if (!entry || !optionId) return;
+
+    const index = entry.exercise.selected.indexOf(optionId);
+    if (index > -1) entry.exercise.selected.splice(index, 1);
+    else entry.exercise.selected.push(optionId);
+    entry.exercise.feedback = null;
+    renderApp();
+  }
+
+  // Obtém contexto do exercício de múltipla escolha.
+  function getCurrentMultipleChoiceExercise(blockId) {
+    const entry = findCurrentStepBlockById(blockId, function (item) {
+      return isMultipleChoiceKind(item.kind);
+    });
+    if (!entry) return null;
+
+    return {
+      step: entry.step,
+      block: entry.block,
+      options: normalizeMultipleChoiceOptions(entry.block.options),
+      exercise: getMultipleChoiceExerciseState(entry.step, entry.block)
+    };
+  }
+
+  // Resolve o estado visual esperado de uma alternativa selecionada.
+  function multipleChoiceSelectionState(answerState) {
+    return normalizeMultipleChoiceAnswerState(answerState) === "incorrect" ? "incorrect" : "correct";
+  }
+
+  // Valida um bloco de múltipla escolha pelo conjunto exato de alternativas marcadas como resposta.
+  function validateMultipleChoiceExerciseBlock(step, block) {
+    const options = normalizeMultipleChoiceOptions(block.options);
+    const exercise = getMultipleChoiceExerciseState(step, block);
+    const selected = exercise.selected.slice().sort();
+    const expected = options.filter(function (option) { return option.answer; }).map(function (option) { return option.id; }).sort();
+
+    if (!selected.length) {
+      exercise.feedback = "incomplete";
+      return "incomplete";
+    }
+
+    const ok =
+      selected.length === expected.length &&
+      selected.every(function (value, index) { return value === expected[index]; });
+    exercise.feedback = ok ? "correct" : "incorrect";
+    return exercise.feedback;
+  }
+
+  // Mostra o conjunto esperado de respostas na múltipla escolha.
+  function multipleChoiceViewAnswer(blockId) {
+    const entry = getCurrentMultipleChoiceExercise(blockId);
+    if (!entry) return;
+
+    entry.exercise.selected = entry.options
+      .filter(function (option) { return option.answer; })
+      .map(function (option) { return option.id; });
+    entry.exercise.feedback = "correct";
+    renderApp();
+  }
+
+  // Limpa feedback da múltipla escolha.
+  function multipleChoiceTryAgain(blockId) {
+    const entry = getCurrentMultipleChoiceExercise(blockId);
+    if (!entry) return;
+    entry.exercise.feedback = null;
+    renderApp();
+  }
+
+  // Renderiza feedback inline da múltipla escolha.
+  function renderMultipleChoiceFeedback(step, block) {
+    const exercise = getMultipleChoiceExerciseState(step, block);
+    if (!exercise.feedback) return "";
+
+    if (exercise.feedback === "correct") {
+      return '<div class="inline-feedback ok"><p class="tiny">Correto.</p></div>';
+    }
+
+    if (exercise.feedback === "incomplete") {
+      return '<div class="inline-feedback err"><p class="tiny">Selecione pelo menos uma resposta.</p></div>';
+    }
+
+    return (
+      '<div class="inline-feedback err">' +
+      '<p class="tiny">As respostas marcadas não correspondem ao conjunto esperado.</p>' +
+      '<div class="feedback-icons">' +
+      '<button class="icon-pill" data-action="multiple-choice-view-answer" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Ver resposta">&#128065;</button>' +
+      '<button class="icon-pill primary" data-action="multiple-choice-try-again" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Tentar de novo">&#8635;</button>' +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  // Renderiza exercício de múltipla escolha.
+  function renderMultipleChoiceBlock(step, block) {
+    const normalized = normalizeMultipleChoiceBlock(block);
+    const exercise = getMultipleChoiceExerciseState(step, normalized);
+    const optionsHtml = normalized.options.map(function (option) {
+      const selected = exercise.selected.indexOf(option.id) > -1;
+      const selectedState = selected ? multipleChoiceSelectionState(normalized.answerState) : "";
+      const stateClass = selectedState ? " selected-" + selectedState : "";
+      const mark = selectedState === "correct" ? "&#10003;" : selectedState === "incorrect" ? "&times;" : "";
+      return (
+        '<button class="multiple-choice-option' +
+        (selected ? " active" : "") +
+        stateClass +
+        '" data-action="multiple-choice-toggle" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id) +
+        '">' +
+        '<span class="multiple-choice-mark">' +
+        mark +
+        "</span>" +
+        '<span class="multiple-choice-label">' +
+        esc(option.value) +
+        "</span>" +
+        "</button>"
+      );
+    }).join("");
+
+    return (
+      '<section class="multiple-choice-exercise">' +
+      '<div class="multiple-choice-list">' +
+      optionsHtml +
+      "</div>" +
+      renderMultipleChoiceFeedback(step, normalized) +
+      "</section>"
+    );
+  }
+
+  // Renderiza blocos de conteúdo dentro do popup do botão.
+  function renderPopupBlocks(step, blocks) {
+    return normalizePopupBlocks(blocks).map(function (block) {
+      if (block.kind === "heading") {
+        return '<h3 class="popup-block-heading block-align-' + escAttr(normalizeTextBlockAlign(block.align)) + '">' + esc(block.value || "") + "</h3>";
+      }
+      if (block.kind === "image") {
+        return renderImage(block.value);
+      }
+      if (isTableKind(block.kind)) {
+        return renderTableBlock(block);
+      }
+      if (isEditorKind(block.kind)) {
+        return renderTerminalBlock(step, block);
+      }
+      if (isMultipleChoiceKind(block.kind)) {
+        return renderMultipleChoiceBlock(step, block);
+      }
+      if (isSimulatorKind(block.kind)) {
+        return renderSimulatorBlock(step, block);
+      }
+      if (isFlowchartKind(block.kind)) {
+        return renderFlowchartBlock(step, block);
+      }
+      return renderTextBlock(block);
+    }).join("");
+  }
+
+  // Renderiza bloco textual do tipo parágrafo com texto rico inline.
+  function renderTextBlock(block) {
+    if (!block) return "";
+
+    const normalized = normalizeParagraphBlockData(block);
+    if (!normalized.richText) return "";
+    return '<div class="rich-text block-align-' + escAttr(normalizeTextBlockAlign(normalized.align)) + '"><p>' + normalized.richText + "</p></div>";
+  }
+
+  // Resume quantos contêineres reais existem no popup do botão.
+  function getButtonPopupBlockCount(block) {
+    if (!block || !isButtonKind(block.kind)) return 0;
+    return normalizePopupBlocks(block.popupBlocks).length;
+  }
+
+  // Constrói os blocos iniciais do editor de popup.
+  function getButtonPopupBuilderSeedBlocks(block) {
+    if (!block || !isButtonKind(block.kind)) return [];
+    return normalizePopupBlocks(block.popupBlocks);
+  }
+
+  // Renderiza a faixa fixa de ações da lição, fora da área rolável do card.
+  function renderStepActionDock(step) {
+    const actionHtml = renderStepDockActions(step);
+    if (!actionHtml) return "";
+    return '<footer class="lesson-action-shell"><div class="lesson-action-dock"><div class="lesson-action-stack">' + actionHtml + "</div></div></footer>";
+  }
+
+  // Escolhe quais ações fixas devem aparecer no rodapé da lição.
+  function renderStepDockActions(step) {
+    if (!step) return "";
+
+    if (Array.isArray(step.blocks) && step.blocks.length) {
+      const buttonBlock = step.blocks.find(function (block) {
+        return block && isButtonKind(block.kind);
+      });
+      if (buttonBlock) return renderStepButton(step, buttonBlock);
+    }
+
+    const action =
+      step.type === "lesson_complete"
+        ? "complete-continue"
+        : stepHasEditorExercise(step)
+          ? "step-button-click"
+          : "continue-step";
+
+    return (
+      '<div class="lesson-next-wrap">' +
+      '<button class="next-icon" data-action="' +
+      action +
+      '" data-popup="0" title="Continuar" aria-label="Continuar">&#10140;</button>' +
+      "</div>"
+    );
   }
 
   // Renderiza o botao final do card e controla popup opcional.
@@ -1108,6 +3008,37 @@
       state.inlinePopupOpen.blockId === block.id;
     const gate = getStepEditorGate(step);
     const showReset = gate.requiresSolve;
+    const popupHasExercise =
+      popupEnabled &&
+      Array.isArray(block.popupBlocks) &&
+      collectInteractiveExerciseBlocks(block.popupBlocks).length > 0;
+    const popupContent = Array.isArray(block.popupBlocks) && block.popupBlocks.length
+      ? renderPopupBlocks(step, block.popupBlocks)
+      : '<p class="muted tiny">Sem conteúdo no popup.</p>';
+    const popupActions =
+      '<div class="lesson-next-wrap popup-next-wrap">' +
+      (popupHasExercise
+        ? '<button class="next-icon next-icon-secondary" data-action="step-editor-reset" data-step-id="' +
+          escAttr(step.id) +
+          '" title="Limpar" aria-label="Limpar">&#8635;</button>'
+        : "") +
+      '<button class="next-icon" data-action="popup-continue" data-popup-block-id="' +
+      escAttr(block.id) +
+      '" title="Continuar" aria-label="Continuar">&#10140;</button>' +
+      "</div>";
+
+    if (popupEnabled && popupOpen) {
+      return (
+        '<div class="lesson-next-wrap lesson-next-wrap-popup-open">' +
+        '<div class="inline-popup inline-popup-docked">' +
+        '<div class="popup-copy card-subtitle popup-content-blocks">' +
+        popupContent +
+        "</div>" +
+        popupActions +
+        "</div>" +
+        "</div>"
+      );
+    }
 
     return (
       '<div class="lesson-next-wrap">' +
@@ -1121,50 +3052,106 @@
       '" data-popup="' +
       (popupEnabled ? "1" : "0") +
       '" title="Continuar" aria-label="Continuar">&#10140;</button>' +
-      (popupEnabled && popupOpen
-        ? '<div class="inline-popup">' +
-          '<div class="popup-copy card-subtitle">' +
-          textToParagraphHtml(block.popupText || "Explicação do popup.", "") +
-          "</div>" +
-          '<button class="next-icon" data-action="popup-continue" data-popup-block-id="' +
-          escAttr(block.id) +
-          '" title="Continuar" aria-label="Continuar">&#10140;</button>' +
-          "</div>"
-        : "") +
       "</div>"
     );
   }
 
-  // Indica se o step usa layout de exercicio com area fixa (token_fill ou bloco Editor).
+  // Indica se o step usa layout de exercício com área fixa.
   function isExerciseDrivenStep(step) {
-    if (!step) return false;
-    if (step.type === "token_fill") return true;
-    return stepHasEditorExercise(step);
+    return !!step && stepHasEditorExercise(step);
   }
 
-  // Verifica se o step contem algum bloco Editor com lacunas.
+  // Filtra apenas os blocos interativos que realmente exigem resposta do estudante.
+  function collectInteractiveExerciseBlocks(blocks) {
+    return (Array.isArray(blocks) ? blocks : []).filter(function (block) {
+      if (isEditorKind(block.kind)) {
+        return parseTerminalTemplate(block.value || "").answers.length > 0;
+      }
+      if (isMultipleChoiceKind(block.kind)) {
+        return normalizeMultipleChoiceOptions(block.options).length > 0;
+      }
+      if (isFlowchartKind(block.kind)) {
+        normalizeFlowchartEditorBlock(block);
+        return (block.nodes || []).some(function (node) {
+          return flowchartNodeUsesShapeBlank(node) || flowchartNodeUsesTextBlank(node);
+        });
+      }
+      return false;
+    });
+  }
+
+  // Retorna os blocos interativos do popup atualmente aberto, quando existirem.
+  function getOpenPopupInteractiveBlocks(step) {
+    if (!step || !state.inlinePopupOpen || state.inlinePopupOpen.stepId !== step.id) return [];
+    const buttonBlock = (step.blocks || []).find(function (block) {
+      return block.id === state.inlinePopupOpen.blockId && isButtonKind(block.kind);
+    });
+    if (!buttonBlock || !Array.isArray(buttonBlock.popupBlocks)) return [];
+    return collectInteractiveExerciseBlocks(buttonBlock.popupBlocks);
+  }
+
+  // Verifica se o step contem algum bloco interativo (editor ou fluxograma).
   function stepHasEditorExercise(step) {
-    const blocks = Array.isArray(step && step.blocks) ? step.blocks : [];
-    return blocks.some(function (block) {
-      return isEditorKind(block.kind) && parseTerminalTemplate(block.value || "").answers.length > 0;
-    });
+    return collectInteractiveExerciseBlocks(step && step.blocks).length > 0;
   }
 
-  // Define se o step exige resposta correta do bloco Editor para liberar o botao final.
+  // Define se o step exige resposta correta dos blocos interativos para liberar o botao final.
   function getStepEditorGate(step) {
-    const blocks = Array.isArray(step && step.blocks) ? step.blocks : [];
-    const editorBlocks = blocks.filter(function (block) {
-      return isEditorKind(block.kind) && parseTerminalTemplate(block.value || "").answers.length > 0;
-    });
+    const exerciseBlocks = collectInteractiveExerciseBlocks(step && step.blocks);
 
-    if (!editorBlocks.length) return { requiresSolve: false, solved: true };
+    if (!exerciseBlocks.length) return { requiresSolve: false, solved: true };
 
-    const solved = editorBlocks.every(function (block) {
-      const parsed = parseTerminalTemplate(block.value || "");
-      const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
+    const solved = exerciseBlocks.every(function (block) {
+      if (isEditorKind(block.kind)) {
+        const parsed = parseTerminalTemplate(block.value || "");
+        const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
+        return exercise.feedback === "correct";
+      }
+      if (isMultipleChoiceKind(block.kind)) {
+        const exercise = getMultipleChoiceExerciseState(step, block);
+        return exercise.feedback === "correct";
+      }
+      const exercise = getFlowchartExerciseState(step, block);
       return exercise.feedback === "correct";
     });
     return { requiresSolve: true, solved: solved };
+  }
+
+  // Calcula largura inline confortável para lacunas digitáveis.
+  function getTerminalInlineInputWidthCh(value) {
+    const length = String(value || "").length;
+    return Math.max(2, Math.min(28, length + 0.35));
+  }
+
+  // Ajusta a largura visual da lacuna digitável conforme o texto atual.
+  function syncTerminalInlineInputWidth(input) {
+    if (!input) return;
+    const wrap = input.closest(".terminal-slot");
+    const hasValue = !!String(input.value || "");
+    if (wrap) {
+      wrap.classList.toggle("filled", hasValue);
+      wrap.classList.toggle("empty", !hasValue);
+    }
+    input.style.width = getTerminalInlineInputWidthCh(input.value) + "ch";
+  }
+
+  // Renderiza uma lacuna digitável diretamente dentro do preview do terminal.
+  function renderTerminalInlineInput(block, slotIndex, currentValue) {
+    return (
+      '<span class="terminal-slot terminal-slot-input-wrap ' +
+      (currentValue ? "filled" : "empty") +
+      '">' +
+      '<input class="terminal-slot-input" type="text" data-terminal-inline-input="true" data-block-id="' +
+      escAttr(block.id) +
+      '" data-slot-index="' +
+      escAttr(String(slotIndex)) +
+      '" value="' +
+      escAttr(currentValue || "") +
+      '" style="width:' +
+      escAttr(String(getTerminalInlineInputWidthCh(currentValue))) +
+      'ch" autocomplete="off" autocapitalize="off" spellcheck="false">' +
+      "</span>"
+    );
   }
 
   // Renderiza bloco terminal com lacunas e opções interativas.
@@ -1172,20 +3159,26 @@
     const parsed = parseTerminalTemplate(block.value || "");
     const normalizedOptions = normalizeEditorOptions(block.options);
     const options = mergeTerminalOptions(normalizedOptions, parsed.answers);
+    const interactionMode = getEditorInteractionMode(block);
 
-    if (!parsed.answers.length || !options.length) {
+    if (!parsed.answers.length) {
       return renderTerminal(block.value);
     }
 
     const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
     const slotHtml = parsed.parts
       .map(function (part) {
-        if (part.type === "text") return esc(part.value).replace(/\n/g, "<br>");
+        if (part.type === "text") return renderTerminalRichText(part.value);
 
-        const current = exercise.slots[part.index];
+        const current = String(exercise.slots[part.index] || "");
+        if (interactionMode === "input") {
+          return renderTerminalInlineInput(block, part.index, current);
+        }
+
         return (
           '<button class="terminal-slot ' +
           (current ? "filled" : "empty") +
+          (exercise.activeSlot === part.index ? " is-active" : "") +
           '" data-action="terminal-slot" data-block-id="' +
           escAttr(block.id) +
           '" data-slot-index="' +
@@ -1196,6 +3189,21 @@
         );
       })
       .join("");
+
+    if (interactionMode === "input") {
+      return (
+        '<section class="terminal-exercise terminal-exercise-input">' +
+        '<div class="terminal-box terminal-inline exercise-terminal">' +
+        slotHtml +
+        "</div>" +
+        renderTerminalFeedback(step, block, parsed.answers) +
+        "</section>"
+      );
+    }
+
+    if (!options.length) {
+      return renderTerminal(block.value);
+    }
 
     const available = getAvailableOptionsFromList(options, exercise.slots);
     const optionsHtml = available
@@ -1266,7 +3274,7 @@
       const before = source.slice(last, match.index);
       if (before) parts.push({ type: "text", value: before });
 
-      const answer = String(match[1] || "").trim();
+      const answer = inlineRichTextToPlainText(String(match[1] || "")).trim();
       answers.push(answer);
       parts.push({ type: "slot", index: answers.length - 1 });
 
@@ -1285,13 +3293,29 @@
   function mergeTerminalOptions(list, answers) {
     const merged = [];
 
-    (Array.isArray(list) ? list : []).forEach(function (item) {
+    const sourceList = Array.isArray(list) ? list : [];
+    const orderedList = sourceList.some(function (item) {
+      return item && typeof item === "object" && "displayOrder" in item;
+    })
+      ? sortEditorOptionsForDisplay(sourceList)
+      : sourceList;
+    const availableCountByValue = Object.create(null);
+    const requiredCountByValue = Object.create(null);
+
+    orderedList.forEach(function (item) {
       const value = typeof item === "string" ? item : String(item && item.value ? item.value : "");
-      if (value) merged.push(value);
+      if (!value) return;
+      merged.push(value);
+      availableCountByValue[value] = (availableCountByValue[value] || 0) + 1;
     });
 
     answers.forEach(function (answer) {
-      if (answer && merged.indexOf(answer) === -1) merged.push(answer);
+      if (!answer) return;
+      const nextRequiredCount = (requiredCountByValue[answer] || 0) + 1;
+      requiredCountByValue[answer] = nextRequiredCount;
+      if ((availableCountByValue[answer] || 0) >= nextRequiredCount) return;
+      merged.push(answer);
+      availableCountByValue[answer] = (availableCountByValue[answer] || 0) + 1;
     });
     return merged;
   }
@@ -1313,6 +3337,30 @@
     }
 
     return markers;
+  }
+
+  // Garante exatamente uma lacuna no template do Simulador.
+  function normalizeSimulatorTemplateValue(value) {
+    let source = String(value || "").replace(/\r/g, "");
+    let markers = parseOptionMarkers(source);
+
+    if (!markers.length) {
+      const cleanValue = source.trim();
+      return cleanValue
+        ? cleanValue + (/\s$/.test(cleanValue) ? "" : " ") + "[[]]"
+        : "[[]]";
+    }
+
+    if (String(markers[0].value || "")) {
+      source = replaceMarkerAtIndex(source, 0, "");
+      markers = parseOptionMarkers(source);
+    }
+
+    while (markers.length > 1) {
+      source = removeMarkerAtIndex(source, markers.length - 1);
+      markers = parseOptionMarkers(source);
+    }
+    return source;
   }
 
   // Troca o conteudo de um marcador [[...]] em posicao especifica.
@@ -1352,23 +3400,32 @@
     return source.slice(0, target.start) + marker + source.slice(target.start);
   }
 
-  // Insere um marcador [[...]] na posicao do cursor no editor.
-  function insertMarkerAtPosition(text, selectionStart, selectionEnd, value) {
-    const source = String(text || "");
-    const start = Number.isInteger(selectionStart) ? selectionStart : source.length;
-    const end = Number.isInteger(selectionEnd) ? selectionEnd : start;
-    return source.slice(0, start) + "[[" + value + "]]" + source.slice(end);
-  }
-
   // Sincroniza texto do terminal e lista de opções do editor.
   function normalizeTerminalEditorBlock(block) {
     if (!block || !isEditorKind(block.kind)) return;
 
     block.kind = "editor";
     block.value = String(block.value || "");
-    block.options = normalizeEditorOptions(block.options);
+    block.options = normalizeEditorOptions(block.options).map(function (option, index) {
+      return Object.assign({}, option, {
+        displayOrder: Number.isFinite(Number(option.displayOrder)) ? Number(option.displayOrder) : index,
+        slotOrder: Number.isFinite(Number(option.slotOrder)) ? Number(option.slotOrder) : index
+      });
+    });
+    block.interactionMode = normalizeEditorInteractionMode(
+      block.interactionMode || block.responseMode || block.inputMode
+    );
 
     let markers = parseOptionMarkers(block.value);
+
+    markers.forEach(function (marker, markerIndex) {
+      const plainMarkerValue = inlineRichTextToPlainText(String(marker.value || ""));
+      if (plainMarkerValue !== String(marker.value || "")) {
+        block.value = replaceMarkerAtIndex(block.value, markerIndex, plainMarkerValue);
+      }
+    });
+    markers = parseOptionMarkers(block.value);
+
     const enabledIndexes = getEnabledOptionIndexes(block.options);
 
     // Garante 1 marcador para cada opção habilitada.
@@ -1393,7 +3450,7 @@
 
       const optionValue = String(option.value || "");
       const markerValue = String(marker.value || "");
-      if (optionValue && optionValue !== markerValue) {
+      if (optionValue !== markerValue) {
         block.value = replaceMarkerAtIndex(block.value, markerIndex, optionValue);
       }
     });
@@ -1404,6 +3461,1159 @@
       if (!marker || !block.options[optionIndex]) return;
       block.options[optionIndex].value = String(marker.value || "");
     });
+
+  }
+
+  // Antes de salvar, remove lacunas vazias do Editor e descarta linhas sem valor útil.
+  function pruneEmptyEditorPlaceholders(block) {
+    if (!block || !isEditorKind(block.kind)) return;
+
+    block.options = normalizeEditorOptions(block.options);
+    const enabledIndexes = getEnabledOptionIndexes(block.options);
+
+    for (let i = enabledIndexes.length - 1; i >= 0; i -= 1) {
+      const optionIndex = enabledIndexes[i];
+      const option = block.options[optionIndex];
+      if (!option || String(option.value || "").trim()) continue;
+      option.enabled = false;
+      block.value = removeMarkerAtIndex(String(block.value || ""), i);
+    }
+
+    block.options = block.options.filter(function (option) {
+      return String(option.value || "").trim().length > 0;
+    });
+    normalizeTerminalEditorBlock(block);
+  }
+
+  // Monta lista final de símbolos disponíveis no popup do fluxograma.
+  function mergeFlowchartShapeOptions(list, nodes) {
+    const merged = [];
+
+    (Array.isArray(list) ? list : []).forEach(function (item) {
+      const raw = String(item || "").trim();
+      if (!raw) return;
+      const key = normalizeFlowchartShapeKey(raw);
+      if (merged.indexOf(key) === -1) merged.push(key);
+    });
+
+    getFlowchartAutoShapeOptions(nodes).forEach(function (key) {
+      if (merged.indexOf(key) === -1) merged.push(key);
+    });
+
+    if (!merged.length) {
+      merged.push("terminal", "process", "decision");
+    }
+
+    return merged;
+  }
+
+  // Monta lista final de opções de texto do fluxograma.
+  function mergeFlowchartTextOptions(list, nodes) {
+    const merged = [];
+
+    normalizeFlowchartTextOptions(list).forEach(function (item) {
+      if (!item.value || item.enabled === false) return;
+      if (merged.indexOf(item.value) === -1) merged.push(item.value);
+    });
+
+    getFlowchartAutoTextOptions(nodes).forEach(function (value) {
+      if (value && merged.indexOf(value) === -1) merged.push(value);
+    });
+
+    return merged;
+  }
+
+  // Normaliza bloco de fluxograma com defaults seguros.
+  function normalizeFlowchartEditorBlock(block) {
+    if (!block || !isFlowchartKind(block.kind)) return;
+
+    block.kind = "flowchart";
+    block.value = "";
+
+    const hasExplicitNodes = Array.isArray(block.nodes);
+    const nodes = hasExplicitNodes ? block.nodes.map(normalizeFlowchartNode) : [];
+    block.nodes = nodes.length
+      ? nodes
+      : hasExplicitNodes
+        ? []
+        : [
+          createFlowchartNode(0, "center", "terminal", "Início"),
+          createFlowchartNode(1, "center", "process", "Passo")
+        ];
+
+    const sharedShapeOptions = normalizeFlowchartShapeOptions(block.shapeOptions);
+    const sharedTextOptions = normalizeFlowchartTextOptions(block.textOptions);
+    block.nodes.forEach(function (node) {
+      node.shapeOptions = normalizeFlowchartNodeShapeOptions(
+        node.shapeOptions && node.shapeOptions.length ? node.shapeOptions : sharedShapeOptions,
+        node.shape
+      );
+      node.textOptions = normalizeFlowchartNodeTextOptions(
+        node.textOptions && node.textOptions.length ? node.textOptions : sharedTextOptions,
+        node.text
+      );
+    });
+
+    const nodeIds = block.nodes.map(function (node) { return node.id; });
+    const hasExplicitLinks = Array.isArray(block.links);
+    const rawLinks = (hasExplicitLinks ? block.links.map(normalizeFlowchartLink).filter(Boolean) : [])
+      .filter(function (link) {
+        return (
+          link.fromNodeId &&
+          link.toNodeId &&
+          link.fromNodeId !== link.toNodeId &&
+          nodeIds.indexOf(link.fromNodeId) > -1 &&
+          nodeIds.indexOf(link.toNodeId) > -1
+        );
+      });
+    const linkGroups = rawLinks.reduce(function (acc, link) {
+      if (!acc[link.fromNodeId]) acc[link.fromNodeId] = [];
+      acc[link.fromNodeId].push(link);
+      return acc;
+    }, {});
+    block.links = [];
+
+    Object.keys(linkGroups).forEach(function (fromNodeId) {
+      getFlowchartNodeOutputLinks(linkGroups[fromNodeId], fromNodeId).forEach(function (link, slot) {
+        if (!link || !link.toNodeId) return;
+        block.links.push({
+          id: link.id || uid("flow-link"),
+          fromNodeId: fromNodeId,
+          toNodeId: link.toNodeId,
+          outputSlot: slot,
+          label: String(link.label || "").trim()
+        });
+      });
+    });
+
+    if (!hasExplicitLinks && !block.links.length && block.nodes.length > 1) {
+      block.links.push({
+        id: uid("flow-link"),
+        fromNodeId: block.nodes[0].id,
+        toNodeId: block.nodes[1].id,
+        outputSlot: 0,
+        label: ""
+      });
+    }
+
+    block.shapeOptions = [];
+    block.textOptions = [];
+  }
+
+  // Cria bloco inicial de fluxograma para o editor visual.
+  function defaultFlowchartBlock() {
+    const start = createFlowchartNode(0, "center", "terminal", "Início", false, false);
+    const action = createFlowchartNode(1, "center", "process", "Executar ação", false, false);
+    const block = {
+      id: uid("block"),
+      kind: "flowchart",
+      value: "",
+      nodes: [start, action],
+      links: [
+        {
+          id: uid("flow-link"),
+          fromNodeId: start.id,
+          toNodeId: action.id,
+          outputSlot: 0,
+          label: ""
+        }
+      ],
+      shapeOptions: [],
+      textOptions: []
+    };
+    normalizeFlowchartEditorBlock(block);
+    return block;
+  }
+
+  // Cria bloco inicial de tabela para autoria.
+  function defaultTableBlock() {
+    return normalizeTableBlock({
+      id: uid("block"),
+      kind: "table",
+      title: "",
+      headers: [createBlankTableCell("header")],
+      rows: [[createBlankTableCell("body")]]
+    });
+  }
+
+  // Cria bloco inicial de múltipla escolha para autoria.
+  function defaultMultipleChoiceBlock() {
+    return normalizeMultipleChoiceBlock({
+      id: uid("block"),
+      kind: "multiple_choice",
+      answerState: "correct",
+      options: [
+        { id: uid("opt"), value: "Resposta 1", answer: true },
+        { id: uid("opt"), value: "Resposta 2", answer: false }
+      ]
+    });
+  }
+
+  // Cria bloco inicial de opções com resultado para autoria.
+  function defaultSimulatorBlock() {
+    return normalizeSimulatorBlock({
+      id: uid("block"),
+      kind: "simulator",
+      value: "Resultado de [[]]",
+      options: [
+        { id: uid("opt"), value: "Opção 1", result: "Resultado da opção 1" },
+        { id: uid("opt"), value: "Opção 2", result: "Resultado da opção 2" }
+      ]
+    });
+  }
+
+  // Cria bloco padrão para o editor de conteúdo do popup.
+  function createPopupContentBlock(kind) {
+    if (kind === "table") return defaultTableBlock();
+    if (kind === "simulator") return defaultSimulatorBlock();
+    if (kind === "editor") {
+      return {
+        id: uid("block"),
+        kind: "editor",
+        value: "",
+        options: [],
+        interactionMode: "choice"
+      };
+    }
+    return {
+      id: uid("block"),
+      kind: kind,
+      value: kind === "heading" ? "Título do popup" : "",
+      richText: kind === "paragraph" ? "" : undefined
+    };
+  }
+
+  // Retorna nós na ordem em que aparecem no editor.
+  function getFlowchartSortedNodes(nodes) {
+    return Array.isArray(nodes) ? nodes.slice() : [];
+  }
+
+  // Gera mapa rápido de nós por ID.
+  function getFlowchartNodeMap(nodes) {
+    return (Array.isArray(nodes) ? nodes : []).reduce(function (acc, node) {
+      acc[node.id] = node;
+      return acc;
+    }, {});
+  }
+
+  // Retorna título curto de um nó para UI do editor.
+  function flowchartNodeTitle(nodes, nodeId) {
+    const list = getFlowchartSortedNodes(nodes);
+    const index = list.findIndex(function (node) {
+      return node.id === nodeId;
+    });
+    return "Bloco " + String(index > -1 ? index + 1 : 1);
+  }
+
+  // Renderiza opções de destino para uma saída do fluxograma.
+  function renderFlowchartOutputOptions(nodes, currentNodeId, currentTargetId) {
+    const options = ['<option value=""' + (!currentTargetId ? " selected" : "") + ">Sem ligação</option>"];
+
+    nodes.forEach(function (node) {
+      if (node.id === currentNodeId) return;
+      options.push(
+        '<option value="' +
+        escAttr(node.id) +
+        '"' +
+        (node.id === currentTargetId ? " selected" : "") +
+        ">" +
+        esc(flowchartNodeTitle(nodes, node.id)) +
+        "</option>"
+      );
+    });
+
+    return options.join("");
+  }
+
+  // Indica se o símbolo do bloco deve virar lacuna para o aluno.
+  function flowchartNodeUsesShapeBlank(node) {
+    return mergeFlowchartNodeShapeOptions(node).length > 1;
+  }
+
+  // Indica se o texto do bloco deve virar lacuna para o aluno.
+  function flowchartNodeUsesTextBlank(node) {
+    return mergeFlowchartNodeTextOptions(node).length > 1;
+  }
+
+  // Lista símbolos corretos que entram automaticamente no popup.
+  function getFlowchartAutoShapeOptions(nodes) {
+    const list = [];
+
+    (Array.isArray(nodes) ? nodes : []).forEach(function (node) {
+      if (!flowchartNodeUsesShapeBlank(node)) return;
+      const key = normalizeFlowchartShapeKey(node.shape);
+      if (list.indexOf(key) === -1) list.push(key);
+    });
+
+    return list;
+  }
+
+  // Lista textos corretos que entram automaticamente no popup.
+  function getFlowchartAutoTextOptions(nodes) {
+    const list = [];
+
+    (Array.isArray(nodes) ? nodes : []).forEach(function (node) {
+      if (!flowchartNodeUsesTextBlank(node)) return;
+      const value = String(node.text || "").trim();
+      if (value && list.indexOf(value) === -1) list.push(value);
+    });
+
+    return list;
+  }
+
+  // Monta as opções de símbolo de um nó para o popup.
+  function mergeFlowchartNodeShapeOptions(node) {
+    const merged = normalizeFlowchartNodeShapeOptions(node && node.shapeOptions, node && node.shape);
+    const current = normalizeFlowchartShapeKey(node && node.shape);
+    if (merged.indexOf(current) === -1) merged.unshift(current);
+    return merged;
+  }
+
+  // Monta as opções de texto de um nó para o popup.
+  function mergeFlowchartNodeTextOptions(node) {
+    const merged = normalizeFlowchartNodeTextOptions(node && node.textOptions, node && node.text)
+      .map(function (option) { return option.value; })
+      .filter(Boolean);
+    const current = String(node && node.text ? node.text : "").trim();
+    if (current && merged.indexOf(current) === -1) merged.unshift(current);
+    return merged;
+  }
+
+  // Lista opções de texto do editor preservando extras vazias para que o autor consiga preenchê-las.
+  function getFlowchartNodeTextEditorOptions(node) {
+    const current = String(node && node.text ? node.text : "").trim();
+    const extras = normalizeFlowchartNodeTextOptions(node && node.textOptions, current);
+    return [{ id: "current", value: current }].concat(
+      extras.map(function (option) {
+        return {
+          id: String(option.id || uid("opt")),
+          value: String(option.value || "")
+        };
+      })
+    );
+  }
+
+  // Retorna as duas saídas principais do nó, preservando a ordem dos slots salvos.
+  function getFlowchartNodeOutputLinks(links, nodeId) {
+    const slots = [null, null];
+    const extras = [];
+
+    (Array.isArray(links) ? links : []).forEach(function (item) {
+      const link = normalizeFlowchartLink(item);
+      if (!link || link.fromNodeId !== nodeId || !link.toNodeId) return;
+      if (link.outputSlot === 0 || link.outputSlot === 1) {
+        if (!slots[link.outputSlot] && !slots.some(function (current) { return current && current.toNodeId === link.toNodeId; })) {
+          slots[link.outputSlot] = link;
+          return;
+        }
+      }
+      extras.push(link);
+    });
+
+    extras.forEach(function (link) {
+      if (slots.some(function (current) { return current && current.toNodeId === link.toNodeId; })) return;
+      if (!slots[0]) {
+        link.outputSlot = 0;
+        slots[0] = link;
+        return;
+      }
+      if (!slots[1]) {
+        link.outputSlot = 1;
+        slots[1] = link;
+      }
+    });
+
+    return slots;
+  }
+
+  // Retorna até duas saídas já configuradas para um bloco do fluxograma.
+  function getFlowchartNodeOutputTargets(links, nodeId) {
+    return getFlowchartNodeOutputLinks(links, nodeId).map(function (link) {
+      return link && link.toNodeId ? link.toNodeId : "";
+    });
+  }
+
+  // Retorna rótulo editorial sugerido para ramos de decisão.
+  function getFlowchartEditorOutputLabel(node, slot) {
+    if (!node || normalizeFlowchartShapeKey(node.shape) !== "decision") return "";
+    return slot === 0 ? "Não" : slot === 1 ? "Sim" : "";
+  }
+
+  // Retorna rótulo padrão para saídas de decisões com duas setas.
+  function getFlowchartDefaultOutputLabel(node, slot, links) {
+    if (!node || normalizeFlowchartShapeKey(node.shape) !== "decision") return "";
+    const active = getFlowchartNodeOutputLinks(links, node.id).filter(function (link) {
+      return !!(link && link.toNodeId);
+    });
+    if (active.length < 2) return "";
+    return getFlowchartEditorOutputLabel(node, slot);
+  }
+
+  // Verifica se a ligação é válida no fluxograma.
+  function isFlowchartLinkAllowed(link, nodeMap) {
+    const from = nodeMap[link && link.fromNodeId];
+    const to = nodeMap[link && link.toNodeId];
+    return !!(from && to && from.id !== to.id);
+  }
+
+  const flowchartLayoutEngine = createFlowchartLayoutEngine({
+    layoutConfig: FLOWCHART_LAYOUT,
+    getFlowchartSortedNodes: getFlowchartSortedNodes,
+    getFlowchartNodeMap: getFlowchartNodeMap,
+    normalizeFlowchartLink: normalizeFlowchartLink,
+    isFlowchartLinkAllowed: isFlowchartLinkAllowed,
+    getFlowchartNodeOutputLinks: getFlowchartNodeOutputLinks,
+    normalizeFlowchartShapeKey: normalizeFlowchartShapeKey,
+    getFlowchartDefaultOutputLabel: getFlowchartDefaultOutputLabel
+  });
+  const buildFlowchartLinkRenderData = flowchartLayoutEngine.buildFlowchartLinkRenderData;
+  const getFlowchartBoardLayout = flowchartLayoutEngine.getFlowchartBoardLayout;
+  const computeFlowchartBoardLayout = flowchartLayoutEngine.computeFlowchartBoardLayout;
+
+  // Gera ID seguro para uso em marker SVG.
+  function safeSvgId(value) {
+    return String(value || "shape").replace(/[^a-zA-Z0-9_-]/g, "");
+  }
+
+  // Resume a topologia do fluxograma para reaproveitar layout enquanto o grafo não muda.
+  function getFlowchartTopologySignature(nodes, links) {
+    const normalizedNodes = getFlowchartSortedNodes(nodes).map(function (node) {
+      return {
+        id: String(node.id || ""),
+        shape: normalizeFlowchartShapeKey(node.shape),
+        order: String(node.id || "")
+      };
+    });
+    const normalizedLinks = (Array.isArray(links) ? links : [])
+      .map(normalizeFlowchartLink)
+      .filter(Boolean)
+      .sort(function (a, b) {
+        if (a.fromNodeId !== b.fromNodeId) return a.fromNodeId < b.fromNodeId ? -1 : 1;
+        if ((a.outputSlot || 0) !== (b.outputSlot || 0)) return (a.outputSlot || 0) - (b.outputSlot || 0);
+        if (a.toNodeId !== b.toNodeId) return a.toNodeId < b.toNodeId ? -1 : 1;
+        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+      })
+      .map(function (link) {
+        return {
+          from: String(link.fromNodeId || ""),
+          to: String(link.toNodeId || ""),
+          slot: link.outputSlot === 1 ? 1 : 0
+        };
+      });
+
+    return JSON.stringify({
+      nodes: normalizedNodes,
+      links: normalizedLinks
+    });
+  }
+
+  // Garante que exista um layout calculado ou em cálculo para o bloco visível.
+  function ensureFlowchartLayout(blockId, nodes, links) {
+    const signature = getFlowchartTopologySignature(nodes, links);
+    const cache = state.ui.flowchartLayoutCacheByBlockId[blockId];
+
+    if (cache && cache.signature === signature && (cache.status === "pending" || cache.status === "ready")) {
+      return cache;
+    }
+
+    const requestId = uid("flow-layout");
+    const nextCache = {
+      signature: signature,
+      status: "pending",
+      requestId: requestId,
+      layout: cache && cache.signature === signature ? cache.layout : null,
+      error: ""
+    };
+    state.ui.flowchartLayoutCacheByBlockId[blockId] = nextCache;
+
+    Promise.resolve(computeFlowchartBoardLayout(nodes, links))
+      .then(function (layout) {
+        const current = state.ui.flowchartLayoutCacheByBlockId[blockId];
+        if (!current || current.requestId !== requestId) return;
+        state.ui.flowchartLayoutCacheByBlockId[blockId] = {
+          signature: signature,
+          status: "ready",
+          requestId: requestId,
+          layout: layout,
+          error: ""
+        };
+        renderApp();
+      })
+      .catch(function (error) {
+        const current = state.ui.flowchartLayoutCacheByBlockId[blockId];
+        if (!current || current.requestId !== requestId) return;
+        state.ui.flowchartLayoutCacheByBlockId[blockId] = {
+          signature: signature,
+          status: "error",
+          requestId: requestId,
+          layout: null,
+          error: error && error.message ? String(error.message) : "Erro ao organizar fluxograma."
+        };
+        renderApp();
+      });
+
+    return nextCache;
+  }
+
+  // Consulta o layout já pronto do fluxograma sem forçar cálculo novo.
+  function getReadyFlowchartLayout(blockId, nodes, links) {
+    const signature = getFlowchartTopologySignature(nodes, links);
+    const cache = ((state.ui || {}).flowchartLayoutCacheByBlockId || {})[blockId];
+    if (!cache || cache.signature !== signature || cache.status !== "ready" || !cache.layout) return null;
+    return cache.layout;
+  }
+
+  // Retorna o último layout conhecido do bloco, útil para operações de zoom fora do ciclo de render.
+  function getAnyCachedFlowchartLayout(blockId) {
+    const cache = ((state.ui || {}).flowchartLayoutCacheByBlockId || {})[blockId];
+    return cache && cache.layout ? cache.layout : null;
+  }
+
+  // Chave estável para lembrar o zoom de cada quadro de fluxograma em editor/prática.
+  function getFlowchartViewportKey(blockId, mode) {
+    return String(blockId || "") + "::" + String(mode === "practice" ? "practice" : "editor");
+  }
+
+  // Detecta desktop com ponteiro fino para ajustar o enquadramento inicial sem deixar o fluxograma minúsculo.
+  function isDesktopFlowchartViewport() {
+    if (typeof window === "undefined") return false;
+    const width = Number(window.innerWidth || 0);
+    if (width < 900) return false;
+    if (typeof window.matchMedia === "function") {
+      return window.matchMedia("(pointer: fine)").matches;
+    }
+    return true;
+  }
+
+  // Calcula um zoom inicial que tenta mostrar o máximo do fluxograma no celular sem sacrificar legibilidade.
+  function getFlowchartDefaultViewportScale(layout) {
+    if (!layout || !layout.width || !layout.height) return 1;
+
+    const viewportWidth =
+      typeof window !== "undefined" && window.innerWidth
+        ? Math.max(220, Math.min(window.innerWidth - 92, 760))
+        : 320;
+    const viewportHeight =
+      typeof window !== "undefined" && window.innerHeight
+        ? Math.max(220, Math.round(window.innerHeight * 0.42))
+        : 320;
+
+    const fitScale = Math.min(1, viewportWidth / layout.width, viewportHeight / layout.height);
+    const preferredScale = isDesktopFlowchartViewport()
+      ? Math.max(0.38, fitScale)
+      : fitScale;
+
+    return normalizeFlowchartViewportScale(preferredScale);
+  }
+
+  // Limita o zoom a uma faixa útil: permite visão global menor que 65%, mas nunca passa de 100%.
+  function normalizeFlowchartViewportScale(value) {
+    return clamp(Number(value) || 1, 0.2, 1);
+  }
+
+  // Consulta o zoom salvo para um quadro específico.
+  function getFlowchartViewportScale(blockId, mode, fallbackScale) {
+    const key = getFlowchartViewportKey(blockId, mode);
+    const entry = ((state.ui || {}).flowchartViewportByKey || {})[key];
+    return normalizeFlowchartViewportScale(entry && typeof entry.scale === "number" ? entry.scale : fallbackScale);
+  }
+
+  // Atualiza visualmente o zoom do quadro sem precisar renderizar a tela inteira.
+  function applyFlowchartViewportScaleToNode(scrollNode, nextScale, anchorClientX, anchorClientY) {
+    if (!scrollNode) return;
+
+    const stage = scrollNode.querySelector("[data-flowchart-stage='true']");
+    const board = scrollNode.querySelector("[data-flowchart-board='true']");
+    if (!stage || !board) return;
+
+    const baseWidth = Number(board.getAttribute("data-base-width") || 0);
+    const baseHeight = Number(board.getAttribute("data-base-height") || 0);
+    if (!baseWidth || !baseHeight) return;
+
+    const currentScale = normalizeFlowchartViewportScale(scrollNode.getAttribute("data-flowchart-scale"));
+    const safeScale = normalizeFlowchartViewportScale(nextScale);
+    const rect = scrollNode.getBoundingClientRect();
+    const offsetX =
+      typeof anchorClientX === "number"
+        ? clamp(anchorClientX - rect.left, 0, scrollNode.clientWidth)
+        : scrollNode.clientWidth / 2;
+    const offsetY =
+      typeof anchorClientY === "number"
+        ? clamp(anchorClientY - rect.top, 0, scrollNode.clientHeight)
+        : scrollNode.clientHeight / 2;
+    const contentX = (scrollNode.scrollLeft + offsetX) / currentScale;
+    const contentY = (scrollNode.scrollTop + offsetY) / currentScale;
+
+    stage.style.width = Math.max(1, Math.round(baseWidth * safeScale)) + "px";
+    stage.style.height = Math.max(1, Math.round(baseHeight * safeScale)) + "px";
+    board.style.transform = "scale(" + safeScale.toFixed(3) + ")";
+    scrollNode.setAttribute("data-flowchart-scale", safeScale.toFixed(3));
+    const zoomValue = scrollNode.parentElement && scrollNode.parentElement.querySelector(".flowchart-zoom-value");
+    if (zoomValue) zoomValue.textContent = Math.round(safeScale * 100) + "%";
+
+    requestAnimationFrame(function () {
+      scrollNode.scrollLeft = Math.max(0, contentX * safeScale - offsetX);
+      scrollNode.scrollTop = Math.max(0, contentY * safeScale - offsetY);
+    });
+  }
+
+  // Atualiza o estado de zoom e, se o quadro estiver montado no DOM, aplica a escala imediatamente.
+  function setFlowchartViewportScale(blockId, mode, nextScale, anchorClientX, anchorClientY) {
+    const key = getFlowchartViewportKey(blockId, mode);
+    const safeScale = normalizeFlowchartViewportScale(nextScale);
+
+    state.ui.flowchartViewportByKey[key] = { scale: safeScale };
+
+    const scrollNode = root.querySelector('[data-flowchart-key="' + cssEsc(key) + '"]');
+    if (!scrollNode) {
+      renderApp();
+      return;
+    }
+
+    applyFlowchartViewportScaleToNode(scrollNode, safeScale, anchorClientX, anchorClientY);
+  }
+
+  // Renderiza o quadro do fluxograma em modo editor ou prática.
+  function renderFlowchartBoard(block, options) {
+    normalizeFlowchartEditorBlock(block);
+
+    const mode = options && options.mode === "practice" ? "practice" : "editor";
+    const viewportKey = getFlowchartViewportKey(block.id, mode);
+    const exercise = options && options.exercise ? options.exercise : { shapes: {}, texts: {} };
+    const popup = options && options.popup ? options.popup : null;
+    const nodes = getFlowchartSortedNodes(block.nodes);
+    const nodeMap = getFlowchartNodeMap(nodes);
+    const cachedLayout = getReadyFlowchartLayout(block.id, nodes, block.links);
+    const layoutState = cachedLayout
+      ? { status: "ready", layout: cachedLayout }
+      : ensureFlowchartLayout(block.id, nodes, block.links);
+    const layout = layoutState && layoutState.layout ? layoutState.layout : getFlowchartBoardLayout(nodes, block.links);
+    const layoutStatus = layoutState && layoutState.status ? layoutState.status : "fallback";
+    const viewportScale = getFlowchartViewportScale(block.id, mode, getFlowchartDefaultViewportScale(layout));
+    const scaledWidth = Math.max(1, Math.round(layout.width * viewportScale));
+    const scaledHeight = Math.max(1, Math.round(layout.height * viewportScale));
+    const markerId = "flow-arrow-" + safeSvgId(block.id + "-" + mode);
+    const routedLinks = buildFlowchartLinkRenderData(block.links, nodeMap, layout);
+    const linksSvg = routedLinks.map(function (route) {
+      return (
+        '<polyline points="' +
+        route.points.map(function (point) {
+          return point[0] + "," + point[1];
+        }).join(" ") +
+        '" marker-end="url(#' +
+        markerId +
+        ')"></polyline>'
+      );
+    }).join("");
+    const labelsHtml = routedLinks.map(function (route) {
+      if (!route.label || !route.labelPos) return "";
+      const anchorClass =
+        route.labelPos.anchor === "start"
+          ? " flowchart-link-label-start"
+          : route.labelPos.anchor === "end"
+            ? " flowchart-link-label-end"
+            : "";
+      return (
+        '<div class="flowchart-link-label' +
+        anchorClass +
+        '" style="left:' +
+        route.labelPos.x +
+        "px;top:" +
+        route.labelPos.y +
+        'px;">' +
+        esc(route.label) +
+        "</div>"
+      );
+    }).join("");
+
+    const nodesHtml = nodes.map(function (node) {
+      const pos = layout.positions[node.id];
+      const shapeBlank = flowchartNodeUsesShapeBlank(node);
+      const textBlank = flowchartNodeUsesTextBlank(node);
+      const currentShape = mode === "practice" && shapeBlank ? String(exercise.shapes[node.id] || "") : node.shape;
+      const currentText = mode === "practice" && textBlank ? String(exercise.texts[node.id] || "") : node.text;
+      const shapeHtml = currentShape
+        ? renderFlowchartShapeSvg(currentShape)
+        : '<div class="flowchart-shape-placeholder" aria-hidden="true"></div>';
+      const shapeActive = shapeBlank && popup && popup.nodeId === node.id && popup.kind === "shape";
+      const textActive = textBlank && popup && popup.nodeId === node.id && popup.kind === "text";
+
+      return (
+        '<div class="flowchart-node flowchart-node-' +
+        mode +
+        '" style="left:' +
+        pos.left +
+        "px;top:" +
+        pos.top +
+        'px;">' +
+        (mode === "practice" && shapeBlank
+          ? '<button class="flowchart-shape-button' +
+            (shapeActive ? " active" : "") +
+            '" data-action="flowchart-open-shape" data-block-id="' +
+            escAttr(block.id) +
+            '" data-node-id="' +
+            escAttr(node.id) +
+            '" title="Escolher símbolo" aria-label="Escolher símbolo">' +
+            shapeHtml +
+            "</button>"
+          : mode === "editor"
+            ? '<button class="flowchart-shape-fixed flowchart-board-jump" data-action="flowchart-focus-node-shape" data-block-id="' +
+              escAttr(block.id) +
+              '" data-node-id="' +
+              escAttr(node.id) +
+              '" title="Ir para símbolo do bloco" aria-label="Ir para símbolo do bloco">' +
+              shapeHtml +
+              "</button>"
+            : '<div class="flowchart-shape-fixed">' + shapeHtml + "</div>") +
+        (mode === "practice" && textBlank
+          ? '<button class="flowchart-text-button' +
+            (textActive ? " active" : "") +
+            (currentText ? " filled" : "") +
+            '" data-action="flowchart-open-text" data-block-id="' +
+            escAttr(block.id) +
+            '" data-node-id="' +
+            escAttr(node.id) +
+            '" title="Escolher texto" aria-label="Escolher texto">' +
+            (currentText ? esc(currentText) : "&nbsp;") +
+            "</button>"
+          : mode === "editor"
+            ? '<button class="flowchart-text-fixed flowchart-board-jump' +
+              (currentText ? " filled" : "") +
+              '" data-action="flowchart-focus-node-text" data-block-id="' +
+              escAttr(block.id) +
+              '" data-node-id="' +
+              escAttr(node.id) +
+              '" title="Ir para texto do bloco" aria-label="Ir para texto do bloco">' +
+              (currentText ? esc(currentText) : "&nbsp;") +
+              "</button>"
+            : '<div class="flowchart-text-fixed' +
+              (currentText ? " filled" : "") +
+              '">' +
+              (currentText ? esc(currentText) : "&nbsp;") +
+              "</div>") +
+        "</div>"
+      );
+    }).join("");
+
+    return (
+      '<div class="flowchart-view-shell">' +
+      '<div class="flowchart-zoom-controls" data-flowchart-zoom-controls="true">' +
+      '<button class="icon-ghost tiny-icon" data-action="flowchart-zoom-out" data-block-id="' +
+      escAttr(block.id) +
+      '" data-flowchart-mode="' +
+      escAttr(mode) +
+      '" title="Diminuir zoom" aria-label="Diminuir zoom">-</button>' +
+      '<button class="icon-ghost tiny-icon flowchart-zoom-value" data-action="flowchart-zoom-reset" data-block-id="' +
+      escAttr(block.id) +
+      '" data-flowchart-mode="' +
+      escAttr(mode) +
+      '" title="Voltar ao ajuste automático" aria-label="Voltar ao ajuste automático">' +
+      Math.round(viewportScale * 100) +
+      "%</button>" +
+      '<button class="icon-ghost tiny-icon" data-action="flowchart-zoom-in" data-block-id="' +
+      escAttr(block.id) +
+      '" data-flowchart-mode="' +
+      escAttr(mode) +
+      '" title="Aumentar zoom" aria-label="Aumentar zoom">+</button>' +
+      "</div>" +
+      '<div class="flowchart-scroll" data-flowchart-scroll="true" data-flowchart-key="' +
+      escAttr(viewportKey) +
+      '" data-block-id="' +
+      escAttr(block.id) +
+      '" data-flowchart-mode="' +
+      escAttr(mode) +
+      '" data-flowchart-scale="' +
+      viewportScale.toFixed(3) +
+      '" data-flowchart-layout-status="' +
+      escAttr(layoutStatus) +
+      '">' +
+      '<div class="flowchart-stage" data-flowchart-stage="true" style="width:' +
+      scaledWidth +
+      "px;height:" +
+      scaledHeight +
+      'px;">' +
+      '<div class="flowchart-board flowchart-board-' +
+      mode +
+      '" data-flowchart-board="true" data-base-width="' +
+      layout.width +
+      '" data-base-height="' +
+      layout.height +
+      '" style="width:' +
+      layout.width +
+      "px;height:" +
+      layout.height +
+      "px;transform:scale(" +
+      viewportScale.toFixed(3) +
+      ');transform-origin:top left;">' +
+      (layoutStatus === "pending" ? '<div class="flowchart-layout-overlay" aria-hidden="true"></div>' : "") +
+      '<svg class="flowchart-links" viewBox="0 0 ' +
+      layout.width +
+      " " +
+      layout.height +
+      '" aria-hidden="true" focusable="false">' +
+      '<defs><marker id="' +
+      markerId +
+      '" markerWidth="6" markerHeight="6" refX="5.6" refY="3" orient="auto"><path d="M0.7,0.7 L5.6,3 L0.7,5.3"></path></marker></defs>' +
+      linksSvg +
+      "</svg>" +
+      '<div class="flowchart-link-label-layer">' +
+      labelsHtml +
+      "</div>" +
+      nodesHtml +
+      "</div>" +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  // Renderiza painel do fluxo no modo editor.
+  function renderFlowchartBuilder(block) {
+    normalizeFlowchartEditorBlock(block);
+
+    const nodes = getFlowchartSortedNodes(block.nodes);
+
+    const nodesHtml = nodes.map(function (node) {
+      const outputLinks = getFlowchartNodeOutputLinks(block.links, node.id);
+      const currentOutputs = outputLinks.map(function (link) {
+        return link && link.toNodeId ? link.toNodeId : "";
+      });
+
+      const shapeRows = mergeFlowchartNodeShapeOptions(node).map(function (shape, index) {
+        const optionChoices = FLOWCHART_SHAPES.map(function (item) {
+          return (
+            '<option value="' +
+            escAttr(item.key) +
+            '"' +
+            (item.key === shape ? " selected" : "") +
+            ">" +
+            esc(getFlowchartShapePickerLabel(item.key)) +
+            "</option>"
+          );
+        }).join("");
+
+        return (
+          '<div class="choice-row' +
+          (index === 0 ? " flowchart-main-choice" : "") +
+          '"' +
+          (index === 0
+            ? ""
+            : ' data-flowchart-node-shape-option-row="true" data-option-index="' + String(index - 1) + '"') +
+          ">" +
+          '<button class="icon-ghost tiny-icon option-toggle' +
+          (index === 0 ? " active" : "") +
+          '" data-action="flowchart-select-node-shape-answer" data-block-id="' +
+          escAttr(block.id) +
+          '" data-node-id="' +
+          escAttr(node.id) +
+          '" data-option-index="' +
+          index +
+          '" title="Marcar símbolo correto">' +
+          (index === 0 ? "&#9679;" : "&#9675;") +
+          "</button>" +
+          (index === 0
+            ? '<select class="block-select flowchart-shape-select" data-flowchart-node-shape="true">'
+            : '<select class="block-select flowchart-shape-select" data-flowchart-node-shape-option="true" data-option-index="' +
+              String(index - 1) +
+              '">') +
+          optionChoices +
+          "</select>" +
+          (index === 0
+            ? '<span class="choice-row-spacer" aria-hidden="true"></span>'
+            : '<button class="icon-ghost tiny-icon" data-action="flowchart-remove-node-shape-option" data-block-id="' +
+              escAttr(block.id) +
+              '" data-node-id="' +
+              escAttr(node.id) +
+              '" data-option-index="' +
+              String(index - 1) +
+              '" title="Remover opção de símbolo">&times;</button>') +
+          "</div>"
+        );
+      }).join("");
+
+      const textRows = getFlowchartNodeTextEditorOptions(node).map(function (option, index) {
+        const value = String(option.value || "");
+        const optionId = option.id || "current";
+        return (
+          '<div class="choice-row' +
+          (index === 0 ? " flowchart-main-choice" : "") +
+          '"' +
+          (index === 0
+            ? ""
+            : ' data-flowchart-node-text-option-row="true" data-option-id="' + escAttr(optionId) + '" data-option-index="' + String(index - 1) + '"') +
+          '">' +
+          '<button class="icon-ghost tiny-icon option-toggle' +
+          (index === 0 ? " active" : "") +
+          '" data-action="flowchart-select-node-text-answer" data-block-id="' +
+          escAttr(block.id) +
+          '" data-node-id="' +
+          escAttr(node.id) +
+          '" data-option-index="' +
+          index +
+          '" title="Marcar texto correto">' +
+          (index === 0 ? "&#9679;" : "&#9675;") +
+          "</button>" +
+          (index === 0
+            ? '<input type="text" class="block-input" data-flowchart-node-text="true" value="' +
+              escAttr(value) +
+              '" placeholder="Texto do bloco">'
+            : '<input type="text" class="block-input" data-flowchart-node-text-option="true" data-option-index="' +
+              String(index - 1) +
+              '" value="' +
+              escAttr(value) +
+              '" placeholder="Outra opção de texto">') +
+          (index === 0
+            ? '<span class="choice-row-spacer" aria-hidden="true"></span>'
+            : '<button class="icon-ghost tiny-icon" data-action="flowchart-remove-node-text-option" data-block-id="' +
+              escAttr(block.id) +
+              '" data-node-id="' +
+              escAttr(node.id) +
+              '" data-option-index="' +
+              String(index - 1) +
+              '" title="Remover opção de texto">&times;</button>') +
+          "</div>"
+        );
+      }).join("");
+
+      const outputRows = [0, 1].map(function (slot) {
+        const editorLabel = getFlowchartEditorOutputLabel(node, slot);
+        const defaultLabel = editorLabel || getFlowchartDefaultOutputLabel(node, slot, block.links);
+        const currentLabel = outputLinks[slot] ? String(outputLinks[slot].label || "") : "";
+        const effectiveLabel = currentLabel || defaultLabel;
+        const labelPlaceholder = defaultLabel || "Rótulo";
+        const rowLabel = editorLabel || ("Saída " + String(slot + 1));
+
+        return (
+          '<div class="flowchart-output-row" data-flowchart-node-output-row="true" data-output-slot="' +
+          slot +
+          '">' +
+          '<label class="tiny muted">' +
+          esc(rowLabel) +
+          "</label>" +
+          '<select class="block-select" data-flowchart-node-output="true" data-output-slot="' +
+          slot +
+          '">' +
+          renderFlowchartOutputOptions(nodes, node.id, currentOutputs[slot]) +
+          "</select>" +
+          '<input type="text" class="block-input" data-flowchart-node-output-label="true" data-output-slot="' +
+          slot +
+          '" value="' +
+          escAttr(effectiveLabel) +
+          '" placeholder="' +
+          escAttr(labelPlaceholder) +
+          '">' +
+          "</div>"
+        );
+      }).join("");
+
+      return (
+        '<article class="flowchart-node-card" data-flowchart-node-card="true" data-flowchart-node-id="' +
+        escAttr(node.id) +
+        '">' +
+        '<div class="flowchart-node-card-head">' +
+        '<p class="tiny muted">' +
+        esc(flowchartNodeTitle(nodes, node.id)) +
+        "</p>" +
+        '<div class="flowchart-node-card-actions">' +
+        '<button class="icon-ghost tiny-icon" data-action="flowchart-move-node-up" data-block-id="' +
+        escAttr(block.id) +
+        '" data-node-id="' +
+        escAttr(node.id) +
+        '" title="Subir bloco">&uarr;</button>' +
+        '<button class="icon-ghost tiny-icon" data-action="flowchart-move-node-down" data-block-id="' +
+        escAttr(block.id) +
+        '" data-node-id="' +
+        escAttr(node.id) +
+        '" title="Descer bloco">&darr;</button>' +
+        '<button class="icon-ghost tiny-icon" data-action="flowchart-remove-node" data-block-id="' +
+        escAttr(block.id) +
+        '" data-node-id="' +
+        escAttr(node.id) +
+        '" title="Remover bloco">&times;</button>' +
+        "</div>" +
+        "</div>" +
+        '<div class="flowchart-field-grid">' +
+        '<p class="tiny muted">Conexões</p>' +
+        outputRows +
+        "</div>" +
+        '<section class="flowchart-config-section">' +
+        '<div class="flowchart-config-head">' +
+        '<p class="tiny muted">Símbolo</p>' +
+        '<button class="icon-ghost tiny-icon" data-action="flowchart-add-node-shape-option" data-block-id="' +
+        escAttr(block.id) +
+        '" data-node-id="' +
+        escAttr(node.id) +
+        '" title="Adicionar outra opção de símbolo">+</button>' +
+        "</div>" +
+        '<div class="choice-list">' +
+        shapeRows +
+        "</div>" +
+        "</section>" +
+        '<section class="flowchart-config-section">' +
+        '<div class="flowchart-config-head">' +
+        '<p class="tiny muted">Texto</p>' +
+        '<button class="icon-ghost tiny-icon" data-action="flowchart-add-node-text-option" data-block-id="' +
+        escAttr(block.id) +
+        '" data-node-id="' +
+        escAttr(node.id) +
+        '" title="Adicionar outra opção de texto">+</button>' +
+        "</div>" +
+        '<div class="choice-list">' +
+        textRows +
+        "</div>" +
+        "</section>" +
+        "</article>"
+      );
+    }).join("");
+
+    return (
+      '<section class="flowchart-builder">' +
+      renderFlowchartBoard(block, { mode: "editor" }) +
+      '<section class="flowchart-config">' +
+      '<div class="config-actions">' +
+      '<button class="icon-ghost tiny-icon" data-action="flowchart-add-node" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Adicionar bloco">+</button>' +
+      "</div>" +
+      (nodesHtml || "") +
+      "</section>" +
+      "</section>"
+    );
+  }
+
+  // Renderiza popup de escolha de símbolo/texto do fluxograma.
+  function renderFlowchartPopup(step, block, popup, exercise) {
+    if (!popup || popup.stepId !== step.id || popup.blockId !== block.id) return "";
+
+    const nodes = getFlowchartSortedNodes(block.nodes);
+    const node = nodes.find(function (item) {
+      return item.id === popup.nodeId;
+    });
+    if (!node) return "";
+
+    if (popup.kind === "shape") {
+      const options = mergeFlowchartNodeShapeOptions(node);
+      const current = String(exercise.shapes[node.id] || "");
+      const optionsHtml = options.map(function (shape) {
+        return (
+          '<button class="flowchart-popup-option flowchart-popup-shape' +
+          (shape === current ? " active" : "") +
+          '" data-action="flowchart-set-shape" data-block-id="' +
+          escAttr(block.id) +
+          '" data-node-id="' +
+          escAttr(node.id) +
+          '" data-shape="' +
+          escAttr(shape) +
+          '">' +
+          renderFlowchartShapeSvg(shape) +
+          '<span class="tiny">' +
+          esc(getFlowchartShapeLabel(shape)) +
+          "</span>" +
+          "</button>"
+        );
+      }).join("");
+
+      return (
+        '<section class="flowchart-popup" data-flowchart-popup="true">' +
+        '<p class="tiny muted">Escolha o símbolo de ' +
+        esc(flowchartNodeTitle(nodes, node.id)) +
+        "</p>" +
+        '<div class="flowchart-popup-grid">' +
+        optionsHtml +
+        "</div>" +
+        '<div class="flowchart-popup-actions">' +
+        '<button class="icon-pill" data-action="flowchart-clear-choice" data-block-id="' +
+        escAttr(block.id) +
+        '" data-node-id="' +
+        escAttr(node.id) +
+        '" data-choice-kind="shape" title="Limpar escolha" aria-label="Limpar escolha">&#8635;</button>' +
+        "</div>" +
+        "</section>"
+      );
+    }
+
+    const textOptions = mergeFlowchartNodeTextOptions(node);
+    const currentText = String(exercise.texts[node.id] || "");
+    const textHtml = textOptions.map(function (value) {
+      return (
+        '<button class="token-option' +
+        (value === currentText ? " active" : "") +
+        '" data-action="flowchart-set-text" data-block-id="' +
+        escAttr(block.id) +
+        '" data-node-id="' +
+        escAttr(node.id) +
+        '" data-text="' +
+        encodeURIComponent(value) +
+        '">' +
+        esc(value) +
+        "</button>"
+      );
+    }).join("");
+
+    return (
+      '<section class="flowchart-popup" data-flowchart-popup="true">' +
+      '<p class="tiny muted">Escolha o texto de ' +
+      esc(flowchartNodeTitle(nodes, node.id)) +
+      "</p>" +
+      '<div class="token-options">' +
+      textHtml +
+      "</div>" +
+      '<div class="flowchart-popup-actions">' +
+      '<button class="icon-pill" data-action="flowchart-clear-choice" data-block-id="' +
+      escAttr(block.id) +
+      '" data-node-id="' +
+      escAttr(node.id) +
+      '" data-choice-kind="text" title="Limpar escolha" aria-label="Limpar escolha">&#8635;</button>' +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  // Renderiza feedback do exercício de fluxograma.
+  function renderFlowchartFeedback(step, block) {
+    const exercise = getFlowchartExerciseState(step, block);
+    if (!exercise.feedback) return "";
+
+    if (exercise.feedback === "correct") {
+      return '<div class="inline-feedback ok"><p class="tiny">Correto.</p></div>';
+    }
+
+    if (exercise.feedback === "incomplete") {
+      return '<div class="inline-feedback err"><p class="tiny">Preencha todos os blocos e textos.</p></div>';
+    }
+
+    return (
+      '<div class="inline-feedback err">' +
+      '<p class="tiny">Fluxograma incorreto.</p>' +
+      '<div class="feedback-icons">' +
+      '<button class="icon-pill" data-action="flowchart-view-answer" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Ver resposta">&#128065;</button>' +
+      '<button class="icon-pill primary" data-action="flowchart-try-again" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Tentar de novo">&#8635;</button>' +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  // Renderiza exercício de fluxograma.
+  function renderFlowchartBlock(step, block) {
+    normalizeFlowchartEditorBlock(block);
+    const exercise = getFlowchartExerciseState(step, block);
+    const popup =
+      state.flowchartPopupOpen &&
+      state.flowchartPopupOpen.stepId === step.id &&
+      state.flowchartPopupOpen.blockId === block.id
+        ? state.flowchartPopupOpen
+        : null;
+
+    return (
+      '<section class="flowchart-exercise">' +
+      renderFlowchartBoard(block, { mode: "practice", exercise: exercise, popup: popup }) +
+      renderFlowchartPopup(step, block, popup, exercise) +
+      renderFlowchartFeedback(step, block) +
+      "</section>"
+    );
   }
 
   // Renderiza tela simples de erro para estados invalidos.
@@ -1436,9 +4646,8 @@
     return {
       id: uid("block"),
       kind: "button",
-      value: "CONTINUAR",
       popupEnabled: false,
-      popupText: ""
+      popupBlocks: []
     };
   }
 
@@ -1448,7 +4657,7 @@
     let button = null;
 
     const list = source.filter(function (block) {
-      if (!block || block.kind !== "button") return true;
+      if (!block || !isButtonKind(block.kind)) return true;
       if (!button) button = block;
       return false;
     });
@@ -1459,9 +4668,8 @@
       button = {
         id: button.id || uid("block"),
         kind: "button",
-        value: "CONTINUAR",
         popupEnabled: !!button.popupEnabled,
-        popupText: String(button.popupText || "")
+        popupBlocks: normalizePopupBlocks(button.popupBlocks)
       };
     }
 
@@ -1473,91 +4681,184 @@
   function toEditorForm(step) {
     const stepType = step.type === "lesson_complete" ? "lesson_complete" : "content";
     const form = blankEditorForm(stepType);
-
-    if (Array.isArray(step.blocks) && step.blocks.length) {
-      form.blocks = step.blocks.map(function (block) {
+    form.blocks = Array.isArray(step.blocks)
+      ? step.blocks.map(function (block) {
         const next = {
           id: block.id || uid("block"),
-          kind: block.kind || "paragraph",
-          value: String(block.value || "")
+          kind: block.kind || "paragraph"
         };
+
+        if (!isButtonKind(next.kind)) {
+          next.value = String(block.value || "");
+        }
+
+        if (isHeadingKind(block.kind)) {
+          next.align = normalizeTextBlockAlign(block.align);
+        }
+
+        if (isParagraphTextKind(block.kind)) {
+          next.richText = typeof block.richText === "string" ? block.richText : "";
+          next.align = normalizeTextBlockAlign(block.align);
+          normalizeParagraphEditorBlock(next);
+        }
         if (isEditorKind(block.kind)) {
           next.kind = "editor";
           next.options = normalizeEditorOptions(block.options);
+          next.interactionMode = block.interactionMode;
+          normalizeTerminalEditorBlock(next);
         }
-        if (block.kind === "button") {
+        if (isFlowchartKind(block.kind)) {
+          next.kind = "flowchart";
+          next.value = "";
+          next.nodes = Array.isArray(block.nodes) ? block.nodes.map(normalizeFlowchartNode) : [];
+          next.links = Array.isArray(block.links) ? block.links.map(normalizeFlowchartLink).filter(Boolean) : [];
+          next.shapeOptions = normalizeFlowchartShapeOptions(block.shapeOptions);
+          next.textOptions = normalizeFlowchartTextOptions(block.textOptions);
+          normalizeFlowchartEditorBlock(next);
+        }
+        if (isTableKind(block.kind)) {
+          const normalizedTable = normalizeTableBlock(block);
+          next.kind = "table";
+          next.value = "";
+          next.title = normalizedTable.title;
+          next.titleStyle = normalizedTable.titleStyle;
+          next.headers = normalizedTable.headers;
+          next.rows = normalizedTable.rows;
+        }
+        if (isMultipleChoiceKind(block.kind)) {
+          const normalizedChoice = normalizeMultipleChoiceBlock(block);
+          next.kind = "multiple_choice";
+          next.value = "";
+          next.answerState = normalizedChoice.answerState;
+          next.options = normalizedChoice.options;
+        }
+        if (isSimulatorKind(block.kind)) {
+          const normalizedSimulator = normalizeSimulatorBlock(block);
+          next.kind = "simulator";
+          next.value = normalizedSimulator.value;
+          next.options = normalizedSimulator.options;
+        }
+        if (isButtonKind(block.kind)) {
           next.popupEnabled = !!block.popupEnabled;
-          next.popupText = String(block.popupText || "");
+          next.popupBlocks = normalizePopupBlocks(block.popupBlocks);
         }
+
         return next;
-      });
-      form.blocks = ensureEditorButtonBlock(form.blocks);
-      return form;
-    }
-
-    if (step.type === "token_fill") {
-      if (step.title) form.blocks.push({ id: uid("block"), kind: "heading", value: step.title });
-      if (step.prompt) form.blocks.push({ id: uid("block"), kind: "paragraph", value: step.prompt });
-      form.blocks.push({
-        id: uid("block"),
-        kind: "editor",
-        value: (step.answer || []).map(function (token) { return "[[" + token + "]]"; }).join(" "),
-        options: normalizeEditorOptions(Array.isArray(step.options) ? step.options : [])
-      });
-      form.blocks = ensureEditorButtonBlock(form.blocks);
-      return form;
-    }
-
-    if (step.title) form.blocks.push({ id: uid("block"), kind: "heading", value: step.title });
-
-    extractBodyBlocks(step).forEach(function (block) {
-      form.blocks.push({ id: uid("block"), kind: block.kind, value: block.value });
-    });
-    if (step.type === "lesson_complete" && step.subtitle) {
-      form.blocks.push({ id: uid("block"), kind: "paragraph", value: step.subtitle });
-    }
-
-    if (step.image) form.blocks.push({ id: uid("block"), kind: "image", value: step.image });
-    if (step.terminal) form.blocks.push({ id: uid("block"), kind: "editor", value: step.terminal, options: [] });
-
-    const popupEnabled = step.type === "content_with_inline_popup";
-    const buttonText = popupEnabled
-      ? clean(step.popupTriggerLabel || step.buttonText, "ABRIR")
-      : clean(step.buttonText, "CONTINUAR");
-
-    form.blocks.push({
-      id: uid("block"),
-      kind: "button",
-      value: buttonText,
-      popupEnabled: popupEnabled,
-      popupText: popupEnabled ? String(step.popupText || "") : ""
-    });
+      })
+      : [];
     form.blocks = ensureEditorButtonBlock(form.blocks);
-
     return form;
   }
 
   // Converte formulario do editor para step valido no JSON interno.
   function buildStepFromEditor(form, keepId) {
     const id = keepId || uid("step");
-    const allowedKinds = ["heading", "paragraph", "image", "editor", "button"];
     let blocks = (form.blocks || [])
-      .filter(function (block) { return block && block.kind && allowedKinds.indexOf(block.kind) > -1; })
+      .filter(function (block) { return block && block.kind && SUPPORTED_BLOCK_KINDS.indexOf(block.kind) > -1; })
       .map(function (block) {
         const next = {
           id: block.id || uid("block"),
-          kind: block.kind,
-          value: String(block.value || "")
+          kind: block.kind
         };
+
+        if (!isButtonKind(block.kind)) {
+          next.value = String(block.value || "");
+        }
+
+        if (isHeadingKind(block.kind)) {
+          next.align = normalizeTextBlockAlign(block.align);
+        }
+
+        if (isParagraphTextKind(block.kind)) {
+          next.richText = typeof block.richText === "string" ? block.richText : "";
+          next.align = normalizeTextBlockAlign(block.align);
+          normalizeParagraphEditorBlock(next);
+        }
 
         if (isEditorKind(block.kind)) {
           next.kind = "editor";
+          next.interactionMode = normalizeEditorInteractionMode(block.interactionMode);
           next.options = normalizeEditorOptions(block.options)
+            .map(function (option, index) {
+              const serialized = {
+                id: option.id || uid("opt"),
+                value: String(option.value || "").trim(),
+                enabled: option.enabled !== false,
+                displayOrder: Number.isFinite(Number(option.displayOrder)) ? Number(option.displayOrder) : 0,
+                slotOrder: Number.isFinite(Number(option.slotOrder)) ? Number(option.slotOrder) : index
+              };
+              const variants = normalizeEditorInputVariantsForAuthor(option.variants)
+                .map(function (variant) {
+                  return {
+                    id: variant.id || uid("variant"),
+                    value: String(variant.value || "").trim(),
+                    regex: !!variant.regex
+                  };
+                })
+                .filter(function (variant) {
+                  return variant.value.length > 0;
+                });
+              if (next.interactionMode === "input" && option.regex) serialized.regex = true;
+              if (next.interactionMode === "input" && variants.length) serialized.variants = variants;
+              return serialized;
+            })
+            .filter(function (option) {
+              return option.value.length > 0;
+            });
+        }
+
+        if (isFlowchartKind(block.kind)) {
+          next.kind = "flowchart";
+          next.value = "";
+          next.nodes = Array.isArray(block.nodes) ? block.nodes.map(normalizeFlowchartNode) : [];
+          next.links = Array.isArray(block.links) ? block.links.map(normalizeFlowchartLink).filter(Boolean) : [];
+          next.shapeOptions = normalizeFlowchartShapeOptions(block.shapeOptions);
+          next.textOptions = normalizeFlowchartTextOptions(block.textOptions)
+            .filter(function (option) {
+              return option.value.length > 0;
+            });
+          normalizeFlowchartEditorBlock(next);
+        }
+
+        if (isTableKind(block.kind)) {
+          const normalizedTable = normalizeTableBlock(block);
+          next.kind = "table";
+          next.value = "";
+          next.title = normalizedTable.title;
+          next.titleStyle = normalizedTable.titleStyle;
+          next.headers = normalizedTable.headers;
+          next.rows = normalizedTable.rows;
+        }
+
+        if (isMultipleChoiceKind(block.kind)) {
+          const normalizedChoice = normalizeMultipleChoiceBlock(block);
+          next.kind = "multiple_choice";
+          next.value = "";
+          next.answerState = normalizedChoice.answerState;
+          next.options = normalizedChoice.options
             .map(function (option) {
               return {
                 id: option.id || uid("opt"),
                 value: String(option.value || "").trim(),
-                enabled: option.enabled !== false
+                answer: !!option.answer
+              };
+            })
+            .filter(function (option) {
+              return option.value.length > 0;
+            });
+          normalizeTerminalEditorBlock(next);
+        }
+
+        if (isSimulatorKind(block.kind)) {
+          const normalizedSimulator = normalizeSimulatorBlock(block);
+          next.kind = "simulator";
+          next.value = normalizedSimulator.value;
+          next.options = normalizedSimulator.options
+            .map(function (option) {
+              return {
+                id: option.id || uid("opt"),
+                value: String(option.value || "").trim(),
+                result: String(option.result || "").replace(/\r/g, "")
               };
             })
             .filter(function (option) {
@@ -1565,9 +4866,9 @@
             });
         }
 
-        if (block.kind === "button") {
+        if (isButtonKind(block.kind)) {
           next.popupEnabled = !!block.popupEnabled;
-          next.popupText = String(block.popupText || "");
+          next.popupBlocks = normalizePopupBlocks(block.popupBlocks);
         }
 
         return next;
@@ -1579,8 +4880,10 @@
       if (!isEditorKind(blocks[i].kind)) continue;
 
       normalizeTerminalEditorBlock(blocks[i]);
+      pruneEmptyEditorPlaceholders(blocks[i]);
       const markers = parseOptionMarkers(blocks[i].value);
       const options = normalizeEditorOptions(blocks[i].options);
+      const interactionMode = getEditorInteractionMode(blocks[i]);
       const enabledCount = getEnabledOptionIndexes(options).length;
       if (markers.length !== enabledCount) {
         window.alert("Editor com lacunas inconsistentes. Revise as opções habilitadas.");
@@ -1591,7 +4894,95 @@
       const hasBlankMarker = markers.some(function (marker) { return !String(marker.value || "").trim(); });
       const hasBlankOption = options.some(function (option) { return !String(option.value || "").trim(); });
       if (hasAnyExercise && (hasBlankMarker || hasBlankOption)) {
-        window.alert("Preencha todos os textos dentro de [[...]] e das opções do Editor.");
+        window.alert(
+          interactionMode === "choice"
+            ? "Preencha todos os textos dentro de [[...]] e das opções do Editor."
+            : "Preencha todas as respostas esperadas das lacunas do Editor digitado."
+        );
+        return null;
+      }
+    }
+
+    for (let i = 0; i < blocks.length; i += 1) {
+      if (!isFlowchartKind(blocks[i].kind)) continue;
+
+      normalizeFlowchartEditorBlock(blocks[i]);
+      const flowNodes = getFlowchartSortedNodes(blocks[i].nodes);
+      if (!flowNodes.length) {
+        window.alert("Adicione pelo menos um bloco ao fluxograma.");
+        return null;
+      }
+
+      for (let j = 0; j < flowNodes.length; j += 1) {
+        const node = flowNodes[j];
+        if (!String(node.text || "").trim()) {
+          window.alert("Preencha o texto correto de todos os blocos do fluxograma.");
+          return null;
+        }
+        if ((node.textOptions || []).some(function (option) { return !String(option.value || "").trim(); })) {
+          window.alert("Preencha ou remova todas as opções extras de texto do fluxograma.");
+          return null;
+        }
+      }
+
+      const nodeMap = getFlowchartNodeMap(flowNodes);
+      const outgoingCount = {};
+      for (let j = 0; j < blocks[i].links.length; j += 1) {
+        const link = blocks[i].links[j];
+        if (!nodeMap[link.fromNodeId] || !nodeMap[link.toNodeId]) {
+          window.alert("Há uma seta do fluxograma apontando para um bloco inexistente.");
+          return null;
+        }
+        outgoingCount[link.fromNodeId] = (outgoingCount[link.fromNodeId] || 0) + 1;
+        if (outgoingCount[link.fromNodeId] > 2) {
+          window.alert("Cada bloco do fluxograma pode ter no máximo duas saídas.");
+          return null;
+        }
+        if (!isFlowchartLinkAllowed(link, nodeMap)) {
+          window.alert("As setas do fluxograma precisam ligar um bloco a outro bloco válido.");
+          return null;
+        }
+      }
+    }
+
+    for (let i = 0; i < blocks.length; i += 1) {
+      if (!isTableKind(blocks[i].kind)) continue;
+      blocks[i] = normalizeTableBlock(blocks[i]);
+    }
+
+    for (let i = 0; i < blocks.length; i += 1) {
+      if (!isMultipleChoiceKind(blocks[i].kind)) continue;
+
+      const choice = normalizeMultipleChoiceBlock(blocks[i]);
+      const filledOptions = choice.options.filter(function (option) {
+        return String(option.value || "").trim();
+      });
+      const answerCount = filledOptions.filter(function (option) { return option.answer; }).length;
+
+      if (!filledOptions.length) {
+        window.alert("Adicione pelo menos uma alternativa na múltipla escolha.");
+        return null;
+      }
+      if (answerCount < 1) {
+        window.alert("Marque ao menos uma alternativa como resposta na múltipla escolha.");
+        return null;
+      }
+    }
+
+    for (let i = 0; i < blocks.length; i += 1) {
+      if (!isSimulatorKind(blocks[i].kind)) continue;
+
+      const simulator = normalizeSimulatorBlock(blocks[i]);
+      if (parseOptionMarkers(simulator.value).length !== 1) {
+        window.alert("O Simulador precisa ter exatamente uma lacuna no template.");
+        return null;
+      }
+      const filledOptions = simulator.options.filter(function (option) {
+        return String(option.value || "").trim();
+      });
+
+      if (!filledOptions.length) {
+        window.alert("Adicione pelo menos uma opção no bloco Simulador.");
         return null;
       }
     }
@@ -1602,43 +4993,17 @@
     }
 
     const heading = firstValue(blocks, "heading");
-    const bodyBlocks = blocks.filter(function (block) {
-      return block.kind === "paragraph" && String(block.value || "").trim();
-    });
-    const image = firstValue(blocks, "image");
-    const terminal = firstValue(blocks, "editor");
-    const firstButton = blocks.find(function (block) {
-      return block.kind === "button" && String(block.value || "").trim();
-    });
-
     const stepTypeBase = form.stepType === "lesson_complete" ? "lesson_complete" : "content";
-    const type =
-      stepTypeBase === "lesson_complete"
-        ? "lesson_complete"
-        : firstButton && firstButton.popupEnabled
-          ? "content_with_inline_popup"
-          : "content";
-
     const base = {
       id: id,
-      type: type,
+      type: stepTypeBase,
       title: clean(heading, stepTypeBase === "lesson_complete" ? "Lição concluída" : "Novo card"),
-      buttonText: "CONTINUAR",
       blocks: blocks
     };
 
-    if (bodyBlocks.length) base.bodyHtml = bodyBlocks.map(bodyBlockToHtml).join("");
-    if (image) base.image = image;
-    if (terminal) base.terminal = terminal;
-
-    if (firstButton && firstButton.popupEnabled) {
-      base.popupTriggerLabel = "Abrir popup";
-      base.popupText = clean(firstButton.popupText, "Explique este ponto.");
-    }
-
     if (stepTypeBase === "lesson_complete") {
-      const firstParagraph = bodyBlocks.find(function (block) {
-        return block.kind === "paragraph" && String(block.value || "").trim();
+      const firstParagraph = blocks.find(function (block) {
+        return isParagraphKind(block.kind) && String(block.value || "").trim();
       });
       if (firstParagraph) base.subtitle = firstParagraph.value.trim();
     }
@@ -1681,10 +5046,12 @@
     state.editor.anchorIndex = targetIndex;
     state.editor.keepStepId = targetStep.id;
     state.editor.form = cached ? clone(cached) : toEditorForm(targetStep);
+    state.editor.activeBlockId = null;
     state.editor.dragType = null;
     state.editor.pointerDrag = null;
     state.editor.blockDragId = null;
-    state.editor.imageTargetBlockId = null;
+    state.editor.imageTarget = null;
+    resetPopupBuilderState();
     state.editor.pendingScrollBlockId = null;
     state.editor.terminalGuardByBlockId = {};
     state.editor.dragOverTargetId = null;
@@ -1705,13 +5072,15 @@
     state.editor.keepStepId = mode === "edit" ? step.id : null;
     state.editor.draftByStepId = {};
     state.editor.form = initialForm;
+    state.editor.activeBlockId = null;
     if (mode === "edit") {
       state.editor.draftByStepId[step.id] = clone(initialForm);
     }
     state.editor.dragType = null;
     state.editor.pointerDrag = null;
     state.editor.blockDragId = null;
-    state.editor.imageTargetBlockId = null;
+    state.editor.imageTarget = null;
+    resetPopupBuilderState();
     state.editor.pendingScrollBlockId = null;
     state.editor.terminalGuardByBlockId = {};
     state.editor.dragOverTargetId = null;
@@ -1729,11 +5098,15 @@
     state.editor.keepStepId = null;
     state.editor.draftByStepId = {};
     state.editor.form = null;
+    state.editor.activeBlockId = null;
+    state.editor.activeTableCell = null;
     state.editor.dragType = null;
     state.editor.pointerDrag = null;
     state.editor.blockDragId = null;
-    state.editor.imageTargetBlockId = null;
+    state.editor.imageTarget = null;
+    resetPopupBuilderState();
     state.editor.pendingScrollBlockId = null;
+    state.editor.pendingTableFocus = null;
     state.editor.terminalGuardByBlockId = {};
     state.editor.dragOverTargetId = null;
     state.editor.dragOverPosition = null;
@@ -1744,18 +5117,39 @@
   function addBlock(kind, targetId) {
     if (!state.editor.open) return;
     snapshotEditorFromDom();
-    if (BLOCK_TYPES.indexOf(kind) === -1) return;
+    const availableTypes =
+      state.editor.popupBuilder && state.editor.popupBuilder.open
+        ? POPUP_BLOCK_KINDS
+        : AUTHORING_BLOCK_KINDS;
+    if (availableTypes.indexOf(kind) === -1) return;
 
-    const block = { id: uid("block"), kind: kind, value: "" };
-    if (kind === "editor") block.options = [];
+    const block =
+      kind === "flowchart"
+        ? defaultFlowchartBlock()
+        : kind === "table"
+          ? defaultTableBlock()
+          : kind === "multiple_choice"
+            ? defaultMultipleChoiceBlock()
+            : kind === "simulator"
+              ? defaultSimulatorBlock()
+            : { id: uid("block"), kind: kind, value: "", richText: kind === "paragraph" ? "" : undefined };
+    if (kind === "editor") {
+      block.options = [];
+      block.interactionMode = "choice";
+    }
     const blocks = ensureEditorButtonBlock(state.editor.form.blocks || []);
     const buttonIndex = blocks.findIndex(function (item) { return item.kind === "button"; });
     const insertAtEnd = buttonIndex > -1 ? buttonIndex : blocks.length;
+    const defaultTargetId =
+      !targetId && state.editor.activeBlockId
+        ? getNextInsertTarget(state.editor.activeBlockId)
+        : null;
+    const desiredTargetId = targetId || defaultTargetId;
 
-    if (!targetId) {
+    if (!desiredTargetId) {
       blocks.splice(insertAtEnd, 0, block);
     } else {
-      const targetIndex = blocks.findIndex(function (item) { return item.id === targetId; });
+      const targetIndex = blocks.findIndex(function (item) { return item.id === desiredTargetId; });
       if (targetIndex === -1) {
         blocks.splice(insertAtEnd, 0, block);
       } else {
@@ -1765,7 +5159,1280 @@
     }
 
     state.editor.form.blocks = ensureEditorButtonBlock(blocks);
+    state.editor.activeBlockId = block.id;
     state.editor.pendingScrollBlockId = block.id;
+    renderApp();
+  }
+
+  // Registra o último bloco em edição para orientar destaque visual e inserções.
+  function setActiveEditorBlock(blockId) {
+    if (!state.editor.open) return;
+    state.editor.activeBlockId = blockId || null;
+    syncEditorActiveBlockVisualState();
+  }
+
+  // Reflete no DOM qual bloco está ativo para destacar o foco autoral sem re-render completo.
+  function syncEditorActiveBlockVisualState() {
+    const domScope = getEditorDomScope();
+    if (!domScope || !domScope.querySelectorAll) return;
+
+    const activeBlockId = state.editor && state.editor.open ? state.editor.activeBlockId : null;
+    domScope.querySelectorAll(".builder-block").forEach(function (node) {
+      const blockId = node.getAttribute("data-block-id") || "";
+      const isDragSource =
+        node.classList.contains("drag-source") ||
+        (state.editor.pointerDrag && state.editor.pointerDrag.active && state.editor.pointerDrag.blockId === blockId) ||
+        state.editor.blockDragId === blockId;
+      const isActive = !!activeBlockId && activeBlockId === blockId;
+      const shouldMute = !!activeBlockId && activeBlockId !== blockId && !isDragSource;
+      node.classList.toggle("is-active", isActive);
+      node.classList.toggle("is-muted", shouldMute);
+    });
+  }
+
+  // Retorna o container DOM do editor atualmente ativo.
+  function getEditorDomScope() {
+    if (!(state.editor && state.editor.open)) return root;
+
+    if (state.editor.popupBuilder && state.editor.popupBuilder.open) {
+      return root.querySelector(".popup-builder-overlay") || root;
+    }
+
+    const overlays = Array.from(root.querySelectorAll(".editor-overlay"));
+    return overlays.find(function (node) {
+      return !node.classList.contains("popup-builder-overlay");
+    }) || root;
+  }
+
+  // Retorna o editor rico de um bloco de parágrafo.
+  function getParagraphRichInput(blockId) {
+    if (!blockId) return null;
+    return getEditorDomScope().querySelector(
+      '.builder-block[data-block-id="' + cssEsc(blockId) + '"] [data-block-rich-input]'
+    );
+  }
+
+  // Retorna o campo rico do template do bloco Editor.
+  function getEditorTemplateInput(blockId) {
+    if (!blockId) return null;
+    return getEditorDomScope().querySelector(
+      '.builder-block[data-block-id="' + cssEsc(blockId) + '"] [data-terminal-template]'
+    );
+  }
+
+  // Retorna o campo rico do template do bloco Simulador.
+  function getSimulatorTemplateInput(blockId) {
+    if (!blockId) return null;
+    return getEditorDomScope().querySelector(
+      '.builder-block[data-block-id="' + cssEsc(blockId) + '"] [data-simulator-template]'
+    );
+  }
+
+  // Tenta focar um campo textual sem deslocar a página inteira.
+  function focusFieldNoScroll(field) {
+    if (!field || typeof field.focus !== "function") return;
+    try {
+      field.focus({ preventScroll: true });
+    } catch (error) {
+      field.focus();
+    }
+  }
+
+  // Posiciona o cursor no fim do primeiro campo focado quando o autor clica na superfície do contêiner.
+  function moveCaretToFieldEnd(field) {
+    if (!field) return;
+
+    if (
+      typeof field.setSelectionRange === "function" &&
+      typeof field.value === "string" &&
+      !field.matches("[type='checkbox'], [type='radio']")
+    ) {
+      const end = field.value.length;
+      try {
+        field.setSelectionRange(end, end);
+      } catch (error) {
+        // Alguns tipos de input não aceitam seleção programática.
+      }
+      return;
+    }
+
+    if (field.isContentEditable) {
+      const selection = window.getSelection ? window.getSelection() : null;
+      if (!selection) return;
+      const range = document.createRange();
+      range.selectNodeContents(field);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+
+  // Descobre o primeiro campo editável útil de um contêiner no editor.
+  function getPrimaryEditorField(blockNode) {
+    if (!blockNode || !blockNode.querySelector) return null;
+
+    if (blockNode.getAttribute("data-block-kind") === "table") {
+      return (
+        blockNode.querySelector("[data-table-title]") ||
+        blockNode.querySelector("[data-table-header-cell]") ||
+        blockNode.querySelector("[data-table-cell]") ||
+        null
+      );
+    }
+
+    const selectors = [
+      "[data-block-input]:not([disabled])",
+      "[data-button-popup]:not([disabled])",
+      "input:not([type='hidden']):not([disabled])",
+      "textarea:not([disabled])",
+      "select:not([disabled])",
+      "[contenteditable='true']",
+      "button:not([disabled])"
+    ];
+
+    for (let i = 0; i < selectors.length; i += 1) {
+      const field = blockNode.querySelector(selectors[i]);
+      if (field) return field;
+    }
+    return null;
+  }
+
+  // Ativa o contêiner clicado e, se o clique caiu na superfície, foca o primeiro campo dele.
+  function handleEditorBlockSurfaceClick(event) {
+    if (!state.editor.open) return;
+    const target = event.target;
+    if (!target || !target.closest) return;
+
+    const blockNode = target.closest(".builder-block");
+    if (!blockNode) return;
+
+    setActiveEditorBlock(blockNode.getAttribute("data-block-id"));
+
+    if (target.closest("[data-action], input, textarea, select, button, label, [contenteditable='true']")) {
+      return;
+    }
+
+    const field = getPrimaryEditorField(blockNode);
+    if (!field) return;
+    focusFieldNoScroll(field);
+    moveCaretToFieldEnd(field);
+  }
+
+  // Converte a seleção atual de um contenteditable em offsets lineares de texto.
+  function getEditableSelectionOffsets(input) {
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (!input || !selection || !selection.rangeCount) return null;
+
+    const range = selection.getRangeAt(0);
+    if (!input.contains(range.startContainer) || !input.contains(range.endContainer)) return null;
+
+    const toOffset = function (container, offset) {
+      const probe = document.createRange();
+      try {
+        probe.setStart(input, 0);
+        probe.setEnd(container, offset);
+      } catch (_error) {
+        return null;
+      }
+      return probe.toString().length;
+    };
+
+    const start = toOffset(range.startContainer, range.startOffset);
+    const end = toOffset(range.endContainer, range.endOffset);
+    if (start === null || end === null) return null;
+
+    return {
+      start: Math.min(start, end),
+      end: Math.max(start, end)
+    };
+  }
+
+  // Resolve um offset linear de texto para um nó e posição válidos no contenteditable.
+  function resolveEditableOffsetPosition(input, wantedOffset) {
+    const walker = document.createTreeWalker(input, NodeFilter.SHOW_TEXT);
+    let current = walker.nextNode();
+    let consumed = 0;
+
+    while (current) {
+      const length = String(current.textContent || "").length;
+      if (wantedOffset <= consumed + length) {
+        return {
+          node: current,
+          offset: Math.max(0, wantedOffset - consumed)
+        };
+      }
+      consumed += length;
+      current = walker.nextNode();
+    }
+
+    if (input.lastChild && input.lastChild.nodeType === 3) {
+      return {
+        node: input.lastChild,
+        offset: String(input.lastChild.textContent || "").length
+      };
+    }
+
+    return {
+      node: input,
+      offset: input.childNodes ? input.childNodes.length : 0
+    };
+  }
+
+  // Restaura seleção capturada anteriormente dentro do contenteditable.
+  function restoreEditableSelectionOffsets(input, selectionState) {
+    if (!input || !selectionState) return;
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (!selection) return;
+
+    const start = resolveEditableOffsetPosition(input, Math.max(0, selectionState.start || 0));
+    const end = resolveEditableOffsetPosition(input, Math.max(0, selectionState.end || 0));
+    const range = document.createRange();
+
+    try {
+      range.setStart(start.node, start.offset);
+      range.setEnd(end.node, end.offset);
+    } catch (_error) {
+      return;
+    }
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  // Reaplica a seleção capturada quando o clique na toolbar ou o foco a deslocam do contenteditable.
+  function ensureEditableSelectionState(input, selectionState) {
+    if (!input || !selectionState) return;
+    const current = getEditableSelectionOffsets(input);
+    if (
+      current &&
+      current.start === Math.max(0, selectionState.start || 0) &&
+      current.end === Math.max(0, selectionState.end || 0)
+    ) {
+      return;
+    }
+    restoreEditableSelectionOffsets(input, selectionState);
+  }
+
+  // Captura a seleção atual do bloco textual antes de abrir a paleta de cor.
+  function captureBlockSelectionState(blockId) {
+    const block = getEditorBlock(blockId);
+    if (!block) return null;
+
+    if (isEditorKind(block.kind)) {
+      const input = getEditorTemplateInput(blockId);
+      const offsets = getEditableSelectionOffsets(input);
+      return offsets
+        ? {
+            mode: "contenteditable",
+            start: offsets.start,
+            end: offsets.end
+          }
+        : null;
+    }
+
+    if (isSimulatorKind(block.kind)) {
+      const input = getSimulatorTemplateInput(blockId);
+      const offsets = getEditableSelectionOffsets(input);
+      return offsets
+        ? {
+            mode: "contenteditable",
+            start: offsets.start,
+            end: offsets.end
+          }
+        : null;
+    }
+
+    if (isParagraphTextKind(block.kind)) {
+      const input = getParagraphRichInput(blockId);
+      const offsets = getEditableSelectionOffsets(input);
+      return offsets
+        ? {
+            mode: "contenteditable",
+            start: offsets.start,
+            end: offsets.end
+          }
+        : null;
+    }
+
+    return null;
+  }
+
+  // Restaura a seleção capturada para reaplicar estilo após a abertura da paleta.
+  function restoreBlockSelectionState(blockId, selectionState) {
+    const block = getEditorBlock(blockId);
+    if (!block || !selectionState) return;
+
+    if (selectionState.mode === "contenteditable" && isEditorKind(block.kind)) {
+      const input = getEditorTemplateInput(blockId);
+      if (!input) return;
+      focusFieldNoScroll(input);
+      restoreEditableSelectionOffsets(input, selectionState);
+      return;
+    }
+
+    if (selectionState.mode === "contenteditable" && isSimulatorKind(block.kind)) {
+      const input = getSimulatorTemplateInput(blockId);
+      if (!input) return;
+      focusFieldNoScroll(input);
+      restoreEditableSelectionOffsets(input, selectionState);
+      return;
+    }
+
+    if (selectionState.mode === "contenteditable" && isParagraphTextKind(block.kind)) {
+      const input = getParagraphRichInput(blockId);
+      if (!input) return;
+      focusFieldNoScroll(input);
+      restoreEditableSelectionOffsets(input, selectionState);
+    }
+  }
+
+  // Lê as opções configuradas no bloco Editor a partir do DOM atual.
+  function collectTerminalOptionsFromBlockNode(blockNode) {
+    if (!blockNode) return [];
+    const groups = Array.from(blockNode.querySelectorAll("[data-editor-option-group]"));
+    const currentBlock = getEditorBlock(blockNode.getAttribute("data-block-id") || "");
+    if (!groups.length) {
+      return Array.from(blockNode.querySelectorAll("[data-terminal-option-row]")).map(function (row, visualIndex) {
+        const inputNode = row.querySelector("[data-terminal-option]");
+        const base = getEditorOptionById(currentBlock && currentBlock.options, row.getAttribute("data-option-id") || "") || {};
+        return {
+          id: row.getAttribute("data-option-id") || uid("opt"),
+          value: inputNode ? String(inputNode.value || "") : String(base.value || ""),
+          enabled: row.getAttribute("data-option-enabled") !== "0",
+          displayOrder: visualIndex,
+          slotOrder: Number.isFinite(Number(base.slotOrder)) ? Number(base.slotOrder) : visualIndex,
+          regex: !!base.regex,
+          variants: normalizeEditorInputVariantsForAuthor(base.variants)
+        };
+      });
+    }
+    const baseOptions = normalizeEditorOptions(currentBlock && currentBlock.options).reduce(function (acc, option) {
+      acc[option.id] = option;
+      return acc;
+    }, {});
+
+    const collected = groups.map(function (groupNode, visualIndex) {
+      const row = groupNode.querySelector("[data-terminal-option-row]");
+      const inputNode = row ? row.querySelector("[data-terminal-option]") : null;
+      const id = (row ? row.getAttribute("data-option-id") : groupNode.getAttribute("data-option-id")) || uid("opt");
+      const base = baseOptions[id] || {};
+      const variantRows = Array.from(groupNode.querySelectorAll("[data-editor-slot-variant-row]"));
+      const baseVariants = normalizeEditorInputVariantsForAuthor(base.variants);
+      return {
+        id: id,
+        value: inputNode ? String(inputNode.value || "") : String(base.value || ""),
+        enabled: row ? row.getAttribute("data-option-enabled") !== "0" : base.enabled !== false,
+        displayOrder: visualIndex,
+        slotOrder: Number.isFinite(Number(base.slotOrder)) ? Number(base.slotOrder) : visualIndex,
+        regex: !!base.regex,
+        variants: variantRows.length
+          ? variantRows.map(function (variantRow, variantIndex) {
+              const variantInput = variantRow.querySelector("[data-editor-slot-variant]");
+              const variantBase = baseVariants[variantIndex] || {};
+              return {
+                id: String(variantBase.id || uid("variant")),
+                value: variantInput ? String(variantInput.value || "") : String(variantBase.value || ""),
+                regex: !!variantBase.regex
+              };
+            })
+          : baseVariants
+      };
+    });
+
+    const missing = normalizeEditorOptions(currentBlock && currentBlock.options).filter(function (option) {
+      return !collected.some(function (item) { return item.id === option.id; });
+    }).map(function (option, index) {
+      return Object.assign({}, option, {
+        displayOrder: collected.length + index
+      });
+    });
+
+    return collected.concat(missing);
+  }
+
+  // Lê a grade da tabela diretamente do DOM do editor sem colapsar colunas vazias.
+  function collectTableDraftFromBlockNode(blockNode) {
+    if (!blockNode) return normalizeTableDraft({});
+
+    const titleField = blockNode.querySelector("[data-table-title]");
+    const headerFields = Array.from(blockNode.querySelectorAll("[data-table-header-cell]"));
+    const rowNodes = Array.from(blockNode.querySelectorAll("[data-table-body-row]"));
+
+    return normalizeTableDraft({
+      kind: "table",
+      title: titleField ? titleField.value : "",
+      titleStyle: titleField
+        ? {
+            bold: titleField.getAttribute("data-table-bold") === "1",
+            italic: titleField.getAttribute("data-table-italic") === "1",
+            tone: titleField.getAttribute("data-table-tone") || "default",
+            align: titleField.getAttribute("data-table-align") || "left"
+          }
+        : undefined,
+      headers: headerFields.map(function (field) {
+        return {
+          value: String(field.value || ""),
+          bold: field.getAttribute("data-table-bold") === "1",
+          italic: field.getAttribute("data-table-italic") === "1",
+          tone: field.getAttribute("data-table-tone") || "default",
+          align: field.getAttribute("data-table-align") || "left"
+        };
+      }),
+      rows: rowNodes.map(function (rowNode) {
+        return Array.from(rowNode.querySelectorAll("[data-table-cell]")).map(function (field) {
+          return {
+            value: String(field.value || ""),
+            bold: field.getAttribute("data-table-bold") === "1",
+            italic: field.getAttribute("data-table-italic") === "1",
+            tone: field.getAttribute("data-table-tone") || "default",
+            align: field.getAttribute("data-table-align") || "left"
+          };
+        });
+      })
+    });
+  }
+
+  // Mede o texto com a mesma tipografia do campo para ajustar a coluna ao conteúdo real.
+  function measureTableEditorTextWidth(field, text) {
+    if (!field || typeof window === "undefined" || !window.getComputedStyle) return 0;
+    const value = String(text || "");
+    const style = window.getComputedStyle(field);
+    const canvas = measureTableEditorTextWidth.canvas || (measureTableEditorTextWidth.canvas = document.createElement("canvas"));
+    const context = canvas.getContext("2d");
+    if (!context) return 0;
+
+    const font = style.font && style.font !== ""
+      ? style.font
+      : [
+          style.fontStyle,
+          style.fontVariant,
+          style.fontWeight,
+          style.fontSize + "/" + style.lineHeight,
+          style.fontFamily
+        ].join(" ");
+    context.font = font;
+
+    const horizontalPadding =
+      (parseFloat(style.paddingLeft) || 0) +
+      (parseFloat(style.paddingRight) || 0) +
+      (parseFloat(style.borderLeftWidth) || 0) +
+      (parseFloat(style.borderRightWidth) || 0);
+
+    return Math.ceil(context.measureText(value || " ").width + horizontalPadding + 6);
+  }
+
+  // Recalcula as larguras das colunas da tabela direto no DOM do editor.
+  function syncTableEditorColumnWidths(blockNode) {
+    if (!blockNode) return;
+    const widthNodes = Array.from(blockNode.querySelectorAll("[data-table-column-width]"));
+    if (!widthNodes.length) return;
+
+    widthNodes.forEach(function (node, index) {
+      const headerInput = blockNode.querySelector('[data-table-header-cell][data-column-index="' + String(index) + '"]');
+      const cellInputs = Array.from(blockNode.querySelectorAll('[data-table-cell][data-column-index="' + String(index) + '"]'));
+      const fields = (headerInput ? [headerInput] : []).concat(cellInputs);
+      let width = 44;
+      let hasRealContent = false;
+
+      fields.forEach(function (field) {
+        const sampleText = String(field.value || "");
+        if (sampleText.trim()) {
+          hasRealContent = true;
+          width = Math.max(width, measureTableEditorTextWidth(field, sampleText));
+        }
+      });
+
+      if (!hasRealContent && headerInput) {
+        width = Math.max(width, measureTableEditorTextWidth(headerInput, " "));
+      }
+
+      const removeButton = headerInput
+        ? headerInput.parentElement && headerInput.parentElement.querySelector(".table-editor-remove-column")
+        : null;
+      const removeWidth = removeButton ? Math.ceil(removeButton.getBoundingClientRect().width || 22) : 0;
+      const gapWidth = removeButton ? 4 : 0;
+      node.style.width = String(width + removeWidth + gapWidth) + "px";
+    });
+  }
+
+  // Aplica o recalculo de largura em todas as tabelas abertas no editor.
+  function syncAllTableEditorColumnWidths() {
+    if (!state.editor.open) return;
+    Array.from(getEditorDomScope().querySelectorAll('.builder-block[data-block-kind="table"]')).forEach(syncTableEditorColumnWidths);
+  }
+
+  // Lê as alternativas configuradas no bloco de múltipla escolha a partir do DOM.
+  function collectMultipleChoiceOptionsFromBlockNode(blockNode) {
+    if (!blockNode) return [];
+    return Array.from(blockNode.querySelectorAll("[data-choice-option-row]"))
+      .map(function (row, optionIndex) {
+        const inputNode = row.querySelector("[data-choice-option]");
+        return {
+          id: row.getAttribute("data-option-id") || uid("opt"),
+          value: inputNode ? String(inputNode.value || "") : "",
+          answer: row.getAttribute("data-option-answer") === "1",
+          indexHint: optionIndex
+        };
+      })
+      .sort(function (a, b) { return a.indexHint - b.indexHint; })
+      .map(function (item) {
+        return { id: item.id, value: item.value, answer: item.answer };
+      });
+  }
+
+  // Lê os pares opção -> resultado configurados no bloco correspondente.
+  function collectSimulatorOptionsFromBlockNode(blockNode) {
+    if (!blockNode) return [];
+    return Array.from(blockNode.querySelectorAll("[data-simulator-row]"))
+      .map(function (row, optionIndex) {
+        const labelNode = row.querySelector("[data-simulator-label]");
+        const outputNode = row.querySelector("[data-simulator-output]");
+        return {
+          id: row.getAttribute("data-option-id") || uid("opt"),
+          value: labelNode ? String(labelNode.value || "").trim() : "",
+          result: outputNode ? String(outputNode.value || "").replace(/\r/g, "") : "",
+          indexHint: optionIndex
+        };
+      })
+      .sort(function (a, b) { return a.indexHint - b.indexHint; })
+      .map(function (item) {
+        return { id: item.id, value: item.value, result: item.result };
+      });
+  }
+
+  // Reflete no DOM as opções do bloco Editor após sincronização/normalização.
+  function syncTerminalOptionRowsFromBlockNode(blockNode, options) {
+    const rows = Array.from(blockNode ? blockNode.querySelectorAll("[data-terminal-option-row]") : []);
+    const byId = normalizeEditorOptions(options).reduce(function (acc, option) {
+      acc[option.id] = option;
+      return acc;
+    }, {});
+    rows.forEach(function (row, index) {
+      const option = byId[row.getAttribute("data-option-id") || ""] || null;
+      if (!option) return;
+
+      const enabled = option.enabled !== false;
+      row.setAttribute("data-option-id", option.id || "");
+      row.setAttribute("data-option-enabled", enabled ? "1" : "0");
+      row.setAttribute("data-option-display-order", String(option.displayOrder || index));
+
+      const inputNode = row.querySelector("[data-terminal-option]");
+      if (inputNode) inputNode.value = String(option.value || "");
+
+      const toggle = row.querySelector("[data-action='terminal-toggle-option']");
+      if (toggle) {
+        toggle.classList.toggle("active", enabled);
+        toggle.innerHTML = enabled ? "&#9679;" : "&#9675;";
+        toggle.title = enabled ? "Desabilitar lacuna" : "Habilitar lacuna";
+      }
+    });
+  }
+
+  // Reflete no DOM as respostas esperadas do modo Digitação na mesma ordem das lacunas do preview.
+  function syncTerminalInputAnswerRowsFromBlockNode(blockNode, block) {
+    const listNode = blockNode ? blockNode.querySelector("[data-editor-slot-list]") : null;
+    if (!listNode || !block) return;
+    const html = buildEditorInputAnswerRowsHtml(block);
+    if (listNode.innerHTML !== html) listNode.innerHTML = html;
+  }
+
+  // Reaplica no DOM a visualização rica do template após sincronização do bloco.
+  function refreshTemplateInputFromBlock(blockNode, block, selectionState) {
+    if (!blockNode || !block) return;
+    const field = isEditorKind(block.kind)
+      ? blockNode.querySelector("[data-terminal-template]")
+      : isSimulatorKind(block.kind)
+        ? blockNode.querySelector("[data-simulator-template]")
+        : null;
+    if (!field) return;
+
+    const config = getTemplateBuilderOptions(block.kind);
+    const html = renderAuthorTemplateHtml(block.value || "", {
+      mode: config.mode,
+      editable: config.editablePlaceholders,
+      displayStyle: getAuthorPlaceholderDisplayStyle(block)
+    });
+    if (field.innerHTML !== html) field.innerHTML = html;
+    if (selectionState) restoreEditableSelectionOffsets(field, selectionState);
+  }
+
+  // Sincroniza o template rico do Editor com o estado em memória sem re-renderizar tudo.
+  function syncTerminalTemplateBlockFromNode(blockId, field, options) {
+    const blockNode = field ? field.closest(".builder-block") : null;
+    const block = getEditorBlock(blockId);
+    if (!blockNode || !block || !isEditorKind(block.kind)) return;
+
+    const config = options || {};
+    const preserveSelection = config.preserveSelection !== false;
+    const selectionState = preserveSelection ? getEditableSelectionOffsets(field) : null;
+    const interactionMode = getEditorInteractionMode(block);
+    const nextValue = serializeAuthorTemplateHtml(field);
+    const nextOptions = interactionMode === "choice"
+      ? collectTerminalOptionsFromBlockNode(blockNode)
+      : normalizeEditorOptions(block.options);
+    if (
+      interactionMode === "choice" &&
+      parseOptionMarkers(nextValue).length !== getEnabledOptionIndexes(nextOptions).length
+    ) {
+      const fallback = state.editor.terminalGuardByBlockId[blockId];
+      refreshTemplateInputFromBlock(blockNode, {
+        kind: "editor",
+        value: typeof fallback === "string" ? fallback : String(block.value || "")
+      }, selectionState);
+      return;
+    }
+
+    block.kind = "editor";
+    block.value = nextValue;
+    block.options = nextOptions;
+    normalizeTerminalEditorBlock(block);
+
+    refreshTemplateInputFromBlock(blockNode, block, selectionState);
+    if (interactionMode === "choice") {
+      syncTerminalOptionRowsFromBlockNode(blockNode, block.options);
+    } else {
+      syncTerminalInputAnswerRowsFromBlockNode(blockNode, block);
+    }
+    state.editor.terminalGuardByBlockId[blockId] = block.value;
+  }
+
+  // Sincroniza a resposta esperada de uma lacuna do modo Digitação com o preview do template.
+  function syncTerminalInputAnswerToTemplate(blockId, optionId, value) {
+    if (!optionId) return;
+    const blockNode = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
+    const block = getEditorBlock(blockId);
+    if (!blockNode || !block || !isEditorKind(block.kind)) return;
+
+    block.kind = "editor";
+    block.options = normalizeEditorOptions(block.options);
+    const optionIndex = getEditorOptionIndexById(block.options, optionId);
+    if (optionIndex < 0) return;
+    block.options[optionIndex].value = String(value || "");
+    if (block.options[optionIndex].enabled !== false) {
+      const slotIndex = getEnabledOptionIndexes(block.options).indexOf(optionIndex);
+      if (slotIndex > -1) {
+        block.value = replaceMarkerAtIndex(String(block.value || ""), slotIndex, String(value || ""));
+      }
+    }
+
+    normalizeTerminalEditorBlock(block);
+    refreshTemplateInputFromBlock(blockNode, block, null);
+    state.editor.terminalGuardByBlockId[blockId] = block.value;
+  }
+
+  // Atualiza uma variante aceita da lacuna sem mexer na resposta principal do preview.
+  function syncTerminalInputVariant(blockId, optionId, variantIndex, value) {
+    if (!optionId || !Number.isInteger(variantIndex) || variantIndex < 0) return;
+    const block = getEditorBlock(blockId);
+    if (!block || !isEditorKind(block.kind)) return;
+    block.options = normalizeEditorOptions(block.options);
+    const optionIndex = getEditorOptionIndexById(block.options, optionId);
+    if (optionIndex < 0) return;
+    const currentVariants = normalizeEditorInputVariantsForAuthor(block.options[optionIndex].variants);
+    while (currentVariants.length <= variantIndex) {
+      currentVariants.push({ id: uid("variant"), value: "", regex: false });
+    }
+    currentVariants[variantIndex] = Object.assign({}, currentVariants[variantIndex], {
+      value: String(value || "")
+    });
+    block.options[optionIndex].variants = currentVariants;
+  }
+
+  // Adiciona uma nova variante aceita para a lacuna.
+  function addEditorInputVariant(blockId, optionId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isEditorKind(block.kind)) return;
+    block.options = normalizeEditorOptions(block.options);
+    const optionIndex = getEditorOptionIndexById(block.options, optionId);
+    if (optionIndex < 0) return;
+    const currentVariants = normalizeEditorInputVariantsForAuthor(block.options[optionIndex].variants);
+    currentVariants.push({ id: uid("variant"), value: "", regex: false });
+    block.options[optionIndex].variants = currentVariants;
+    renderApp();
+  }
+
+  // Remove uma variante aceita da lacuna.
+  function removeEditorInputVariant(blockId, optionId, variantIndex) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isEditorKind(block.kind)) return;
+    block.options = normalizeEditorOptions(block.options);
+    const optionIndex = getEditorOptionIndexById(block.options, optionId);
+    if (optionIndex < 0) return;
+    const currentVariants = normalizeEditorInputVariantsForAuthor(block.options[optionIndex].variants);
+    if (variantIndex < 0 || variantIndex >= currentVariants.length) return;
+    currentVariants.splice(variantIndex, 1);
+    block.options[optionIndex].variants = currentVariants;
+    renderApp();
+  }
+
+  // Alterna se a resposta principal da lacuna deve ser tratada como regex.
+  function toggleEditorInputPrimaryRegex(blockId, optionId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isEditorKind(block.kind)) return;
+    block.options = normalizeEditorOptions(block.options);
+    const optionIndex = getEditorOptionIndexById(block.options, optionId);
+    if (optionIndex < 0 || block.options[optionIndex].enabled === false) return;
+    block.options[optionIndex].regex = !block.options[optionIndex].regex;
+    renderApp();
+  }
+
+  // Alterna se uma variante da lacuna deve ser tratada como regex.
+  function toggleEditorInputVariantRegex(blockId, optionId, variantIndex) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isEditorKind(block.kind)) return;
+    block.options = normalizeEditorOptions(block.options);
+    const optionIndex = getEditorOptionIndexById(block.options, optionId);
+    if (optionIndex < 0) return;
+    const currentVariants = normalizeEditorInputVariantsForAuthor(block.options[optionIndex].variants);
+    if (variantIndex < 0 || variantIndex >= currentVariants.length) return;
+    currentVariants[variantIndex] = Object.assign({}, currentVariants[variantIndex], {
+      regex: !currentVariants[variantIndex].regex
+    });
+    block.options[optionIndex].variants = currentVariants;
+    renderApp();
+  }
+
+  // Sincroniza o template rico do Simulador, garantindo exatamente uma lacuna.
+  function syncSimulatorTemplateBlockFromNode(blockId, field, options) {
+    const blockNode = field ? field.closest(".builder-block") : null;
+    const block = getEditorBlock(blockId);
+    if (!blockNode || !block || !isSimulatorKind(block.kind)) return;
+
+    const config = options || {};
+    const preserveSelection = config.preserveSelection !== false;
+    const selectionState = preserveSelection ? getEditableSelectionOffsets(field) : null;
+    const rawValue = serializeAuthorTemplateHtml(field);
+    const markerCount = parseOptionMarkers(rawValue).length;
+    const fallback = state.editor.terminalGuardByBlockId[blockId] || String(block.value || "");
+
+    block.kind = "simulator";
+    block.options = collectSimulatorOptionsFromBlockNode(blockNode);
+    block.value = markerCount === 1 ? rawValue : normalizeSimulatorTemplateValue(fallback);
+    block.value = normalizeSimulatorTemplateValue(block.value);
+
+    refreshTemplateInputFromBlock(blockNode, block, selectionState);
+    state.editor.terminalGuardByBlockId[blockId] = block.value;
+  }
+
+  // Sincroniza o conteúdo rico do DOM para o bloco correspondente sem re-renderizar tudo.
+  function syncParagraphBlockFromNode(blockId, node) {
+    const block = getEditorBlock(blockId);
+    if (!block || !node) return;
+
+    block.kind = "paragraph";
+    block.richText = sanitizeInlineRichText(node.innerHTML);
+    block.value = inlineRichTextToPlainText(block.richText);
+  }
+
+  // Remove qualquer span de cor inline, preservando o conteúdo e outras marcações válidas.
+  function stripToneMarkup(text) {
+    return String(text || "")
+      .replace(/<span class="inline-tone-(?:gold|mint|coral|blue|red)">/g, "")
+      .replace(/<\/span>/g, "");
+  }
+
+  // Remove tons inline de um fragmento DOM antes de reaplicar outra cor ou voltar ao padrão.
+  function stripToneNodes(node) {
+    if (!node || !node.childNodes) return;
+
+    Array.from(node.childNodes).forEach(function (child) {
+      if (child.nodeType !== 1) return;
+      stripToneNodes(child);
+
+      const tag = String(child.tagName || "").toLowerCase();
+      if (tag !== "span") return;
+      const toneClass = Array.from(child.classList || []).find(function (className) {
+        return INLINE_TONE_CLASSES.indexOf(className) > -1;
+      });
+      if (!toneClass) return;
+
+      while (child.firstChild) child.parentNode.insertBefore(child.firstChild, child);
+      child.remove();
+    });
+  }
+
+  // Mede o intervalo textual ocupado por um nó dentro de um contenteditable.
+  function getEditableNodeOffsets(input, node) {
+    if (!input || !node || !input.contains(node)) return null;
+
+    const contentRange = document.createRange();
+    const beforeRange = document.createRange();
+    try {
+      contentRange.selectNodeContents(node);
+      beforeRange.setStart(input, 0);
+      beforeRange.setEnd(contentRange.startContainer, contentRange.startOffset);
+    } catch (_error) {
+      return null;
+    }
+
+    const start = beforeRange.toString().length;
+    const end = start + contentRange.toString().length;
+    return { start: start, end: end };
+  }
+
+  // Remove spans de tom que estejam totalmente cobertos pela seleção atual.
+  function unwrapToneSpansWithinSelection(input) {
+    const selectionState = getEditableSelectionOffsets(input);
+    if (!input || !selectionState || selectionState.start === selectionState.end) return false;
+
+    const toneSpans = Array.from(input.querySelectorAll("span")).filter(function (span) {
+      return Array.from(span.classList || []).some(function (className) {
+        return INLINE_TONE_CLASSES.indexOf(className) > -1;
+      });
+    });
+
+    let changed = false;
+    toneSpans.forEach(function (span) {
+      const offsets = getEditableNodeOffsets(input, span);
+      if (!offsets) return;
+      if (offsets.start < selectionState.start || offsets.end > selectionState.end) return;
+      while (span.firstChild) span.parentNode.insertBefore(span.firstChild, span);
+      span.remove();
+      changed = true;
+    });
+
+    if (changed) {
+      restoreEditableSelectionOffsets(input, selectionState);
+    }
+    return changed;
+  }
+
+  // Remove wrappers inline totalmente cobertos pela seleção atual.
+  function unwrapInlineStyleWithinSelection(input, styleKind) {
+    const selectionState = getEditableSelectionOffsets(input);
+    if (!input || !selectionState || selectionState.start === selectionState.end) return false;
+
+    const selector =
+      styleKind === "bold"
+        ? "strong, b"
+        : styleKind === "italic"
+          ? "em, i"
+          : "span";
+    const inlineNodes = Array.from(input.querySelectorAll(selector)).filter(function (node) {
+      return inlineStyleNodeMatches(node, styleKind);
+    });
+
+    let changed = false;
+    inlineNodes.forEach(function (node) {
+      const offsets = getEditableNodeOffsets(input, node);
+      if (!offsets) return;
+      if (offsets.start < selectionState.start || offsets.end > selectionState.end) return;
+      while (node.firstChild) node.parentNode.insertBefore(node.firstChild, node);
+      node.remove();
+      changed = true;
+    });
+
+    if (changed) {
+      restoreEditableSelectionOffsets(input, selectionState);
+    }
+    return changed;
+  }
+
+  // Verifica se um elemento DOM representa exatamente o estilo inline solicitado.
+  function inlineStyleNodeMatches(node, styleKind) {
+    if (!node || node.nodeType !== 1) return false;
+    const tag = String(node.tagName || "").toLowerCase();
+    if (styleKind === "bold") return tag === "strong" || tag === "b";
+    if (styleKind === "italic") return tag === "em" || tag === "i";
+    if (styleKind.indexOf("tone-") === 0) {
+      return tag === "span" && node.classList && node.classList.contains("inline-" + styleKind);
+    }
+    return false;
+  }
+
+  // Descobre se um nó textual está contido por uma marcação inline específica.
+  function nodeHasInlineStyleAncestor(node, input, styleKind) {
+    let current = node && node.nodeType === 3 ? node.parentNode : node;
+    while (current && current !== input) {
+      if (inlineStyleNodeMatches(current, styleKind)) return true;
+      current = current.parentNode;
+    }
+    return false;
+  }
+
+  // Lista nós de texto realmente interceptados pela seleção atual dentro do contenteditable.
+  function getIntersectingEditableTextNodes(input, range) {
+    if (!input || !range) return [];
+    const walker = document.createTreeWalker(input, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let current = walker.nextNode();
+    while (current) {
+      if (String(current.textContent || "").trim()) {
+        try {
+          if (range.intersectsNode(current)) nodes.push(current);
+        } catch (_error) {
+          // Ignora nós transitórios que possam sair do DOM durante a interação.
+        }
+      }
+      current = walker.nextNode();
+    }
+    return nodes;
+  }
+
+  // Lê se a seleção atual inteira está coberta por um estilo inline específico.
+  function selectionUsesInlineStyle(input, styleKind) {
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (!input || !selection || !selection.rangeCount) return false;
+
+    const range = selection.getRangeAt(0);
+    if (!input.contains(range.startContainer) || !input.contains(range.endContainer)) return false;
+
+    if (selection.isCollapsed) {
+      return range.startContainer.nodeType === 3
+        ? nodeHasInlineStyleAncestor(range.startContainer, input, styleKind)
+        : false;
+    }
+
+    const textNodes = getIntersectingEditableTextNodes(input, range);
+    if (textNodes.length) {
+      return textNodes.every(function (node) {
+        return nodeHasInlineStyleAncestor(node, input, styleKind);
+      });
+    }
+
+    return nodeHasInlineStyleAncestor(range.commonAncestorContainer, input, styleKind);
+  }
+
+  // Descobre o tom inline dominante da seleção, se houver um único tom comum.
+  function getSelectionInlineTone(input) {
+    const toneKind = INLINE_TONE_CLASSES
+      .map(function (className) { return className.replace(/^inline-/, ""); })
+      .find(function (styleKind) {
+        return selectionUsesInlineStyle(input, styleKind);
+      });
+    return toneKind || "tone-default";
+  }
+
+  // Remove wrappers inline do estilo informado preservando o texto e outras marcações.
+  function unwrapInlineStyleNodes(node, styleKind) {
+    if (!node || !node.childNodes) return;
+
+    Array.from(node.childNodes).forEach(function (child) {
+      if (child.nodeType !== 1) return;
+      unwrapInlineStyleNodes(child, styleKind);
+      if (!inlineStyleNodeMatches(child, styleKind)) return;
+
+      while (child.firstChild) child.parentNode.insertBefore(child.firstChild, child);
+      child.remove();
+    });
+  }
+
+  // Retorna a marcação inline correspondente ao estilo solicitado.
+  function getInlineStyleMarkup(styleKind) {
+    if (styleKind === "bold") {
+      return {
+        tagName: "strong",
+        openTag: "<strong>",
+        closeTag: "</strong>"
+      };
+    }
+    if (styleKind === "italic") {
+      return {
+        tagName: "em",
+        openTag: "<em>",
+        closeTag: "</em>"
+      };
+    }
+    if (styleKind === "tone-gold" || styleKind === "blue") {
+      return {
+        tagName: "span",
+        className: styleKind === "blue" ? "inline-tone-blue" : "inline-tone-gold",
+        openTag: '<span class="' + (styleKind === "blue" ? "inline-tone-blue" : "inline-tone-gold") + '">',
+        closeTag: "</span>"
+      };
+    }
+    if (styleKind === "tone-mint") {
+      return {
+        tagName: "span",
+        className: "inline-tone-mint",
+        openTag: '<span class="inline-tone-mint">',
+        closeTag: "</span>"
+      };
+    }
+    if (styleKind === "tone-coral" || styleKind === "red") {
+      return {
+        tagName: "span",
+        className: styleKind === "red" ? "inline-tone-red" : "inline-tone-coral",
+        openTag: '<span class="' + (styleKind === "red" ? "inline-tone-red" : "inline-tone-coral") + '">',
+        closeTag: "</span>"
+      };
+    }
+    return null;
+  }
+
+  // Envolve a seleção atual dentro de um contenteditable com uma marcação inline segura.
+  function wrapEditableSelection(input, styleKind) {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount || selection.isCollapsed) return;
+    if (!input.contains(selection.anchorNode) || !input.contains(selection.focusNode)) return;
+    const shouldRemoveStyle =
+      (styleKind === "bold" || styleKind === "italic") &&
+      selectionUsesInlineStyle(input, styleKind);
+    if (shouldRemoveStyle && unwrapInlineStyleWithinSelection(input, styleKind)) {
+      return;
+    }
+
+    if (styleKind.indexOf("tone-") === 0) {
+      const removedExistingTone = unwrapToneSpansWithinSelection(input);
+      if (styleKind === "tone-default" && removedExistingTone) {
+        return;
+      }
+    }
+
+    const range = selection.getRangeAt(0);
+    const previewFragment = range.cloneContents();
+    if (previewFragment && previewFragment.querySelector && previewFragment.querySelector("[data-template-placeholder]")) {
+      return;
+    }
+    const fragment = range.extractContents();
+    const fragmentNodes = Array.from(fragment ? fragment.childNodes || [] : []);
+    if (!fragment || !String(fragment.textContent || "").trim()) {
+      range.insertNode(fragment || document.createTextNode(""));
+      return;
+    }
+
+    let insertedNode = null;
+    if (styleKind.indexOf("tone-") === 0) {
+      stripToneNodes(fragment);
+      if (styleKind === "tone-default") {
+        range.insertNode(fragment);
+        insertedNode = fragmentNodes[fragmentNodes.length - 1] || null;
+      } else {
+        const toneMarkup = getInlineStyleMarkup(styleKind);
+        if (!toneMarkup) {
+          range.insertNode(fragment);
+          insertedNode = fragmentNodes[fragmentNodes.length - 1] || null;
+          return;
+        }
+        const toneWrapper = document.createElement("span");
+        toneWrapper.className = toneMarkup.className;
+        toneWrapper.appendChild(fragment);
+        range.insertNode(toneWrapper);
+        insertedNode = toneWrapper;
+      }
+    } else {
+      const markup = getInlineStyleMarkup(styleKind);
+      if (!markup) {
+        range.insertNode(fragment);
+        insertedNode = fragmentNodes[fragmentNodes.length - 1] || null;
+        return;
+      }
+      if (shouldRemoveStyle) {
+        unwrapInlineStyleNodes(fragment, styleKind);
+        range.insertNode(fragment);
+        insertedNode = fragmentNodes[fragmentNodes.length - 1] || null;
+      } else {
+        const wrapper = document.createElement(markup.tagName);
+        if (markup.className) wrapper.className = markup.className;
+        wrapper.appendChild(fragment);
+        range.insertNode(wrapper);
+        insertedNode = wrapper;
+      }
+    }
+
+    selection.removeAllRanges();
+    if (insertedNode && insertedNode.parentNode) {
+      const nextRange = document.createRange();
+      nextRange.setStartAfter(insertedNode);
+      nextRange.collapse(true);
+      selection.addRange(nextRange);
+    }
+  }
+
+  // Aplica formatação inline ao trecho selecionado de um bloco contenteditable.
+  function applyEditableTextStyle(input, styleKind, syncFn, blockId) {
+    if (!state.editor.open || !input || typeof syncFn !== "function" || !blockId) return;
+    const selectionState = getEditableSelectionOffsets(input);
+    focusFieldNoScroll(input);
+    ensureEditableSelectionState(input, selectionState);
+    wrapEditableSelection(input, styleKind);
+    syncFn(blockId, input);
+  }
+
+  // Aplica formatação ao trecho selecionado dentro do contêiner de parágrafo.
+  function toggleParagraphBlockStyle(blockId, styleKind) {
+    applyEditableTextStyle(getParagraphRichInput(blockId), styleKind, syncParagraphBlockFromNode, blockId);
+  }
+
+  // Aplica indentação simples no template rico mantendo o cursor após os espaços.
+  function indentTemplateSelection(input, syncFn, blockId) {
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (!input || !selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0);
+    if (!input.contains(range.startContainer) || !input.contains(range.endContainer)) return;
+
+    const indentNode = document.createTextNode("  ");
+    range.insertNode(indentNode);
+    const nextRange = document.createRange();
+    nextRange.setStartAfter(indentNode);
+    nextRange.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(nextRange);
+    syncFn(blockId, input);
+  }
+
+  // Aplica formatação inline ou indentação ao template rico do Editor.
+  function toggleEditorBlockStyle(blockId, styleKind) {
+    if (!state.editor.open) return;
+
+    const input = getEditorTemplateInput(blockId);
+    if (!input) return;
+
+    if (styleKind === "indent") {
+      focusFieldNoScroll(input);
+      indentTemplateSelection(input, syncTerminalTemplateBlockFromNode, blockId);
+      return;
+    }
+
+    applyEditableTextStyle(input, styleKind, syncTerminalTemplateBlockFromNode, blockId);
+  }
+
+  // Direciona a ação de formatação para o contêiner textual correto.
+  function applyBlockTextStyle(blockId, styleKind) {
+    const block = getEditorBlock(blockId);
+    if (!block) return;
+
+    if (isEditorKind(block.kind)) {
+      toggleEditorBlockStyle(blockId, styleKind);
+      return;
+    }
+
+    if (isSimulatorKind(block.kind)) {
+      if (styleKind === "indent") {
+        const input = getSimulatorTemplateInput(blockId);
+        if (!input) return;
+        focusFieldNoScroll(input);
+        indentTemplateSelection(input, syncSimulatorTemplateBlockFromNode, blockId);
+        return;
+      }
+      applyEditableTextStyle(getSimulatorTemplateInput(blockId), styleKind, syncSimulatorTemplateBlockFromNode, blockId);
+      return;
+    }
+
+    if (styleKind === "indent") return;
+    toggleParagraphBlockStyle(blockId, styleKind);
+  }
+
+  // Atualiza os botões de alinhamento do bloco ativo sem re-render completo.
+  function syncBlockAlignTools(blockId) {
+    const block = getEditorBlock(blockId);
+    const blockNode = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
+    if (!block || !blockNode) return;
+    const align = normalizeTextBlockAlign(block.align);
+    const setActive = function (selector, value) {
+      const button = blockNode.querySelector(selector);
+      if (button) button.classList.toggle("active", !!value);
+    };
+    setActive('[data-action="block-align-left"]', align === "left");
+    setActive('[data-action="block-align-center"]', align === "center");
+    setActive('[data-action="block-align-right"]', align === "right");
+  }
+
+  // Sincroniza negrito/itálico/cor da toolbar conforme a seleção atual do bloco ativo.
+  function syncBlockTextStyleTools(blockId) {
+    if (!state.editor.open || !blockId) return;
+    const block = getEditorBlock(blockId);
+    const blockNode = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
+    if (!block || !blockNode) return;
+    if (!(isEditorKind(block.kind) || isSimulatorKind(block.kind) || isParagraphTextKind(block.kind))) return;
+
+    const input = isEditorKind(block.kind)
+      ? blockNode.querySelector("[data-terminal-template]")
+      : isSimulatorKind(block.kind)
+        ? blockNode.querySelector("[data-simulator-template]")
+        : blockNode.querySelector("[data-block-rich-input]");
+    if (!input) return;
+
+    const setActive = function (selector, value) {
+      const button = blockNode.querySelector(selector);
+      if (button) button.classList.toggle("active", !!value);
+    };
+
+    setActive('[data-action="block-style-bold"]', selectionUsesInlineStyle(input, "bold"));
+    setActive('[data-action="block-style-italic"]', selectionUsesInlineStyle(input, "italic"));
+    setActive('[data-action="open-tone-picker"]', getSelectionInlineTone(input) !== "tone-default");
+  }
+
+  // Define alinhamento global de bloco textual simples.
+  function setBlockAlign(blockId, align) {
+    const block = getEditorBlock(blockId);
+    if (!block) return;
+    if (!(isHeadingKind(block.kind) || isParagraphTextKind(block.kind))) return;
+    block.align = normalizeTextBlockAlign(align);
+
+    const blockNode = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
+    if (blockNode) {
+      const field = isHeadingKind(block.kind)
+        ? blockNode.querySelector("[data-heading-input]")
+        : blockNode.querySelector("[data-block-rich-input]");
+      if (field) {
+        field.classList.remove("block-align-left", "block-align-center", "block-align-right");
+        field.classList.add("block-align-" + block.align);
+      }
+    }
+    syncBlockAlignTools(blockId);
+  }
+
+  // Abre a paleta de cores simplificada para o bloco textual selecionado.
+  function openTonePicker(blockId) {
+    const block = getEditorBlock(blockId);
+    if (!block) return;
+    if (!(isEditorKind(block.kind) || isSimulatorKind(block.kind) || isParagraphTextKind(block.kind))) return;
+
+    state.ui.tonePicker = {
+      blockId: blockId,
+      selection: captureBlockSelectionState(blockId)
+    };
+    renderApp();
+  }
+
+  // Abre a paleta de cor da célula ativa da tabela.
+  function openTableTonePicker(blockId) {
+    snapshotEditorFromDom();
+    const block = getEditorTableBlock(blockId);
+    if (!block) return;
+    state.ui.tonePicker = {
+      mode: "table-cell",
+      blockId: blockId,
+      cell: getActiveTableCellRef(blockId, block)
+    };
+    renderApp();
+  }
+
+  // Fecha a paleta de cores sem aplicar mudanças.
+  function closeTonePicker() {
+    state.ui.tonePicker = null;
+    renderApp();
+  }
+
+  // Aplica a cor escolhida e fecha a paleta.
+  function applyTonePicker(blockId, toneId) {
+    const picker = state.ui.tonePicker;
+    if (!blockId || !toneId || !picker) return;
+
+    if (picker.mode === "table-cell") {
+      state.ui.tonePicker = null;
+      setActiveTableCellTone(picker.blockId, toneId);
+      return;
+    }
+
+    if (picker.blockId === blockId) {
+      restoreBlockSelectionState(blockId, state.ui.tonePicker.selection);
+    }
+    applyBlockTextStyle(blockId, toneId);
+    state.ui.tonePicker = null;
     renderApp();
   }
 
@@ -1838,34 +6505,508 @@
     });
   }
 
-  // Adiciona opção/lacuna no bloco terminal do editor.
-  function addTerminalOption(blockId) {
-    if (!state.editor.open) return;
-    const textField = root.querySelector(
-      '.builder-block[data-block-id="' + cssEsc(blockId) + '"] [data-terminal-template]'
-    );
-    const selectionStart = textField && typeof textField.selectionStart === "number" ? textField.selectionStart : null;
-    const selectionEnd = textField && typeof textField.selectionEnd === "number" ? textField.selectionEnd : null;
+  // Busca bloco de tabela no formato de grade usado pela autoria.
+  function getEditorTableBlock(blockId) {
+    const block = getEditorBlock(blockId);
+    if (!block || !isTableKind(block.kind)) return null;
+    const draft = normalizeTableDraft(block);
+    block.kind = "table";
+    block.value = "";
+    block.title = draft.title;
+    block.titleStyle = draft.titleStyle;
+    block.headers = draft.headers;
+    block.rows = draft.rows;
+    return block;
+  }
 
+  // Resolve um campo visual da tabela a partir da referência persistida no estado do editor.
+  function getTableEditorCellField(cellRef) {
+    if (!cellRef || !cellRef.blockId) return null;
+    const blockNode = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(cellRef.blockId) + '"]');
+    if (!blockNode) return null;
+    if (cellRef.role === "title") {
+      return blockNode.querySelector("[data-table-title]");
+    }
+    if (cellRef.role === "body") {
+      return blockNode.querySelector(
+        '[data-table-cell="true"][data-row-index="' +
+        String(cellRef.rowIndex) +
+        '"][data-column-index="' +
+        String(cellRef.columnIndex) +
+        '"]'
+      );
+    }
+    return blockNode.querySelector(
+      '[data-table-header-cell="true"][data-column-index="' +
+      String(cellRef.columnIndex) +
+      '"]'
+    );
+  }
+
+  // Foca a célula da tabela depois de um rerender, preservando a continuidade da edição.
+  function focusTableEditorCell(cellRef) {
+    const field = getTableEditorCellField(cellRef);
+    if (!field) return;
+    focusFieldNoScroll(field);
+    moveCaretToFieldEnd(field);
+  }
+
+  // Atualiza a referência da célula ativa na tabela.
+  function setActiveTableCell(cellRef) {
+    if (!cellRef || !cellRef.blockId) return;
+    state.editor.activeTableCell = {
+      blockId: cellRef.blockId,
+      role: cellRef.role === "title" ? "title" : cellRef.role === "body" ? "body" : "header",
+      rowIndex: cellRef.role === "body" ? Math.max(0, Number(cellRef.rowIndex) || 0) : -1,
+      columnIndex: Math.max(0, Number(cellRef.columnIndex) || 0)
+    };
+    syncTableFormatTools(state.editor.activeTableCell.blockId);
+  }
+
+  // Lê a referência de célula a partir de um campo do editor da tabela.
+  function getTableCellRefFromField(field) {
+    if (!field || !field.closest) return null;
+    const blockNode = field.closest(".builder-block");
+    if (!blockNode) return null;
+    return {
+      blockId: blockNode.getAttribute("data-block-id") || "",
+      role:
+        field.getAttribute("data-table-cell-role") === "title"
+          ? "title"
+          : field.getAttribute("data-table-cell-role") === "body"
+            ? "body"
+            : "header",
+      rowIndex: Number(field.getAttribute("data-row-index")),
+      columnIndex: Number(field.getAttribute("data-column-index"))
+    };
+  }
+
+  // Atualiza estilos de uma célula específica da tabela no rascunho autoral.
+  function updateTableCellDraft(blockId, cellRef, updater) {
+    const block = getEditorTableBlock(blockId);
+    if (!block || !cellRef || typeof updater !== "function") return null;
+    const target =
+      cellRef.role === "title"
+        ? block.titleStyle
+        : cellRef.role === "body"
+        ? block.rows[cellRef.rowIndex] && block.rows[cellRef.rowIndex][cellRef.columnIndex]
+        : block.headers[cellRef.columnIndex];
+    if (!target) return null;
+    updater(target);
+    return target;
+  }
+
+  // Inverte um estilo booleano da célula atualmente ativa.
+  function toggleActiveTableCellFlag(blockId, key) {
+    snapshotEditorFromDom();
+    const block = getEditorTableBlock(blockId);
+    if (!block) return;
+    const cellRef = getActiveTableCellRef(blockId, block);
+    updateTableCellDraft(blockId, cellRef, function (cell) {
+      cell[key] = !cell[key];
+    });
+    setActiveTableCell(cellRef);
+    state.editor.pendingTableFocus = clone(cellRef);
+    renderApp();
+  }
+
+  // Define o alinhamento da célula atualmente ativa.
+  function setActiveTableCellAlign(blockId, align) {
+    snapshotEditorFromDom();
+    const block = getEditorTableBlock(blockId);
+    if (!block) return;
+    const cellRef = getActiveTableCellRef(blockId, block);
+    updateTableCellDraft(blockId, cellRef, function (cell) {
+      cell.align = normalizeTableCellAlign(align);
+    });
+    setActiveTableCell(cellRef);
+    state.editor.pendingTableFocus = clone(cellRef);
+    renderApp();
+  }
+
+  // Define a cor semântica da célula atualmente ativa.
+  function setActiveTableCellTone(blockId, toneId) {
+    snapshotEditorFromDom();
+    const block = getEditorTableBlock(blockId);
+    if (!block) return;
+    const cellRef = getActiveTableCellRef(blockId, block);
+    updateTableCellDraft(blockId, cellRef, function (cell) {
+      cell.tone = normalizeTableCellTone(toneId);
+    });
+    setActiveTableCell(cellRef);
+    state.editor.pendingTableFocus = clone(cellRef);
+    renderApp();
+  }
+
+  // Adiciona uma nova coluna vazia ao fim da grade da tabela.
+  function addTableColumn(blockId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorTableBlock(blockId);
+    if (!block) return;
+
+    block.headers.push(createBlankTableCell("header"));
+    block.rows = block.rows.map(function (row) {
+      return row.concat(createBlankTableCell("body"));
+    });
+    setActiveTableCell({
+      blockId: blockId,
+      role: "header",
+      rowIndex: -1,
+      columnIndex: block.headers.length - 1
+    });
+    state.editor.pendingTableFocus = clone(state.editor.activeTableCell);
+    renderApp();
+  }
+
+  // Remove coluna da grade da tabela, preservando pelo menos uma coluna vazia.
+  function removeTableColumn(blockId, columnIndex) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorTableBlock(blockId);
+    const safeIndex = Number(columnIndex);
+    if (!block || !Number.isInteger(safeIndex) || safeIndex < 0 || safeIndex >= block.headers.length) return;
+
+    if (block.headers.length <= 1) {
+      block.headers = [createBlankTableCell("header")];
+      block.rows = block.rows.map(function () {
+        return [createBlankTableCell("body")];
+      });
+      setActiveTableCell({
+        blockId: blockId,
+        role: "header",
+        rowIndex: -1,
+        columnIndex: 0
+      });
+      state.editor.pendingTableFocus = clone(state.editor.activeTableCell);
+      renderApp();
+      return;
+    }
+
+    block.headers.splice(safeIndex, 1);
+    block.rows = block.rows.map(function (row) {
+      const cells = row.slice();
+      cells.splice(safeIndex, 1);
+      return cells;
+    });
+    setActiveTableCell({
+      blockId: blockId,
+      role: "header",
+      rowIndex: -1,
+      columnIndex: Math.max(0, Math.min(safeIndex, block.headers.length - 1))
+    });
+    state.editor.pendingTableFocus = clone(state.editor.activeTableCell);
+    renderApp();
+  }
+
+  // Adiciona nova linha vazia ao fim da grade da tabela.
+  function addTableRow(blockId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorTableBlock(blockId);
+    if (!block) return;
+
+    block.rows.push(Array.from({ length: block.headers.length || 1 }, function () { return createBlankTableCell("body"); }));
+    setActiveTableCell({
+      blockId: blockId,
+      role: "body",
+      rowIndex: block.rows.length - 1,
+      columnIndex: 0
+    });
+    state.editor.pendingTableFocus = clone(state.editor.activeTableCell);
+    renderApp();
+  }
+
+  // Remove linha da grade da tabela, preservando pelo menos uma linha vazia.
+  function removeTableRow(blockId, rowIndex) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorTableBlock(blockId);
+    const safeIndex = Number(rowIndex);
+    if (!block || !Number.isInteger(safeIndex) || safeIndex < 0 || safeIndex >= block.rows.length) return;
+
+    if (block.rows.length <= 1) {
+      block.rows = [Array.from({ length: block.headers.length || 1 }, function () { return createBlankTableCell("body"); })];
+      setActiveTableCell({
+        blockId: blockId,
+        role: "body",
+        rowIndex: 0,
+        columnIndex: 0
+      });
+      state.editor.pendingTableFocus = clone(state.editor.activeTableCell);
+      renderApp();
+      return;
+    }
+
+    block.rows.splice(safeIndex, 1);
+    setActiveTableCell({
+      blockId: blockId,
+      role: "body",
+      rowIndex: Math.max(0, Math.min(safeIndex, block.rows.length - 1)),
+      columnIndex: 0
+    });
+    state.editor.pendingTableFocus = clone(state.editor.activeTableCell);
+    renderApp();
+  }
+
+  // Busca nó interno de um bloco de fluxograma.
+  function getFlowchartEditorNode(blockId, nodeId) {
+    const block = getEditorBlock(blockId);
+    if (!block || !isFlowchartKind(block.kind)) return null;
+    normalizeFlowchartEditorBlock(block);
+    return (block.nodes || []).find(function (node) {
+      return node.id === nodeId;
+    }) || null;
+  }
+
+  // Adiciona novo bloco interno ao fluxograma.
+  function addFlowchartNode(blockId) {
+    if (!state.editor.open) return;
     snapshotEditorFromDom();
 
     const block = getEditorBlock(blockId);
-    if (!block || !isEditorKind(block.kind)) return;
+    if (!block || !isFlowchartKind(block.kind)) return;
+
+    normalizeFlowchartEditorBlock(block);
+    block.nodes.push(createFlowchartNode(getNextFlowchartRow(block.nodes), "center", "process", "Novo bloco"));
+    renderApp();
+  }
+
+  // Remove bloco interno do fluxograma e suas setas associadas.
+  function removeFlowchartNode(blockId, nodeId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isFlowchartKind(block.kind)) return;
+
+    block.nodes = (block.nodes || []).filter(function (node) {
+      return node.id !== nodeId;
+    });
+    block.links = (block.links || []).filter(function (link) {
+      return link.fromNodeId !== nodeId && link.toNodeId !== nodeId;
+    });
+    normalizeFlowchartEditorBlock(block);
+    renderApp();
+  }
+
+  // Move bloco interno do fluxograma para cima ou para baixo na lista do editor.
+  function moveFlowchartNode(blockId, nodeId, direction) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isFlowchartKind(block.kind)) return;
+
+    const nodes = Array.isArray(block.nodes) ? block.nodes.slice() : [];
+    const index = nodes.findIndex(function (node) {
+      return node.id === nodeId;
+    });
+    if (index < 0) return;
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= nodes.length) return;
+
+    const moved = nodes[index];
+    nodes[index] = nodes[targetIndex];
+    nodes[targetIndex] = moved;
+    block.nodes = nodes;
+    normalizeFlowchartEditorBlock(block);
+    renderApp();
+  }
+
+  // Marca uma opção de símbolo como resposta correta do nó.
+  function selectFlowchartNodeShapeAnswer(blockId, nodeId, answerIndex) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const node = getFlowchartEditorNode(blockId, nodeId);
+    if (!node) return;
+
+    const merged = mergeFlowchartNodeShapeOptions(node);
+    const safeIndex = Number(answerIndex);
+    if (!Number.isInteger(safeIndex) || safeIndex < 0 || safeIndex >= merged.length) return;
+
+    node.shape = normalizeFlowchartShapeKey(merged[safeIndex]);
+    node.shapeOptions = merged.filter(function (shape, index) {
+      return index !== safeIndex && shape !== node.shape;
+    });
+    renderApp();
+  }
+
+  // Marca uma opção de texto como resposta correta do nó.
+  function selectFlowchartNodeTextAnswer(blockId, nodeId, answerIndex) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const node = getFlowchartEditorNode(blockId, nodeId);
+    if (!node) return;
+
+    const merged = mergeFlowchartNodeTextOptions(node);
+    const safeIndex = Number(answerIndex);
+    if (!Number.isInteger(safeIndex) || safeIndex < 0 || safeIndex >= merged.length) return;
+
+    node.text = String(merged[safeIndex] || "").trim();
+    node.textOptions = merged
+      .filter(function (value, index) {
+        return index !== safeIndex && String(value || "").trim() && String(value || "").trim() !== node.text;
+      })
+      .map(function (value) {
+        return {
+          id: uid("opt"),
+          value: String(value || "").trim(),
+          enabled: true
+        };
+      });
+    renderApp();
+  }
+
+  // Adiciona nova opção extra de símbolo ao nó.
+  function addFlowchartNodeShapeOption(blockId, nodeId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const node = getFlowchartEditorNode(blockId, nodeId);
+    if (!node) return;
+
+    node.shapeOptions = normalizeFlowchartNodeShapeOptions(node.shapeOptions, node.shape);
+    const nextShape = FLOWCHART_SHAPES.find(function (item) {
+      return item.key !== node.shape && node.shapeOptions.indexOf(item.key) === -1;
+    });
+    if (!nextShape) return;
+    node.shapeOptions.push(nextShape.key);
+    renderApp();
+  }
+
+  // Remove opção extra de símbolo do nó.
+  function removeFlowchartNodeShapeOption(blockId, nodeId, index) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const node = getFlowchartEditorNode(blockId, nodeId);
+    if (!node) return;
+
+    node.shapeOptions = normalizeFlowchartNodeShapeOptions(node.shapeOptions, node.shape);
+    if (!Number.isInteger(index) || index < 0 || index >= node.shapeOptions.length) return;
+    node.shapeOptions.splice(index, 1);
+    renderApp();
+  }
+
+  // Adiciona nova opção extra de texto ao nó.
+  function addFlowchartNodeTextOption(blockId, nodeId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const node = getFlowchartEditorNode(blockId, nodeId);
+    if (!node) return;
+
+    node.textOptions = normalizeFlowchartNodeTextOptions(node.textOptions, node.text);
+    node.textOptions.push({ id: uid("opt"), value: "", enabled: true });
+    renderApp();
+  }
+
+  // Remove opção extra de texto do nó.
+  function removeFlowchartNodeTextOption(blockId, nodeId, index) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const node = getFlowchartEditorNode(blockId, nodeId);
+    if (!node) return;
+
+    node.textOptions = normalizeFlowchartNodeTextOptions(node.textOptions, node.text);
+    if (!Number.isInteger(index) || index < 0 || index >= node.textOptions.length) return;
+    node.textOptions.splice(index, 1);
+    renderApp();
+  }
+
+  // Calcula a posição estrutural para inserir uma nova lacuna no Editor.
+  function getEditorEnabledInsertIndex(options, markerPosition) {
+    const enabledIndexes = getEnabledOptionIndexes(options);
+    if (!enabledIndexes.length) return 0;
+    if (markerPosition <= 0) return 0;
+    if (markerPosition >= enabledIndexes.length) return enabledIndexes.length;
+    return markerPosition;
+  }
+
+  // Cria nó DOM temporário do placeholder do template rico.
+  function createAuthorPlaceholderNode(value, options) {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = renderAuthorPlaceholderChip(value, options);
+    return wrapper.firstElementChild;
+  }
+
+  // Insere um nó de placeholder na seleção atual do template rico.
+  function insertNodeAtTemplateSelection(field, node) {
+    if (!field || !node) return null;
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (!selection || !selection.rangeCount) {
+      field.appendChild(node);
+      return node;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (!field.contains(range.startContainer) || !field.contains(range.endContainer)) {
+      field.appendChild(node);
+      return node;
+    }
+
+    range.deleteContents();
+    range.insertNode(node);
+    const nextRange = document.createRange();
+    nextRange.setStartAfter(node);
+    nextRange.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(nextRange);
+    return node;
+  }
+
+  // Adiciona opção/lacuna no bloco terminal do editor.
+  function addTerminalOption(blockId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+    const block = getEditorBlock(blockId);
+    const textField = getEditorTemplateInput(blockId);
+    if (!block || !isEditorKind(block.kind) || !textField) return;
 
     block.kind = "editor";
     block.options = normalizeEditorOptions(block.options);
-    const cursorStart = selectionStart === null ? String(block.value || "").length : selectionStart;
-    const cursorEnd = selectionEnd === null ? cursorStart : selectionEnd;
-    const newOption = { id: uid("opt"), value: "", enabled: true };
-    block.value = insertMarkerAtPosition(String(block.value || ""), cursorStart, cursorEnd, newOption.value);
+    const placeholderNode = createAuthorPlaceholderNode("", { mode: "editor", editable: false });
+    insertNodeAtTemplateSelection(textField, placeholderNode);
+    const markerPosition = Array.from(textField.querySelectorAll("[data-template-placeholder]")).indexOf(placeholderNode);
+    const newOption = {
+      id: uid("opt"),
+      value: "",
+      enabled: true,
+      displayOrder: sortEditorOptionsForDisplay(block.options).length,
+      slotOrder: 0,
+      regex: false,
+      variants: []
+    };
+    const insertIndex = getEditorEnabledInsertIndex(
+      block.options,
+      markerPosition === -1 ? getEnabledOptionIndexes(block.options).length : markerPosition
+    );
+    block.options = normalizeEditorOptions(block.options).map(function (option) {
+      if (option.enabled !== false && Number(option.slotOrder) >= insertIndex) {
+        return Object.assign({}, option, { slotOrder: Number(option.slotOrder) + 1 });
+      }
+      return option;
+    });
+    newOption.slotOrder = insertIndex;
     block.options.push(newOption);
+    block.value = serializeAuthorTemplateHtml(textField);
     normalizeTerminalEditorBlock(block);
+    setActiveEditorBlock(block.id);
     state.editor.pendingScrollBlockId = block.id;
     renderApp();
   }
 
   // Remove opção/lacuna do bloco terminal do editor.
-  function removeTerminalOption(blockId, index) {
+  function removeTerminalOption(blockId, optionId) {
     if (!state.editor.open) return;
     snapshotEditorFromDom();
 
@@ -1874,7 +7015,8 @@
 
     block.kind = "editor";
     block.options = normalizeEditorOptions(block.options);
-    if (!Number.isInteger(index) || index < 0 || index >= block.options.length) return;
+    const index = getEditorOptionIndexById(block.options, optionId);
+    if (index < 0) return;
 
     const enabledIndexes = getEnabledOptionIndexes(block.options);
     const markerIndex = enabledIndexes.indexOf(index);
@@ -1887,7 +7029,7 @@
   }
 
   // Habilita/desabilita uma opção para virar lacuna [[...]] no texto do Editor.
-  function toggleTerminalOption(blockId, index) {
+  function toggleTerminalOption(blockId, optionId) {
     if (!state.editor.open) return;
     snapshotEditorFromDom();
 
@@ -1896,7 +7038,8 @@
 
     block.kind = "editor";
     block.options = normalizeEditorOptions(block.options);
-    if (!Number.isInteger(index) || index < 0 || index >= block.options.length) return;
+    const index = getEditorOptionIndexById(block.options, optionId);
+    if (index < 0) return;
 
     const option = block.options[index];
     const enabledIndexes = getEnabledOptionIndexes(block.options);
@@ -1916,54 +7059,393 @@
     renderApp();
   }
 
+  // Reordena apenas a ordem visível das opções do Editor, sem alterar as lacunas no texto.
+  function reorderTerminalOptionDisplay(blockId, draggedOptionId, targetOptionId, position) {
+    if (!blockId || !draggedOptionId || !targetOptionId || draggedOptionId === targetOptionId) return false;
+    const block = getEditorBlock(blockId);
+    if (!block || !isEditorKind(block.kind)) return false;
+
+    block.options = normalizeEditorOptions(block.options);
+    const ordered = sortEditorOptionsForDisplay(block.options);
+    const fromIndex = ordered.findIndex(function (option) { return option.id === draggedOptionId; });
+    const targetIndex = ordered.findIndex(function (option) { return option.id === targetOptionId; });
+    if (fromIndex < 0 || targetIndex < 0) return false;
+
+    const moved = ordered.splice(fromIndex, 1)[0];
+    const safeTargetIndex = ordered.findIndex(function (option) { return option.id === targetOptionId; });
+    const insertIndex = position === "after" ? safeTargetIndex + 1 : safeTargetIndex;
+    ordered.splice(insertIndex, 0, moved);
+
+    const orderMap = ordered.reduce(function (acc, option, index) {
+      acc[option.id] = index;
+      return acc;
+    }, {});
+
+    block.options = ordered.map(function (option, index) {
+      const current = normalizeEditorOptions(block.options).find(function (item) {
+        return item.id === option.id;
+      }) || option;
+      return {
+        id: current.id || uid("opt"),
+        value: String(current.value || ""),
+        enabled: current.enabled !== false,
+        displayOrder: Object.prototype.hasOwnProperty.call(orderMap, current.id) ? orderMap[current.id] : index,
+        slotOrder: Number.isFinite(Number(current.slotOrder)) ? Number(current.slotOrder) : index,
+        regex: !!current.regex,
+        variants: normalizeEditorInputVariantsForAuthor(current.variants)
+      };
+    });
+    normalizeTerminalEditorBlock(block);
+    return true;
+  }
+
+  // Adiciona alternativa no bloco de múltipla escolha.
+  function addMultipleChoiceOption(blockId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isMultipleChoiceKind(block.kind)) return;
+
+    block.options = normalizeMultipleChoiceOptions(block.options);
+    block.options.push({ id: uid("opt"), value: "", answer: block.options.length === 0 });
+    renderApp();
+  }
+
+  // Marca ou desmarca uma alternativa como resposta no bloco de múltipla escolha.
+  function toggleMultipleChoiceOptionAnswer(blockId, optionId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isMultipleChoiceKind(block.kind)) return;
+
+    block.options = normalizeMultipleChoiceOptions(block.options);
+    const index = block.options.findIndex(function (option) { return option.id === optionId; });
+    if (index < 0) return;
+    block.options[index].answer = !block.options[index].answer;
+    renderApp();
+  }
+
+  // Define se as respostas do bloco devem ser tratadas como corretas ou incorretas.
+  function setMultipleChoiceAnswerState(blockId, answerState) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isMultipleChoiceKind(block.kind)) return;
+
+    block.answerState = normalizeMultipleChoiceAnswerState(answerState);
+    renderApp();
+  }
+
+  // Remove alternativa do bloco de múltipla escolha.
+  function removeMultipleChoiceOption(blockId, optionId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isMultipleChoiceKind(block.kind)) return;
+
+    block.options = normalizeMultipleChoiceOptions(block.options);
+    const index = block.options.findIndex(function (option) { return option.id === optionId; });
+    if (index < 0) return;
+    block.options.splice(index, 1);
+    renderApp();
+  }
+
+  // Adiciona opção no bloco de opções com resultado.
+  function addSimulatorOption(blockId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isSimulatorKind(block.kind)) return;
+
+    block.options = normalizeSimulatorOptions(block.options);
+    block.options.push({ id: uid("opt"), value: "", result: "" });
+    renderApp();
+  }
+
+  // Remove opção do bloco de opções com resultado.
+  function removeSimulatorOption(blockId, optionId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const block = getEditorBlock(blockId);
+    if (!block || !isSimulatorKind(block.kind)) return;
+
+    block.options = normalizeSimulatorOptions(block.options);
+    const index = block.options.findIndex(function (option) { return option.id === optionId; });
+    if (index < 0) return;
+    block.options.splice(index, 1);
+    renderApp();
+  }
+
   // Captura valores atuais do DOM do editor para o estado em memoria.
   function snapshotEditorFromDom() {
     if (!state.editor.open || !state.editor.form) return;
 
-    const nodeList = root.querySelectorAll(".builder-block");
+    const domScope = getEditorDomScope();
+    const nodeList = domScope.querySelectorAll(".builder-block");
     const nextBlocks = [];
     nodeList.forEach(function (node) {
       const blockId = node.getAttribute("data-block-id");
       const kind = node.getAttribute("data-block-kind");
       const input = node.querySelector("[data-block-input]");
+      const templateRichInput = node.querySelector("[data-template-rich-input]");
+      const richInput = node.querySelector("[data-block-rich-input]:not([data-template-rich-input])");
       const next = {
         id: blockId || uid("block"),
         kind: kind || "paragraph",
-        value: input ? input.value : ""
+        value: templateRichInput
+          ? serializeAuthorTemplateHtml(templateRichInput)
+          : richInput
+          ? inlineRichTextToPlainText(richInput.innerHTML)
+          : input && typeof input.value === "string"
+            ? input.value
+            : ""
       };
+      const currentBlock = getEditorBlock(next.id);
+
+      if (richInput) {
+        next.kind = "paragraph";
+        next.richText = sanitizeInlineRichText(richInput.innerHTML);
+        next.value = inlineRichTextToPlainText(next.richText);
+        next.align = normalizeTextBlockAlign(currentBlock && currentBlock.align);
+      }
 
       if (isEditorKind(next.kind)) {
         next.kind = "editor";
-        next.options = Array.from(node.querySelectorAll("[data-terminal-option-row]"))
-          .map(function (row, optionIndex) {
-            const inputNode = row.querySelector("[data-terminal-option]");
-            const enabled = row.getAttribute("data-option-enabled") !== "0";
-            return {
-              id: row.getAttribute("data-option-id") || uid("opt"),
-              value: inputNode ? String(inputNode.value || "") : "",
-              enabled: enabled,
-              indexHint: optionIndex
-            };
-          })
-          .sort(function (a, b) { return a.indexHint - b.indexHint; })
-          .map(function (item) {
-            return { id: item.id, value: item.value, enabled: item.enabled };
-          });
+        const domOptions = collectTerminalOptionsFromBlockNode(node);
+        next.options = domOptions.length
+          ? domOptions
+          : currentBlock && Array.isArray(currentBlock.options)
+            ? normalizeEditorOptions(currentBlock.options)
+            : [];
+        next.interactionMode = normalizeEditorInteractionMode(
+          (node.querySelector("[data-editor-interaction]:checked") || {}).value ||
+          (currentBlock && currentBlock.interactionMode)
+        );
         normalizeTerminalEditorBlock(next);
+        state.editor.terminalGuardByBlockId[next.id] = next.value;
+      }
+
+      if (isFlowchartKind(next.kind)) {
+        next.kind = "flowchart";
+        next.value = "";
+        const nodeCards = Array.from(node.querySelectorAll("[data-flowchart-node-card]"));
+        const linkAccumulator = [];
+
+        next.nodes = nodeCards
+          .map(function (card, nodeIndex) {
+            const cardNodeId = card.getAttribute("data-flowchart-node-id") || uid("flow-node");
+            const currentShape = normalizeFlowchartShapeKey((card.querySelector("[data-flowchart-node-shape]") || {}).value);
+            const outputRows = Array.from(card.querySelectorAll("[data-flowchart-node-output-row]"));
+
+            outputRows.forEach(function (rowNode) {
+              const slot = Number(rowNode.getAttribute("data-output-slot"));
+              const selectNode = rowNode.querySelector("[data-flowchart-node-output]");
+              const labelNode = rowNode.querySelector("[data-flowchart-node-output-label]");
+              const targetId = String(selectNode ? selectNode.value || "" : "").trim();
+              const label = String(labelNode ? labelNode.value || "" : "").trim();
+              if (!targetId) return;
+
+              linkAccumulator.push({
+                id: uid("flow-link"),
+                fromNodeId: cardNodeId,
+                toNodeId: targetId,
+                outputSlot: slot === 1 ? 1 : 0,
+                label: label || getFlowchartEditorOutputLabel({ shape: currentShape }, slot)
+              });
+            });
+
+            return normalizeFlowchartNode({
+              id: cardNodeId,
+              row: nodeIndex,
+              column: "center",
+              shape: currentShape,
+              text: (card.querySelector("[data-flowchart-node-text]") || {}).value,
+              shapeBlank: !!card.querySelector("[data-flowchart-node-shape-option-row]"),
+              textBlank: !!card.querySelector("[data-flowchart-node-text-option-row]"),
+              shapeOptions: Array.from(card.querySelectorAll("[data-flowchart-node-shape-option-row]"))
+                .map(function (row) {
+                  const selectNode = row.querySelector("[data-flowchart-node-shape-option]");
+                  return String(selectNode ? selectNode.value || "" : "").trim();
+                })
+                .filter(Boolean),
+              textOptions: Array.from(card.querySelectorAll("[data-flowchart-node-text-option-row]"))
+                .map(function (row) {
+                  const inputNode = row.querySelector("[data-flowchart-node-text-option]");
+                  return {
+                    id: row.getAttribute("data-option-id") || uid("opt"),
+                    value: inputNode ? String(inputNode.value || "").trim() : "",
+                    enabled: true
+                  };
+                })
+            }, nodeIndex);
+          });
+        next.links = linkAccumulator.filter(function (link, linkIndex, source) {
+          if (!link.fromNodeId || !link.toNodeId || link.fromNodeId === link.toNodeId) return false;
+          const key = link.fromNodeId + "::" + String(link.outputSlot);
+          return source.findIndex(function (item) {
+            return item.fromNodeId + "::" + String(item.outputSlot) === key;
+          }) === linkIndex;
+        });
+        next.shapeOptions = [];
+        next.textOptions = [];
+        normalizeFlowchartEditorBlock(next);
+      }
+
+      if (isTableKind(next.kind)) {
+        const draftTable = collectTableDraftFromBlockNode(node);
+        next.kind = "table";
+        next.value = "";
+        next.title = draftTable.title;
+        next.titleStyle = draftTable.titleStyle;
+        next.headers = draftTable.headers;
+        next.rows = draftTable.rows;
+      }
+
+      if (isMultipleChoiceKind(next.kind)) {
+        next.kind = "multiple_choice";
+        next.value = "";
+        const answerStateNode = node.querySelector("[data-choice-answer-state]:checked");
+        next.answerState = normalizeMultipleChoiceAnswerState(answerStateNode ? answerStateNode.value : "");
+        next.options = collectMultipleChoiceOptionsFromBlockNode(node);
+      }
+
+      if (isSimulatorKind(next.kind)) {
+        next.kind = "simulator";
+        next.value = normalizeSimulatorTemplateValue(serializeAuthorTemplateHtml(templateRichInput));
+        next.options = collectSimulatorOptionsFromBlockNode(node);
         state.editor.terminalGuardByBlockId[next.id] = next.value;
       }
 
       if (next.kind === "button") {
         const popupToggle = node.querySelector("[data-button-popup]");
-        const popupText = node.querySelector("[data-button-popup-text]");
-        next.value = "CONTINUAR";
+        delete next.value;
         next.popupEnabled = popupToggle ? popupToggle.checked : false;
-        next.popupText = popupText ? popupText.value : "";
+        next.popupBlocks = normalizePopupBlocks(currentBlock && currentBlock.popupBlocks);
+      }
+
+      if (isParagraphTextKind(next.kind)) {
+        normalizeParagraphEditorBlock(next);
+      }
+
+      if (isHeadingKind(next.kind)) {
+        next.align = normalizeTextBlockAlign(currentBlock && currentBlock.align);
       }
 
       nextBlocks.push(next);
     });
     state.editor.form.blocks = ensureEditorButtonBlock(nextBlocks);
+  }
+
+  // Reseta o estado auxiliar usado quando o editor do popup está aberto.
+  function resetPopupBuilderState() {
+    state.editor.popupBuilder = {
+      open: false,
+      ownerBlockId: null,
+      mainForm: null,
+      saving: false,
+      pendingPromise: null
+    };
+  }
+
+  // Prepara um mini formulário de card para editar o conteúdo do popup com o mesmo motor do editor principal.
+  function buildPopupEditorForm(blocks) {
+    return {
+      stepType: "content",
+      blocks: ensureEditorButtonBlock(normalizePopupBlocks(blocks).map(clone))
+    };
+  }
+
+  // Extrai somente os contêineres reais do popup, descartando o botão interno temporário.
+  function extractPopupContentBlocks(form) {
+    const blocks = Array.isArray(form && form.blocks) ? form.blocks : [];
+    return normalizePopupBlocks(blocks.filter(function (block) {
+      return block && block.kind !== "button";
+    }));
+  }
+
+  // Abre o editor dedicado de conteúdo do popup do botão.
+  function openPopupBuilder(buttonBlockId) {
+    if (!state.editor.open) return;
+    snapshotEditorFromDom();
+
+    const buttonBlock = getEditorBlock(buttonBlockId);
+    if (!buttonBlock || buttonBlock.kind !== "button" || !buttonBlock.popupEnabled) return;
+
+    const popupBlocks = getButtonPopupBuilderSeedBlocks(buttonBlock);
+
+    state.editor.popupBuilder = {
+      open: true,
+      ownerBlockId: buttonBlockId,
+      mainForm: state.editor.form,
+      saving: false,
+      pendingPromise: null
+    };
+    state.editor.form = buildPopupEditorForm(popupBlocks);
+    state.editor.imageTarget = null;
+    state.ui.tonePicker = null;
+    renderApp();
+  }
+
+  // Fecha o editor de popup sem salvar mudanças.
+  function closePopupBuilder() {
+    if (state.editor.popupBuilder && state.editor.popupBuilder.open && state.editor.popupBuilder.mainForm) {
+      state.editor.form = state.editor.popupBuilder.mainForm;
+    }
+    resetPopupBuilderState();
+    state.editor.imageTarget = null;
+    state.ui.tonePicker = null;
+    renderApp();
+  }
+
+  // Salva o rascunho do popup de volta no botão dono sem persistir o card final.
+  async function savePopupBuilder() {
+    if (!(state.editor.popupBuilder && state.editor.popupBuilder.open)) return;
+    if (state.editor.popupBuilder.pendingPromise) {
+      await state.editor.popupBuilder.pendingPromise;
+      return;
+    }
+
+    const popupState = state.editor.popupBuilder;
+    popupState.saving = true;
+    popupState.pendingPromise = (async function () {
+      snapshotEditorFromDom();
+
+      const mainForm = popupState.mainForm;
+      if (!mainForm || !Array.isArray(mainForm.blocks)) {
+        closePopupBuilder();
+        return;
+      }
+
+      const buttonBlock = (mainForm.blocks || []).find(function (block) {
+        return block.id === popupState.ownerBlockId && isButtonKind(block.kind);
+      });
+      if (!buttonBlock) {
+        closePopupBuilder();
+        return;
+      }
+
+      buttonBlock.popupBlocks = extractPopupContentBlocks(state.editor.form);
+      state.editor.form = mainForm;
+      resetPopupBuilderState();
+      state.editor.imageTarget = null;
+      state.ui.tonePicker = null;
+      renderApp();
+    })();
+
+    try {
+      await popupState.pendingPromise;
+    } finally {
+      if (state.editor.popupBuilder === popupState) {
+        popupState.saving = false;
+        popupState.pendingPromise = null;
+      }
+    }
   }
 
   // Converte caminhos/links de imagem em assets internos no formato assets/images/arquivo.ext.
@@ -1980,6 +7462,31 @@
       const result = await materializeImageValue(rawValue);
       if (!result.ok) {
         window.alert(result.message || "Não foi possível salvar a imagem.");
+        return false;
+      }
+      block.value = result.path;
+    }
+
+    for (let i = 0; i < form.blocks.length; i += 1) {
+      const block = form.blocks[i];
+      if (!block || block.kind !== "button" || !Array.isArray(block.popupBlocks)) continue;
+      if (!(await materializePopupBlocksAssets(block.popupBlocks))) return false;
+    }
+
+    return true;
+  }
+
+  // Materializa imagens usadas dentro do conteúdo do popup.
+  async function materializePopupBlocksAssets(blocks) {
+    if (!Array.isArray(blocks)) return true;
+
+    for (let i = 0; i < blocks.length; i += 1) {
+      const block = blocks[i];
+      if (!block || block.kind !== "image") continue;
+
+      const result = await materializeImageValue(String(block.value || "").trim());
+      if (!result.ok) {
+        window.alert(result.message || "Não foi possível salvar a imagem do popup.");
         return false;
       }
       block.value = result.path;
@@ -2060,6 +7567,10 @@
   // Salva alteracoes do editor no step atual da licao.
   async function saveEditor() {
     if (!state.editor.open) return;
+    if (state.editor.popupBuilder && state.editor.popupBuilder.pendingPromise) {
+      await state.editor.popupBuilder.pendingPromise;
+    }
+    if (state.editor.popupBuilder && state.editor.popupBuilder.open) return;
 
     const lessonEntry = getCurrentLessonEntry();
     if (!lessonEntry) return;
@@ -2116,6 +7627,8 @@
     resetTransient();
     closeEditor(false);
     renderApp();
+    // Salvar um card precisa refletir imediatamente no snapshot persistido.
+    persistProjectSnapshot();
   }
 
   // Salva edicao atual e abre card anterior/proximo no editor.
@@ -2360,7 +7873,7 @@
     if (!lessonEntry) return;
 
     state.inlinePopupOpen = null;
-    state.feedback = null;
+    state.flowchartPopupOpen = null;
 
     if (state.currentStepIndex < lessonEntry.lesson.steps.length - 1) {
       state.currentStepIndex += 1;
@@ -2379,7 +7892,7 @@
     if (!lessonEntry) return;
 
     state.inlinePopupOpen = null;
-    state.feedback = null;
+    state.flowchartPopupOpen = null;
 
     if (state.currentStepIndex > 0) {
       state.currentStepIndex -= 1;
@@ -2412,6 +7925,58 @@
     }
   }
 
+  // Lê o conteúdo hardcoded gerado em arquivo separado, sem misturar com o motor.
+  function loadBundledProjectSeed() {
+    try {
+      const bundled = window.AraLearnBundledContent;
+      if (!bundled || typeof bundled !== "object") return { content: null, assets: {} };
+      return {
+        content: bundled.content ? normalizeContent(bundled.content) : null,
+        assets: normalizeAssetStore(bundled.assets)
+      };
+    } catch (_error) {
+      return { content: null, assets: {} };
+    }
+  }
+
+  // Injeta o hardcoded inicial apenas como complemento do storage local, preservando edições do usuário.
+  function applyBundledProjectSeed() {
+    const bundled = loadBundledProjectSeed();
+    if (!bundled.content) return false;
+
+    const summary = createImportMergeSummary();
+    let changed = false;
+    const incomingTitle = clean(bundled.content.appTitle, DEFAULT_APP_TITLE);
+    if (
+      (!String(state.content.appTitle || "").trim() || state.content.appTitle === DEFAULT_APP_TITLE) &&
+      incomingTitle &&
+      incomingTitle !== DEFAULT_APP_TITLE
+    ) {
+      state.content.appTitle = incomingTitle;
+      changed = true;
+    }
+
+    bundled.content.courses.forEach(function (bundledCourse) {
+      const match = findImportMatch(state.content.courses, bundledCourse);
+      if (!match) {
+        state.content.courses.push(clone(bundledCourse));
+        summary.coursesAdded += 1;
+        changed = true;
+        return;
+      }
+
+      if (mergeCourseModules(match.item, bundledCourse, [], summary)) {
+        changed = true;
+      }
+    });
+
+    if (mergeMissingAssets(bundled.assets)) {
+      changed = true;
+    }
+
+    return changed;
+  }
+
   // Normaliza mapa de assets (caminho lógico -> data URL da imagem).
   function normalizeAssetStore(rawAssets) {
     if (!rawAssets || typeof rawAssets !== "object") return {};
@@ -2433,16 +7998,16 @@
     persistTimer = window.setTimeout(function () {
       persistTimer = null;
       persistProjectSnapshot();
-      scheduleLocalFolderPersist();
     }, 120);
   }
 
   // Persiste snapshot completo do projeto para recuperar tudo apos reinicio/reload.
   function persistProjectSnapshot() {
     try {
+      pruneUnusedAssetsStore();
       const snapshot = {
         content: state.content,
-        progress: serializeProgressForJson(),
+        progress: serializeProgressRecords(getProgressRecordsList(state.progress)),
         assets: state.assets,
         updatedAt: new Date().toISOString()
       };
@@ -2452,283 +8017,33 @@
     }
   }
 
-  // Verifica se File System Access API esta disponivel neste navegador.
-  function isFileSystemAccessSupported() {
-    return !!(
-      typeof window !== "undefined" &&
-      typeof window.showDirectoryPicker === "function" &&
-      typeof window.FileSystemFileHandle !== "undefined"
-    );
-  }
-
-  // Agenda sincronizacao fisica em pasta local (modo opcional).
-  function scheduleLocalFolderPersist() {
-    if (!(state.fs && state.fs.enabled && state.fs.handle)) return;
-    fsPersistQueued = true;
-    if (fsPersistTimer) window.clearTimeout(fsPersistTimer);
-    fsPersistTimer = window.setTimeout(function () {
-      fsPersistTimer = null;
-      persistProjectToLocalFolder(false);
-    }, 500);
-  }
-
-  // Solicita ao usuario uma pasta local para sincronizacao automatica.
-  async function chooseLocalFolderForSync() {
-    if (!isFileSystemAccessSupported()) {
-      window.alert("Seu navegador não suporta File System Access API.");
-      return;
-    }
-
-    try {
-      const handle = await window.showDirectoryPicker({ mode: "readwrite" });
-      const granted = await ensureDirectoryPermission(handle);
-      if (!granted) {
-        window.alert("Permissão de escrita não concedida para a pasta selecionada.");
-        return;
-      }
-
-      state.fs.enabled = true;
-      state.fs.handle = handle;
-      state.fs.folderName = String(handle.name || "");
-      state.fs.lastError = "";
-      renderApp();
-      await persistProjectToLocalFolder(true);
-    } catch (error) {
-      if (error && error.name === "AbortError") return;
-      state.fs.lastError = "Falha ao selecionar pasta local.";
-      renderApp();
-    }
-  }
-
-  // Desativa modo de sincronizacao em pasta local.
-  function disconnectLocalFolderSync() {
-    state.fs.enabled = false;
-    state.fs.handle = null;
-    state.fs.folderName = "";
-    state.fs.lastError = "";
-    state.fs.lastSavedAt = "";
-    if (fsPersistTimer) {
-      window.clearTimeout(fsPersistTimer);
-      fsPersistTimer = null;
-    }
-    fsPersistInFlight = false;
-    fsPersistQueued = false;
-    renderApp();
-  }
-
-  // Garante permissao readwrite para operar no diretorio escolhido.
-  async function ensureDirectoryPermission(handle) {
-    if (!handle || typeof handle.queryPermission !== "function") return false;
-    const mode = { mode: "readwrite" };
-    let permission = await handle.queryPermission(mode);
-    if (permission === "granted") return true;
-    permission = await handle.requestPermission(mode);
-    return permission === "granted";
-  }
-
-  // Sincroniza projeto completo para pasta local (JSON + imagens em assets/images).
-  async function persistProjectToLocalFolder(showAlertOnError) {
-    if (!(state.fs && state.fs.enabled && state.fs.handle)) return;
-
-    fsPersistQueued = false;
-    if (fsPersistInFlight) {
-      fsPersistQueued = true;
-      return;
-    }
-
-    const prevError = state.fs.lastError;
-    fsPersistInFlight = true;
-    try {
-      const granted = await ensureDirectoryPermission(state.fs.handle);
-      if (!granted) throw new Error("Permissão de escrita negada.");
-
-      const payload = buildProjectPayload();
-      const jsonText = JSON.stringify(payload, null, 2);
-      await writeTextToDirectory(state.fs.handle, DEFAULT_PROJECT_JSON_FILE_NAME, jsonText);
-
-      const assetPaths = Object.keys(state.assets).sort();
-      for (let i = 0; i < assetPaths.length; i += 1) {
-        const assetPath = assetPaths[i];
-        const parsed = dataUrlToBytes(state.assets[assetPath]);
-        if (!parsed) continue;
-        await writeBytesToDirectory(state.fs.handle, assetPath, parsed.bytes);
-      }
-
-      state.fs.lastError = "";
-      state.fs.lastSavedAt = new Date().toISOString();
-    } catch (error) {
-      state.fs.lastError = (error && error.message) ? String(error.message) : "Falha ao gravar pasta local.";
-      if (showAlertOnError) window.alert(state.fs.lastError);
-    } finally {
-      fsPersistInFlight = false;
-      if (fsPersistQueued) {
-        fsPersistQueued = false;
-        scheduleLocalFolderPersist();
-      }
-      if (prevError !== state.fs.lastError) {
-        renderApp();
-      }
-    }
-  }
-
-  // Grava arquivo de texto em caminho relativo dentro do diretorio escolhido.
-  async function writeTextToDirectory(rootHandle, relativePath, text) {
-    await writeBytesToDirectory(rootHandle, relativePath, utf8Encode(String(text || "")));
-  }
-
-  // Grava bytes em caminho relativo dentro do diretorio escolhido.
-  async function writeBytesToDirectory(rootHandle, relativePath, bytes) {
-    const normalized = normalizeZipPath(relativePath);
-    if (!normalized) throw new Error("Caminho de arquivo inválido.");
-
-    const parts = normalized.split("/").filter(Boolean);
-    const fileName = parts.pop();
-    if (!fileName) throw new Error("Nome de arquivo inválido.");
-
-    let dir = rootHandle;
-    for (let i = 0; i < parts.length; i += 1) {
-      dir = await dir.getDirectoryHandle(parts[i], { create: true });
-    }
-
-    const fileHandle = await dir.getFileHandle(fileName, { create: true });
-    const writable = await fileHandle.createWritable();
-    try {
-      await writable.write(bytes);
-    } finally {
-      await writable.close();
-    }
-  }
-
   // Carrega progresso salvo no localStorage.
   function loadProgressStore() {
     try {
       const raw = window.localStorage.getItem(PROGRESS_STORAGE_KEY);
       if (!raw) return { lessons: {} };
-      return normalizeProgressStore(JSON.parse(raw));
+      return normalizeImportedProgress(JSON.parse(raw));
     } catch (_error) {
       return { lessons: {} };
     }
   }
 
-  // Normaliza estrutura de progresso para formato interno esperado.
-  function normalizeProgressStore(raw) {
-    const source = raw && typeof raw === "object" ? raw : {};
-    const sourceLessons = source.lessons && typeof source.lessons === "object" ? source.lessons : {};
-    const lessons = {};
-
-    Object.keys(sourceLessons).forEach(function (key) {
-      const item = sourceLessons[key];
-      if (!item || typeof item !== "object") return;
-
-      const courseId = String(item.courseId || "").trim();
-      const moduleId = String(item.moduleId || "").trim();
-      const lessonId = String(item.lessonId || "").trim();
-      if (!courseId || !moduleId || !lessonId) return;
-
-      const currentIndexHint = normalizeIndexHint(item.currentIndexHint);
-      const furthestIndexHint = normalizeIndexHint(item.furthestIndexHint);
-      lessons[key] = {
-        courseId: courseId,
-        moduleId: moduleId,
-        lessonId: lessonId,
-        currentStepId: String(item.currentStepId || ""),
-        currentIndexHint: currentIndexHint,
-        furthestStepId: String(item.furthestStepId || item.currentStepId || ""),
-        furthestIndexHint: furthestIndexHint === null ? currentIndexHint : furthestIndexHint,
-        updatedAt: String(item.updatedAt || "")
-      };
-    });
-
-    return { lessons: lessons };
-  }
-
   // Persiste progresso atual no localStorage.
   function saveProgressStore() {
     try {
-      window.localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(state.progress));
+      window.localStorage.setItem(
+        PROGRESS_STORAGE_KEY,
+        JSON.stringify(serializeProgressRecords(getProgressRecordsList(state.progress)))
+      );
     } catch (_error) {
       // Silencioso para manter o app funcional mesmo com storage bloqueado.
     }
-  }
-
-  // Indica se existe progresso registrado.
-  function hasProgressEntries(progressStore) {
-    return !!(progressStore && progressStore.lessons && Object.keys(progressStore.lessons).length);
-  }
-
-  // Normaliza progresso vindo de JSON importado.
-  function normalizeImportedProgress(rawProgress) {
-    if (!rawProgress || typeof rawProgress !== "object") return { lessons: {} };
-
-    if (Array.isArray(rawProgress.lessons)) {
-      const indexed = {};
-      rawProgress.lessons.forEach(function (item) {
-        if (!item || typeof item !== "object") return;
-        const courseId = String(item.courseId || "").trim();
-        const moduleId = String(item.moduleId || "").trim();
-        const lessonId = String(item.lessonId || "").trim();
-        if (!courseId || !moduleId || !lessonId) return;
-        indexed[lessonProgressKey(courseId, moduleId, lessonId)] = item;
-      });
-      return normalizeProgressStore({ lessons: indexed });
-    }
-
-    if (rawProgress.lessons && typeof rawProgress.lessons === "object") {
-      return normalizeProgressStore(rawProgress);
-    }
-
-    return { lessons: {} };
-  }
-
-  // Converte progresso interno para formato amigavel no JSON exportado.
-  function serializeProgressForJson() {
-    const records = Object.keys(state.progress.lessons || {})
-      .map(function (key) { return state.progress.lessons[key]; })
-      .filter(Boolean)
-      .sort(function (a, b) {
-        const keyA = a.courseId + "::" + a.moduleId + "::" + a.lessonId;
-        const keyB = b.courseId + "::" + b.moduleId + "::" + b.lessonId;
-        return keyA.localeCompare(keyB);
-      });
-
-    return { lessons: records };
-  }
-
-  // Gera chave unica hierarquica de progresso por licao.
-  function lessonProgressKey(courseId, moduleId, lessonId) {
-    return String(courseId) + "::" + String(moduleId) + "::" + String(lessonId);
   }
 
   // Busca registro de progresso de uma licao especifica.
   function getLessonProgressRecord(courseId, moduleId, lessonId) {
     const key = lessonProgressKey(courseId, moduleId, lessonId);
     return (state.progress.lessons || {})[key] || null;
-  }
-
-  // Ajusta registro de progresso quando estrutura da licao muda.
-  function normalizeProgressRecordForLesson(record, courseId, moduleId, lessonId, steps) {
-    if (!Array.isArray(steps) || !steps.length) return null;
-    if (!record || typeof record !== "object") return null;
-
-    const currentIndex = resolveProgressIndex(steps, record.currentStepId, record.currentIndexHint, 0);
-    let furthestIndex = resolveProgressIndex(
-      steps,
-      record.furthestStepId || record.currentStepId,
-      record.furthestIndexHint,
-      currentIndex
-    );
-    if (furthestIndex < currentIndex) furthestIndex = currentIndex;
-
-    return {
-      courseId: courseId,
-      moduleId: moduleId,
-      lessonId: lessonId,
-      currentStepId: steps[currentIndex].id,
-      currentIndexHint: currentIndex,
-      furthestStepId: steps[furthestIndex].id,
-      furthestIndexHint: furthestIndex,
-      updatedAt: String(record.updatedAt || new Date().toISOString())
-    };
   }
 
   // Salva progresso atual de uma licao em memoria/persistencia.
@@ -2778,29 +8093,6 @@
     const record = getLessonProgressRecord(entry.course.id, entry.module.id, entry.lesson.id);
     if (!record) return 0;
     return resolveProgressIndex(entry.lesson.steps, record.currentStepId, record.currentIndexHint, 0);
-  }
-
-  // Resolve indice valido por ID de step, hint e fallback.
-  function resolveProgressIndex(steps, stepId, indexHint, fallbackIndex) {
-    if (!Array.isArray(steps) || !steps.length) return 0;
-    const maxIndex = steps.length - 1;
-
-    if (stepId) {
-      const byId = steps.findIndex(function (step) { return step.id === stepId; });
-      if (byId > -1) return byId;
-    }
-
-    const hint = normalizeIndexHint(indexHint);
-    if (hint !== null) return clamp(hint - 1, 0, maxIndex);
-
-    return clamp(fallbackIndex || 0, 0, maxIndex);
-  }
-
-  // Valida e normaliza indice numerico armazenado.
-  function normalizeIndexHint(value) {
-    const number = Number(value);
-    if (!Number.isInteger(number) || number < 0) return null;
-    return number;
   }
 
   // Reconcilia progresso da licao apos insercao/exclusao/edicao de cards.
@@ -2984,7 +8276,7 @@
   // Limpa estados temporarios de interacao da UI.
   function resetTransient() {
     state.inlinePopupOpen = null;
-    state.feedback = null;
+    state.flowchartPopupOpen = null;
     state.tokenByStepId = {};
     state.ui.sideOpen = false;
     state.ui.contextMenu = null;
@@ -2992,21 +8284,8 @@
   }
 
   // ============================================================================
-  // Exercicios (Token Fill e Terminal)
+  // Exercícios interativos
   // ============================================================================
-  // Obtem estado em memoria do exercicio token_fill.
-  function getExerciseState(step) {
-    if (!state.tokenByStepId[step.id]) {
-      state.tokenByStepId[step.id] = { slots: Array(step.slots).fill(null) };
-    }
-    return state.tokenByStepId[step.id];
-  }
-
-  // Retorna opções ainda disponiveis para preencher lacunas.
-  function getAvailableOptions(step, slots) {
-    return getAvailableOptionsFromList(step.options, slots);
-  }
-
   // Calcula opções livres removendo as ja usadas nas lacunas.
   function getAvailableOptionsFromList(options, slots) {
     const selected = slots.filter(Boolean).slice();
@@ -3020,101 +8299,6 @@
     });
   }
 
-  // Verifica se todas as lacunas estao preenchidas.
-  function isFilled(slots) {
-    return slots.every(function (slot) { return slot !== null; });
-  }
-
-  // Aplica opção clicada na primeira lacuna vazia.
-  function tokenOptionClick(value) {
-    const step = getCurrentStep();
-    if (!step || step.type !== "token_fill") return;
-
-    const exercise = getExerciseState(step);
-    const firstIndex = exercise.slots.findIndex(function (slot) { return slot === null; });
-    if (firstIndex === -1) return;
-
-    exercise.slots[firstIndex] = value;
-    state.feedback = null;
-    renderApp();
-  }
-
-  // Remove opção de uma lacuna preenchida.
-  function tokenSlotClick(index) {
-    const step = getCurrentStep();
-    if (!step || step.type !== "token_fill") return;
-
-    const exercise = getExerciseState(step);
-    if (!exercise.slots[index]) return;
-
-    exercise.slots[index] = null;
-    state.feedback = null;
-    renderApp();
-  }
-
-  // Limpa todas as lacunas do exercicio token_fill.
-  function tokenReset() {
-    const step = getCurrentStep();
-    if (!step || step.type !== "token_fill") return;
-
-    getExerciseState(step).slots = Array(step.slots).fill(null);
-    state.feedback = null;
-    renderApp();
-  }
-
-  // Valida resposta do exercicio token_fill.
-  function tokenCheck() {
-    const step = getCurrentStep();
-    if (!step || step.type !== "token_fill") return;
-
-    const exercise = getExerciseState(step);
-    if (!isFilled(exercise.slots)) return;
-
-    const ok = exercise.slots.every(function (value, index) { return value === step.answer[index]; });
-    state.feedback = { type: ok ? "correct" : "incorrect", stepId: step.id };
-    renderApp();
-  }
-
-  // Botao "Continuar" do token_fill: valida na primeira vez; avanca na segunda se estiver correto.
-  function tokenContinue() {
-    const step = getCurrentStep();
-    if (!step || step.type !== "token_fill") return;
-
-    if (state.feedback && state.feedback.stepId === step.id && state.feedback.type === "correct") {
-      nextStep();
-      return;
-    }
-
-    const exercise = getExerciseState(step);
-    if (!isFilled(exercise.slots)) {
-      state.feedback = {
-        type: "incorrect",
-        stepId: step.id,
-        message: "Preencha todas as lacunas antes de continuar."
-      };
-      renderApp();
-      return;
-    }
-
-    const ok = exercise.slots.every(function (value, index) { return value === step.answer[index]; });
-    state.feedback = {
-      type: ok ? "correct" : "incorrect",
-      stepId: step.id,
-      message: ok ? "" : ((step.incorrect && step.incorrect.message) || "Tente novamente.")
-    };
-    renderApp();
-  }
-
-  // Preenche automaticamente a resposta correta no token_fill.
-  function applyAnswer() {
-    const step = getCurrentStep();
-    if (!step || step.type !== "token_fill") return;
-
-    getExerciseState(step).slots = step.answer.slice(0, step.slots);
-    state.feedback = null;
-    renderApp();
-  }
-
   // Gera chave unica para estado de exercicio do bloco terminal.
   function terminalExerciseKey(stepId, blockId) {
     return "terminal::" + stepId + "::" + blockId;
@@ -3124,7 +8308,7 @@
   function getTerminalExerciseState(step, block, slotCount) {
     const key = terminalExerciseKey(step.id, block.id);
     if (!state.tokenByStepId[key]) {
-      state.tokenByStepId[key] = { slots: Array(slotCount).fill(null), feedback: null };
+      state.tokenByStepId[key] = { slots: Array(slotCount).fill(null), feedback: null, activeSlot: null };
       return state.tokenByStepId[key];
     }
 
@@ -3137,25 +8321,83 @@
       });
       current.slots = next;
     }
+    if (!Number.isInteger(current.activeSlot) || current.activeSlot < 0 || current.activeSlot >= slotCount) {
+      current.activeSlot = null;
+    }
     return current;
   }
 
   // Monta contexto do exercicio terminal no step atual.
   function getCurrentTerminalExercise(blockId) {
-    const step = getCurrentStep();
-    if (!step || !Array.isArray(step.blocks)) return null;
-
-    const block = step.blocks.find(function (item) {
-      return item.id === blockId && isEditorKind(item.kind);
+    const entry = findCurrentStepBlockById(blockId, function (item) {
+      return isEditorKind(item.kind);
     });
-    if (!block) return null;
+    if (!entry) return null;
 
-    const parsed = parseTerminalTemplate(block.value || "");
+    const parsed = parseTerminalTemplate(entry.block.value || "");
     if (!parsed.answers.length) return null;
 
-    const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
-    const options = mergeTerminalOptions(block.options, parsed.answers);
-    return { step: step, block: block, parsed: parsed, exercise: exercise, options: options };
+    const exercise = getTerminalExerciseState(entry.step, entry.block, parsed.answers.length);
+    const options = mergeTerminalOptions(entry.block.options, parsed.answers);
+    return { step: entry.step, block: entry.block, parsed: parsed, exercise: exercise, options: options };
+  }
+
+  // Monta a lista de respostas aceitas por lacuna a partir das opções habilitadas do Editor digitado.
+  function getEnabledEditorInputMatchers(options) {
+    return sortEditorOptionsBySlotOrder(options)
+      .filter(function (option) {
+        return option.enabled !== false;
+      })
+      .map(function (option) {
+        return [{
+          value: String(option.value || ""),
+          regex: !!option.regex
+        }].concat(
+          normalizeEditorInputVariantsForAuthor(option.variants)
+            .filter(function (variant) {
+              return String(variant.value || "").trim().length > 0;
+            })
+            .map(function (variant) {
+              return {
+                value: String(variant.value || ""),
+                regex: !!variant.regex
+              };
+            })
+        );
+      });
+  }
+
+  // Lista lacunas vazias, preservando a ordem visual do template.
+  function getEmptyTerminalSlotIndexes(slots) {
+    return (Array.isArray(slots) ? slots : []).reduce(function (acc, value, index) {
+      if (value === null || value === undefined || String(value) === "") acc.push(index);
+      return acc;
+    }, []);
+  }
+
+  // Resolve qual lacuna do modo choice deve receber a opção clicada.
+  function resolveTerminalChoiceTargetIndex(entry, value) {
+    if (!entry || !entry.exercise) return -1;
+    const slots = Array.isArray(entry.exercise.slots) ? entry.exercise.slots : [];
+    const activeSlot = entry.exercise.activeSlot;
+    if (
+      Number.isInteger(activeSlot) &&
+      activeSlot >= 0 &&
+      activeSlot < slots.length &&
+      (slots[activeSlot] === null || slots[activeSlot] === undefined || String(slots[activeSlot]) === "")
+    ) {
+      return activeSlot;
+    }
+
+    const emptyIndexes = getEmptyTerminalSlotIndexes(slots);
+    if (!emptyIndexes.length) return -1;
+
+    const exactMatches = emptyIndexes.filter(function (index) {
+      return String(entry.parsed.answers[index] || "") === String(value || "");
+    });
+    if (exactMatches.length) return exactMatches[0];
+
+    return emptyIndexes[0];
   }
 
   // Seleciona opção no exercicio de terminal.
@@ -3163,12 +8405,23 @@
     const entry = getCurrentTerminalExercise(blockId);
     if (!entry) return;
 
-    const first = entry.exercise.slots.findIndex(function (slot) { return slot === null; });
-    if (first === -1) return;
+    const targetIndex = resolveTerminalChoiceTargetIndex(entry, value);
+    if (targetIndex === -1) return;
 
-    entry.exercise.slots[first] = value;
+    entry.exercise.slots[targetIndex] = value;
     entry.exercise.feedback = null;
+    entry.exercise.activeSlot = null;
     renderApp();
+  }
+
+  // Atualiza em tempo real o texto digitado para a lacuna ativa.
+  function setTerminalInputDraft(blockId, index, value) {
+    const entry = getCurrentTerminalExercise(blockId);
+    if (!entry || !isTypedEditorBlock(entry.block)) return;
+    if (!Number.isInteger(index) || index < 0 || index >= entry.exercise.slots.length) return;
+
+    entry.exercise.slots[index] = String(value || "");
+    entry.exercise.feedback = null;
   }
 
   // Remove opção de lacuna no exercicio de terminal.
@@ -3176,9 +8429,16 @@
     const entry = getCurrentTerminalExercise(blockId);
     if (!entry) return;
     if (!Number.isInteger(index) || index < 0 || index >= entry.exercise.slots.length) return;
-    if (!entry.exercise.slots[index]) return;
+    const currentValue = entry.exercise.slots[index];
+    if (currentValue === null || currentValue === undefined || String(currentValue) === "") {
+      entry.exercise.activeSlot = entry.exercise.activeSlot === index ? null : index;
+      entry.exercise.feedback = null;
+      renderApp();
+      return;
+    }
 
     entry.exercise.slots[index] = null;
+    entry.exercise.activeSlot = index;
     entry.exercise.feedback = null;
     renderApp();
   }
@@ -3190,7 +8450,43 @@
 
     entry.exercise.slots = Array(entry.parsed.answers.length).fill(null);
     entry.exercise.feedback = null;
+    entry.exercise.activeSlot = null;
     renderApp();
+  }
+
+  // Verifica se todas as posições de resposta receberam algum valor.
+  function isFilled(values) {
+    return Array.isArray(values) && values.every(function (value) {
+      return value !== null && value !== undefined && String(value) !== "";
+    });
+  }
+
+  // Valida um bloco Editor conforme o modo de interação configurado.
+  function validateTerminalExerciseBlock(step, block) {
+    const parsed = parseTerminalTemplate(block.value || "");
+    const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
+    if (!isFilled(exercise.slots)) {
+      exercise.feedback = "incomplete";
+      return "incomplete";
+    }
+
+    let status = "incorrect";
+    if (isTypedEditorBlock(block)) {
+      const result = validateTypedCodeInputAttempt({
+        slots: exercise.slots,
+        matchersBySlot: getEnabledEditorInputMatchers(block.options)
+      });
+      status = result.status;
+    } else {
+      status = exercise.slots.every(function (value, index) {
+        return value === parsed.answers[index];
+      })
+        ? "correct"
+        : "incorrect";
+    }
+
+    exercise.feedback = status;
+    return status;
   }
 
   // Valida exercicio terminal.
@@ -3199,45 +8495,31 @@
     if (!entry) return;
     if (!isFilled(entry.exercise.slots)) return;
 
-    const ok = entry.exercise.slots.every(function (value, index) {
-      return value === entry.parsed.answers[index];
-    });
-    entry.exercise.feedback = ok ? "correct" : "incorrect";
+    validateTerminalExerciseBlock(entry.step, entry.block);
     renderApp();
   }
 
-  // Valida todos os blocos Editor do step atual (usado no botao Continuar do card).
-  function validateStepEditorExercises(step) {
-    if (!step) return { hasExercise: false, status: "none" };
-
-    const blocks = Array.isArray(step.blocks) ? step.blocks : [];
-    const editorBlocks = blocks.filter(function (block) {
-      return isEditorKind(block.kind) && parseTerminalTemplate(block.value || "").answers.length > 0;
-    });
-    if (!editorBlocks.length) return { hasExercise: false, status: "none" };
+  // Valida uma coleção arbitrária de blocos interativos dentro do mesmo step lógico.
+  function validateInteractiveBlocks(step, blocks) {
+    const exerciseBlocks = collectInteractiveExerciseBlocks(blocks);
+    if (!exerciseBlocks.length) return { hasExercise: false, status: "none" };
 
     let hasIncomplete = false;
     let hasIncorrect = false;
 
-    editorBlocks.forEach(function (block) {
-      const parsed = parseTerminalTemplate(block.value || "");
-      const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
+    exerciseBlocks.forEach(function (block) {
+      let status = "none";
 
-      if (!isFilled(exercise.slots)) {
-        exercise.feedback = "incomplete";
-        hasIncomplete = true;
-        return;
+      if (isEditorKind(block.kind)) {
+        status = validateTerminalExerciseBlock(step, block);
+      } else if (isMultipleChoiceKind(block.kind)) {
+        status = validateMultipleChoiceExerciseBlock(step, block);
+      } else if (isFlowchartKind(block.kind)) {
+        status = validateFlowchartExerciseBlock(step, block);
       }
 
-      const ok = exercise.slots.every(function (value, index) {
-        return value === parsed.answers[index];
-      });
-      if (ok) {
-        exercise.feedback = "correct";
-      } else {
-        exercise.feedback = "incorrect";
-        hasIncorrect = true;
-      }
+      if (status === "incorrect") hasIncorrect = true;
+      if (status === "incomplete") hasIncomplete = true;
     });
 
     if (hasIncorrect) return { hasExercise: true, status: "incorrect" };
@@ -3245,17 +8527,48 @@
     return { hasExercise: true, status: "correct" };
   }
 
-  // Limpa todos os blocos Editor do step atual.
+  // Limpa respostas e feedbacks de uma coleção de blocos interativos.
+  function resetInteractiveBlocks(step, blocks) {
+    collectInteractiveExerciseBlocks(blocks).forEach(function (block) {
+      if (isEditorKind(block.kind)) {
+        const parsed = parseTerminalTemplate(block.value || "");
+        const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
+        exercise.slots = Array(parsed.answers.length).fill(null);
+        exercise.feedback = null;
+        exercise.activeSlot = null;
+        return;
+      }
+
+      if (isMultipleChoiceKind(block.kind)) {
+        const exercise = getMultipleChoiceExerciseState(step, block);
+        exercise.selected = [];
+        exercise.feedback = null;
+        return;
+      }
+
+      if (isFlowchartKind(block.kind)) {
+        const exercise = getFlowchartExerciseState(step, block);
+        getFlowchartSortedNodes(block.nodes).forEach(function (node) {
+          if (flowchartNodeUsesShapeBlank(node)) exercise.shapes[node.id] = null;
+          if (flowchartNodeUsesTextBlank(node)) exercise.texts[node.id] = null;
+        });
+        exercise.feedback = null;
+      }
+    });
+  }
+
+  // Valida todos os blocos interativos do step atual (usado no botao Continuar do card).
+  function validateStepEditorExercises(step) {
+    if (!step) return { hasExercise: false, status: "none" };
+    return validateInteractiveBlocks(step, step.blocks);
+  }
+
+  // Limpa todos os blocos interativos do step atual.
   function resetStepEditorExercises(step) {
     if (!step || !Array.isArray(step.blocks)) return;
-    step.blocks.forEach(function (block) {
-      if (!isEditorKind(block.kind)) return;
-      const parsed = parseTerminalTemplate(block.value || "");
-      if (!parsed.answers.length) return;
-      const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
-      exercise.slots = Array(parsed.answers.length).fill(null);
-      exercise.feedback = null;
-    });
+    resetInteractiveBlocks(step, step.blocks);
+    resetInteractiveBlocks(step, getOpenPopupInteractiveBlocks(step));
+    state.flowchartPopupOpen = null;
   }
 
   // Mostra resposta correta no exercicio terminal.
@@ -3265,12 +8578,200 @@
 
     entry.exercise.slots = entry.parsed.answers.slice();
     entry.exercise.feedback = "correct";
+    entry.exercise.activeSlot = null;
     renderApp();
   }
 
   // Fecha feedback de erro do exercicio terminal.
   function terminalTryAgain(blockId) {
     const entry = getCurrentTerminalExercise(blockId);
+    if (!entry) return;
+    entry.exercise.feedback = null;
+    renderApp();
+  }
+
+  // Gera chave unica para estado do exercicio de fluxograma.
+  function flowchartExerciseKey(stepId, blockId) {
+    return "flowchart::" + stepId + "::" + blockId;
+  }
+
+  // Obtem/cria estado de exercicio do bloco de fluxograma.
+  function getFlowchartExerciseState(step, block) {
+    const key = flowchartExerciseKey(step.id, block.id);
+    const nodes = getFlowchartSortedNodes(block.nodes);
+
+    if (!state.tokenByStepId[key]) {
+      state.tokenByStepId[key] = { shapes: {}, texts: {}, feedback: null };
+    }
+
+    const current = state.tokenByStepId[key];
+    if (!current.shapes || typeof current.shapes !== "object") current.shapes = {};
+    if (!current.texts || typeof current.texts !== "object") current.texts = {};
+
+    const activeIds = {};
+    nodes.forEach(function (node) {
+      activeIds[node.id] = true;
+      if (!Object.prototype.hasOwnProperty.call(current.shapes, node.id)) current.shapes[node.id] = null;
+      if (!Object.prototype.hasOwnProperty.call(current.texts, node.id)) current.texts[node.id] = null;
+    });
+
+    Object.keys(current.shapes).forEach(function (nodeId) {
+      if (!activeIds[nodeId]) delete current.shapes[nodeId];
+    });
+    Object.keys(current.texts).forEach(function (nodeId) {
+      if (!activeIds[nodeId]) delete current.texts[nodeId];
+    });
+
+    return current;
+  }
+
+  // Monta contexto do exercicio de fluxograma no step atual.
+  function getCurrentFlowchartExercise(blockId) {
+    const entry = findCurrentStepBlockById(blockId, function (item) {
+      return isFlowchartKind(item.kind);
+    });
+    if (!entry) return null;
+
+    normalizeFlowchartEditorBlock(entry.block);
+    return {
+      step: entry.step,
+      block: entry.block,
+      exercise: getFlowchartExerciseState(entry.step, entry.block)
+    };
+  }
+
+  // Abre popup de seleção do fluxograma para um nó específico.
+  function flowchartOpenPopup(blockId, nodeId, kind) {
+    const entry = getCurrentFlowchartExercise(blockId);
+    if (!entry) return;
+    state.flowchartPopupOpen = {
+      stepId: entry.step.id,
+      blockId: entry.block.id,
+      nodeId: nodeId,
+      kind: kind === "shape" ? "shape" : "text"
+    };
+    renderApp();
+  }
+
+  // Define símbolo selecionado no fluxograma.
+  function flowchartSetShape(blockId, nodeId, shape) {
+    const entry = getCurrentFlowchartExercise(blockId);
+    if (!entry) return;
+    entry.exercise.shapes[nodeId] = normalizeFlowchartShapeKey(shape);
+    entry.exercise.feedback = null;
+    state.flowchartPopupOpen = null;
+    renderApp();
+  }
+
+  // Define texto selecionado no fluxograma.
+  function flowchartSetText(blockId, nodeId, text) {
+    const entry = getCurrentFlowchartExercise(blockId);
+    if (!entry) return;
+    entry.exercise.texts[nodeId] = String(text || "");
+    entry.exercise.feedback = null;
+    state.flowchartPopupOpen = null;
+    renderApp();
+  }
+
+  // Limpa símbolo ou texto de um nó do fluxograma.
+  function flowchartClearChoice(blockId, nodeId, kind) {
+    const entry = getCurrentFlowchartExercise(blockId);
+    if (!entry) return;
+    if (kind === "shape") {
+      entry.exercise.shapes[nodeId] = null;
+    } else {
+      entry.exercise.texts[nodeId] = null;
+    }
+    entry.exercise.feedback = null;
+    state.flowchartPopupOpen = null;
+    renderApp();
+  }
+
+  // Valida um bloco de fluxograma e retorna status consolidado.
+  function validateFlowchartExerciseBlock(step, block) {
+    const exercise = getFlowchartExerciseState(step, block);
+    const nodes = getFlowchartSortedNodes(block.nodes);
+    if (!nodes.length) {
+      exercise.feedback = null;
+      return "none";
+    }
+
+    const hasAnyBlank = nodes.some(function (node) {
+      return flowchartNodeUsesShapeBlank(node) || flowchartNodeUsesTextBlank(node);
+    });
+    if (!hasAnyBlank) {
+      exercise.feedback = null;
+      return "none";
+    }
+
+    let incomplete = false;
+    let incorrect = false;
+
+    nodes.forEach(function (node) {
+      const selectedShape = String(exercise.shapes[node.id] || "").trim();
+      const selectedText = String(exercise.texts[node.id] || "").trim();
+
+      if (flowchartNodeUsesShapeBlank(node)) {
+        if (!selectedShape) {
+          incomplete = true;
+          return;
+        }
+        if (selectedShape !== normalizeFlowchartShapeKey(node.shape)) {
+          incorrect = true;
+        }
+      }
+
+      if (flowchartNodeUsesTextBlank(node)) {
+        if (!selectedText) {
+          incomplete = true;
+          return;
+        }
+        if (selectedText !== String(node.text || "").trim()) {
+          incorrect = true;
+        }
+      }
+    });
+
+    exercise.feedback = incorrect ? "incorrect" : incomplete ? "incomplete" : "correct";
+    return exercise.feedback;
+  }
+
+  // Limpa respostas do fluxograma.
+  function flowchartReset(blockId) {
+    const entry = getCurrentFlowchartExercise(blockId);
+    if (!entry) return;
+
+    const nodes = getFlowchartSortedNodes(entry.block.nodes);
+    nodes.forEach(function (node) {
+      if (flowchartNodeUsesShapeBlank(node)) entry.exercise.shapes[node.id] = null;
+      if (flowchartNodeUsesTextBlank(node)) entry.exercise.texts[node.id] = null;
+    });
+    entry.exercise.feedback = null;
+    state.flowchartPopupOpen = null;
+    renderApp();
+  }
+
+  // Mostra resposta correta do fluxograma.
+  function flowchartViewAnswer(blockId) {
+    const entry = getCurrentFlowchartExercise(blockId);
+    if (!entry) return;
+
+    getFlowchartSortedNodes(entry.block.nodes).forEach(function (node) {
+      if (flowchartNodeUsesShapeBlank(node)) {
+        entry.exercise.shapes[node.id] = normalizeFlowchartShapeKey(node.shape);
+      }
+      if (flowchartNodeUsesTextBlank(node)) {
+        entry.exercise.texts[node.id] = String(node.text || "").trim();
+      }
+    });
+    entry.exercise.feedback = "correct";
+    state.flowchartPopupOpen = null;
+    renderApp();
+  }
+
+  // Fecha feedback de erro do fluxograma para tentar novamente.
+  function flowchartTryAgain(blockId) {
+    const entry = getCurrentFlowchartExercise(blockId);
     if (!entry) return;
     entry.exercise.feedback = null;
     renderApp();
@@ -3314,8 +8815,8 @@
 
     clearCourseProgressRecords(courseId);
     state.content.courses = state.content.courses.filter(function (item) { return item.id !== courseId; });
-    if (!state.content.courses.length) state.content.courses.push(defaultCourse("Novo curso"));
     pruneProgressStore();
+    state.currentCourseId = state.content.courses.length ? state.content.courses[0].id : null;
     goMain();
   }
 
@@ -3354,7 +8855,6 @@
 
     clearModuleProgressRecords(state.currentCourseId, moduleId);
     course.modules.splice(entry.moduleIndex, 1);
-    if (!course.modules.length) course.modules.push(defaultModule("Novo módulo"));
     pruneProgressStore();
     if (state.currentView === "lesson_step" && !getCurrentLessonEntry()) return goCourse(state.currentCourseId);
 
@@ -3399,7 +8899,6 @@
 
     clearLessonProgressRecord(state.currentCourseId, moduleId, lessonId);
     moduleEntry.module.lessons.splice(index, 1);
-    if (!moduleEntry.module.lessons.length) moduleEntry.module.lessons.push(defaultLesson("Nova lição"));
     pruneProgressStore();
     if (state.currentLessonId === lessonId) return goCourse(state.currentCourseId);
 
@@ -3419,42 +8918,393 @@
   // ============================================================================
   // Importacao e Exportacao ZIP/JSON
   // ============================================================================
+  // Nome amigavel de cada escopo usado nas mensagens de importacao/exportacao.
+  function getPackageScopeLabel(scope) {
+    if (scope === "course") return "curso";
+    if (scope === "module") return "módulo";
+    if (scope === "lesson") return "lição";
+    if (scope === "app") return "aplicação inteira";
+    return "arquivo incompatível";
+  }
+
+  // Cria metadados do pacote para validar importacoes por escopo.
+  function buildPackageMeta(scope, source) {
+    return {
+      format: PACKAGE_FORMAT,
+      scope: scope,
+      exportedAt: new Date().toISOString(),
+      appTitle: state.content.appTitle || DEFAULT_APP_TITLE,
+      source: clone(source || {})
+    };
+  }
+
+  // Serializa progresso em lista ordenada e sem campos redundantes.
+  function serializeProgressRecords(records) {
+    const list = (Array.isArray(records) ? records : [])
+      .filter(Boolean)
+      .map(function (record) {
+        return {
+          courseId: String(record.courseId || ""),
+          moduleId: String(record.moduleId || ""),
+          lessonId: String(record.lessonId || ""),
+          currentStepId: String(record.currentStepId || ""),
+          currentIndexHint: normalizeIndexHint(record.currentIndexHint),
+          furthestStepId: String(record.furthestStepId || record.currentStepId || ""),
+          furthestIndexHint: normalizeIndexHint(record.furthestIndexHint),
+          updatedAt: String(record.updatedAt || "")
+        };
+      })
+      .filter(function (record) {
+        return record.courseId && record.moduleId && record.lessonId;
+      })
+      .sort(function (a, b) {
+        const keyA = a.courseId + "::" + a.moduleId + "::" + a.lessonId;
+        const keyB = b.courseId + "::" + b.moduleId + "::" + b.lessonId;
+        return keyA.localeCompare(keyB);
+      })
+      .map(function (record) {
+        if (record.currentIndexHint === null) delete record.currentIndexHint;
+        if (record.furthestIndexHint === null) delete record.furthestIndexHint;
+        return record;
+      });
+
+    return { lessons: list };
+  }
+
+  // Extrai registros do armazenamento de progresso interno no formato de lista.
+  function getProgressRecordsList(progressStore) {
+    const lessons = (progressStore && progressStore.lessons) || {};
+    return Object.keys(lessons).map(function (key) { return lessons[key]; }).filter(Boolean);
+  }
+
+  // Acumula assets realmente referenciados por blocos, incluindo imagens dentro de popups estruturados.
+  function collectBlockAssetPaths(blocks, bucket, assetStore) {
+    if (!Array.isArray(blocks) || !bucket) return;
+
+    const addPath = function (rawPath) {
+      const path = String(rawPath || "").trim();
+      if (!/^assets\/images\//i.test(path)) return;
+      if (assetStore && !assetStore[path]) return;
+      bucket.add(path);
+    };
+
+    blocks.forEach(function (block) {
+      if (!block) return;
+      if (block.kind === "image") addPath(block.value);
+      if (block.kind === "button" && Array.isArray(block.popupBlocks)) {
+        collectBlockAssetPaths(block.popupBlocks, bucket, assetStore);
+      }
+    });
+  }
+
+  // Acumula assets realmente referenciados por um step.
+  function collectStepAssetPaths(step, bucket, assetStore) {
+    if (!step || !bucket) return;
+
+    const addPath = function (rawPath) {
+      const path = String(rawPath || "").trim();
+      if (!/^assets\/images\//i.test(path)) return;
+      if (assetStore && !assetStore[path]) return;
+      bucket.add(path);
+    };
+
+    addPath(step.image);
+    collectBlockAssetPaths(step.blocks, bucket, assetStore);
+    if (Array.isArray(step.popupBlocks)) {
+      collectBlockAssetPaths(step.popupBlocks, bucket, assetStore);
+    }
+  }
+
+  // Coleta assets referenciados por uma licao.
+  function collectLessonAssetPaths(lesson, assetStore) {
+    const bucket = new Set();
+    if (!lesson || !Array.isArray(lesson.steps)) return [];
+    lesson.steps.forEach(function (step) {
+      collectStepAssetPaths(step, bucket, assetStore);
+    });
+    return Array.from(bucket).sort();
+  }
+
+  // Coleta assets referenciados por um modulo.
+  function collectModuleAssetPaths(moduleItem, assetStore) {
+    const bucket = new Set();
+    if (!moduleItem || !Array.isArray(moduleItem.lessons)) return [];
+    moduleItem.lessons.forEach(function (lesson) {
+      collectLessonAssetPaths(lesson, assetStore).forEach(function (path) {
+        bucket.add(path);
+      });
+    });
+    return Array.from(bucket).sort();
+  }
+
+  // Coleta assets referenciados por um curso.
+  function collectCourseAssetPaths(course, assetStore) {
+    const bucket = new Set();
+    if (!course || !Array.isArray(course.modules)) return [];
+    course.modules.forEach(function (moduleItem) {
+      collectModuleAssetPaths(moduleItem, assetStore).forEach(function (path) {
+        bucket.add(path);
+      });
+    });
+    return Array.from(bucket).sort();
+  }
+
+  // Coleta todos os assets ainda usados no conteudo atual.
+  function collectContentAssetPaths(content, assetStore) {
+    const bucket = new Set();
+    const courses = content && Array.isArray(content.courses) ? content.courses : [];
+    courses.forEach(function (course) {
+      collectCourseAssetPaths(course, assetStore).forEach(function (path) {
+        bucket.add(path);
+      });
+    });
+    return Array.from(bucket).sort();
+  }
+
+  // Coleta assets que ainda estão apenas em rascunhos do editor, antes do salvamento final do card.
+  function collectEditorDraftAssetPaths(assetStore) {
+    const bucket = new Set();
+
+    const collectForm = function (form) {
+      if (!form || !Array.isArray(form.blocks)) return;
+      collectBlockAssetPaths(form.blocks, bucket, assetStore);
+    };
+
+    collectForm(state.editor && state.editor.form);
+    collectForm(state.editor && state.editor.popupBuilder && state.editor.popupBuilder.mainForm);
+
+    const drafts = state.editor && state.editor.draftByStepId ? state.editor.draftByStepId : {};
+    Object.keys(drafts).forEach(function (stepId) {
+      collectForm(drafts[stepId]);
+    });
+
+    return Array.from(bucket).sort();
+  }
+
+  // Remove do armazenamento local imagens orfas para evitar JSONs com sobra.
+  function pruneUnusedAssetsStore() {
+    const next = {};
+    const referenced = new Set();
+
+    collectContentAssetPaths(state.content, state.assets).forEach(function (path) {
+      referenced.add(path);
+    });
+    collectEditorDraftAssetPaths(state.assets).forEach(function (path) {
+      referenced.add(path);
+    });
+
+    Array.from(referenced).forEach(function (path) {
+      if (state.assets[path]) next[path] = state.assets[path];
+    });
+    state.assets = next;
+    return Object.keys(next).sort();
+  }
+
   // Monta payload completo do projeto (conteúdo + progresso + assets referenciados).
   function buildProjectPayload() {
     pruneProgressStore();
+    const assetPaths = pruneUnusedAssetsStore();
     return {
       appTitle: state.content.appTitle,
       courses: clone(state.content.courses),
-      progress: serializeProgressForJson(),
-      assets: Object.keys(state.assets).sort(),
+      progress: serializeProgressRecords(getProgressRecordsList(state.progress)),
+      assets: assetPaths,
       packageMeta: {
-        format: "aralearn-zip-v1",
-        exportedAt: new Date().toISOString()
+        format: PACKAGE_FORMAT,
+        scope: "app",
+        exportedAt: new Date().toISOString(),
+        appTitle: state.content.appTitle || DEFAULT_APP_TITLE
       }
     };
   }
 
-  // Exporta pacote .zip contendo JSON completo e todas as imagens em assets/images/.
-  function exportJson() {
-    const payload = buildProjectPayload();
+  // Monta payload de curso individual para backup/restore localizado.
+  function buildCoursePayload(courseId) {
+    const course = getCourse(courseId);
+    if (!course) return null;
+
+    return {
+      course: clone(course),
+      progress: serializeProgressRecords(getProgressRecordsList(state.progress).filter(function (record) {
+        return record.courseId === course.id;
+      })),
+      assets: collectCourseAssetPaths(course, state.assets),
+      packageMeta: buildPackageMeta("course", {
+        courseId: course.id,
+        courseTitle: course.title
+      })
+    };
+  }
+
+  // Monta payload de modulo individual com suas licoes e progresso relacionado.
+  function buildModulePayload(courseId, moduleId) {
+    const entry = findModule(courseId, moduleId);
+    if (!entry) return null;
+
+    return {
+      module: clone(entry.module),
+      progress: serializeProgressRecords(getProgressRecordsList(state.progress).filter(function (record) {
+        return record.courseId === entry.course.id && record.moduleId === entry.module.id;
+      })),
+      assets: collectModuleAssetPaths(entry.module, state.assets),
+      packageMeta: buildPackageMeta("module", {
+        courseId: entry.course.id,
+        courseTitle: entry.course.title,
+        moduleId: entry.module.id,
+        moduleTitle: entry.module.title
+      })
+    };
+  }
+
+  // Monta payload de licao individual com seus cards, imagens e progresso.
+  function buildLessonPayload(courseId, moduleId, lessonId) {
+    const moduleEntry = findModule(courseId, moduleId);
+    if (!moduleEntry) return null;
+
+    const lesson = (moduleEntry.module.lessons || []).find(function (item) {
+      return item.id === lessonId;
+    });
+    if (!lesson) return null;
+
+    return {
+      lesson: clone(lesson),
+      progress: serializeProgressRecords(getProgressRecordsList(state.progress).filter(function (record) {
+        return (
+          record.courseId === moduleEntry.course.id &&
+          record.moduleId === moduleEntry.module.id &&
+          record.lessonId === lesson.id
+        );
+      })),
+      assets: collectLessonAssetPaths(lesson, state.assets),
+      packageMeta: buildPackageMeta("lesson", {
+        courseId: moduleEntry.course.id,
+        courseTitle: moduleEntry.course.title,
+        moduleId: moduleEntry.module.id,
+        moduleTitle: moduleEntry.module.title,
+        lessonId: lesson.id,
+        lessonTitle: lesson.title
+      })
+    };
+  }
+
+  // Resolve payload conforme o escopo pedido pelo menu atual.
+  function buildScopedPayload(scope, context) {
+    if (scope === "course") return buildCoursePayload(context && context.courseId);
+    if (scope === "module") {
+      return buildModulePayload((context && context.courseId) || state.currentCourseId, context && context.moduleId);
+    }
+    if (scope === "lesson") {
+      return buildLessonPayload(
+        (context && context.courseId) || state.currentCourseId,
+        context && context.moduleId,
+        context && context.lessonId
+      );
+    }
+    return buildProjectPayload();
+  }
+
+  // Coleta caminhos de imagem do escopo exportado, incluindo assets estáticos ainda não materializados.
+  function collectScopedAssetPaths(scope, context) {
+    if (scope === "course") {
+      const courseItem = getCourse(context && context.courseId);
+      return collectCourseAssetPaths(courseItem, null);
+    }
+
+    if (scope === "module") {
+      const entry = findModule((context && context.courseId) || state.currentCourseId, context && context.moduleId);
+      return entry ? collectModuleAssetPaths(entry.module, null) : [];
+    }
+
+    if (scope === "lesson") {
+      const entry = findModule((context && context.courseId) || state.currentCourseId, context && context.moduleId);
+      if (!entry) return [];
+      const lessonItem = (entry.module.lessons || []).find(function (item) {
+        return item && item.id === (context && context.lessonId);
+      });
+      return lessonItem ? collectLessonAssetPaths(lessonItem, null) : [];
+    }
+
+    return collectContentAssetPaths(state.content, null);
+  }
+
+  // Materializa assets estáticos do projeto em data URLs para que possam entrar em exportações ZIP.
+  async function ensureAssetDataAvailable(assetPaths) {
+    const paths = Array.isArray(assetPaths) ? assetPaths : [];
+
+    for (let i = 0; i < paths.length; i += 1) {
+      const path = String(paths[i] || "").trim();
+      if (!/^assets\/images\//i.test(path)) continue;
+      if (state.assets[path]) continue;
+
+      try {
+        const response = await fetch(path);
+        if (!response.ok) continue;
+        const blob = await response.blob();
+        if (!String(blob.type || "").toLowerCase().startsWith("image/")) continue;
+        state.assets[path] = await blobToDataUrl(blob);
+      } catch (_error) {
+        // Mantém silencioso: se o asset não puder ser materializado, a exportação apenas o omitirá.
+      }
+    }
+  }
+
+  // Resolve titulo principal do pacote para nomear o arquivo exportado.
+  function getPackageTitle(payload) {
+    const scope = payload && payload.packageMeta ? payload.packageMeta.scope : "app";
+    if (scope === "course") return payload && payload.course ? payload.course.title : "curso";
+    if (scope === "module") return payload && payload.module ? payload.module.title : "modulo";
+    if (scope === "lesson") return payload && payload.lesson ? payload.lesson.title : "licao";
+    return state.content.appTitle || DEFAULT_APP_TITLE;
+  }
+
+  // Sugere nome de arquivo claro para cada backup ZIP.
+  function buildPackageFileName(scope, title) {
+    if (scope === "app") return DEFAULT_EXPORT_FILE_NAME;
+    const safeTitle = slug(String(title || scope), scope).replace(/^-+|-+$/g, "") || scope;
+    return "aralearn-" + scope + "-" + safeTitle + ".zip";
+  }
+
+  // Constroi entradas fisicas do ZIP a partir do JSON e dos assets declarados.
+  function buildPackageZipEntries(payload) {
     const jsonBytes = utf8Encode(JSON.stringify(payload, null, 2));
+    const entries = [{ path: PROJECT_PACKAGE_JSON_FILE_NAME, bytes: jsonBytes }];
+    const assetPaths = Array.isArray(payload && payload.assets) ? payload.assets : [];
 
-    const entries = [
-      { path: DEFAULT_PROJECT_JSON_FILE_NAME, bytes: jsonBytes }
-    ];
-
-    Object.keys(state.assets).sort().forEach(function (assetPath) {
+    assetPaths.forEach(function (assetPath) {
       const parsed = dataUrlToBytes(state.assets[assetPath]);
       if (!parsed) return;
       entries.push({ path: assetPath, bytes: parsed.bytes });
     });
+    return entries;
+  }
 
-    const zipBytes = createZip(entries);
-    const androidExportStatus = tryAndroidExport(zipBytes, DEFAULT_EXPORT_FILE_NAME, "application/zip");
+  // Gera o pacote ZIP completo do projeto atual para exportação.
+  async function buildProjectArchiveBytes() {
+    await ensureAssetDataAvailable(collectContentAssetPaths(state.content, null));
+    return createZip(buildPackageZipEntries(buildProjectPayload()));
+  }
+
+  // Exporta pacote .zip no escopo pedido (app, curso, modulo ou licao).
+  async function exportScopedPackage(scope, context) {
+    await ensureAssetDataAvailable(collectScopedAssetPaths(scope || "app", context || null));
+    const payload = buildScopedPayload(scope || "app", context || null);
+    if (!payload) {
+      window.alert("Não foi possível montar o pacote de " + getPackageScopeLabel(scope || "app") + ".");
+      return;
+    }
+
+    const zipBytes = createZip(buildPackageZipEntries(payload));
+    const fileName = buildPackageFileName(payload.packageMeta.scope, getPackageTitle(payload));
+    const androidExportStatus = tryAndroidExport(zipBytes, fileName, "application/zip");
     if (androidExportStatus !== "unsupported") return;
 
     const blob = new Blob([zipBytes], { type: "application/zip" });
-    saveBlobDownload(blob, DEFAULT_EXPORT_FILE_NAME);
+    saveBlobDownload(blob, fileName);
+  }
+
+  // Exporta pacote .zip contendo o projeto inteiro.
+  function exportJson() {
+    exportScopedPackage("app", null);
   }
 
   // Tenta delegar a exportacao para o host Android nativo quando o app roda no APK.
@@ -3490,56 +9340,1227 @@
     URL.revokeObjectURL(url);
   }
 
-  // Abre seletor de arquivo para importar pacote ZIP/JSON.
-  function triggerImport() {
+  // Abre seletor de arquivo para importar pacote no contêiner atual.
+  function triggerImport(targetScope, context) {
+    state.ui.pendingImport = Object.assign({ scope: targetScope || "app" }, context || {});
+    state.ui.contextMenu = null;
+    state.ui.sideOpen = false;
+    renderApp();
+
     const input = document.getElementById("import-json-file");
     if (!input) return;
     input.value = "";
     input.click();
   }
 
-  // Importa ZIP (preferencial) ou JSON de conteudo/progresso e re-renderiza app.
-  function importJson(file) {
-    if (!file) return;
+  function readFileAsArrayBuffer(file) {
+    return new Promise(function (resolve, reject) {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        resolve(event.target.result);
+      };
+      reader.onerror = function () {
+        reject(reader.error || new Error("Falha ao ler arquivo."));
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
 
-    const reader = new FileReader();
-    reader.onload = function (event) {
-      try {
-        const result = event.target.result;
-        const isZip = file.name.toLowerCase().endsWith(".zip") || isZipBytes(result);
+  function parsePackageBytes(bytes, fileName) {
+    const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
+    const lowerName = String(fileName || "").toLowerCase();
+    const looksLikeZip = lowerName.endsWith(".zip") || isZipBytes(source);
+    return looksLikeZip
+      ? parseProjectZip(source)
+      : normalizeImportedPackagePayload(JSON.parse(utf8Decode(source)), {});
+  }
 
-        if (isZip) {
-          const imported = parseProjectZip(new Uint8Array(result));
-          state.content = normalizeContent(imported.content);
+  async function parsePackageFile(file) {
+    const buffer = await readFileAsArrayBuffer(file);
+    return parsePackageBytes(new Uint8Array(buffer), file && file.name ? file.name : "");
+  }
+
+  function syncCurrentSelectionAfterContentChange() {
+    if (!state.content.courses.length) {
+      state.currentCourseId = null;
+      state.currentLessonId = null;
+      state.currentStepIndex = 0;
+      state.currentView = "main_menu";
+      return;
+    }
+
+    if (!getCourse(state.currentCourseId)) {
+      state.currentCourseId = state.content.courses[0].id;
+    }
+
+    if (state.currentLessonId && !getCurrentLessonEntry()) {
+      state.currentLessonId = null;
+      state.currentStepIndex = 0;
+      if (state.currentView === "lesson_step") {
+        state.currentView = "course_menu";
+      }
+    }
+  }
+
+  function hasWorkspaceContent() {
+    return !!(
+      (state.content && Array.isArray(state.content.courses) && state.content.courses.length) ||
+      (state.content && String(state.content.appTitle || DEFAULT_APP_TITLE) !== DEFAULT_APP_TITLE) ||
+      hasProgressEntries(state.progress) ||
+      Object.keys(state.assets || {}).length
+    );
+  }
+
+  function finalizeImportedState(target, importedScope) {
+    pruneUnusedAssetsStore();
+    pruneProgressStore();
+    saveProgressStore();
+    persistProjectSnapshot();
+    resetTransient();
+    closeEditor(false);
+
+    if ((target && target.scope) === "app" && importedScope === "app") {
+      state.currentView = "main_menu";
+      state.currentCourseId = state.content.courses.length ? state.content.courses[0].id : null;
+      state.currentLessonId = null;
+      state.currentStepIndex = 0;
+      return;
+    }
+
+    syncCurrentSelectionAfterContentChange();
+  }
+
+  function replaceCurrentProject(imported) {
+    if (!imported || imported.scope !== "app") {
+      throw new Error("O app inteiro só pode ser substituído por um pacote de aplicação.");
+    }
+    state.content = imported.content;
+    state.progress = normalizeImportedProgress(imported.progress);
+    state.assets = normalizeAssetStore(imported.assets);
+    finalizeImportedState({ scope: "app" }, "app");
+  }
+
+  // Detecta o escopo logico do pacote recebido.
+  function detectPackageScope(parsed) {
+    const metaScope =
+      parsed &&
+      parsed.packageMeta &&
+      String(parsed.packageMeta.scope || "").trim().toLowerCase();
+    if (metaScope === "app" || metaScope === "course" || metaScope === "module" || metaScope === "lesson") {
+      return metaScope;
+    }
+
+    if (parsed && Array.isArray(parsed.courses)) return "app";
+    if (parsed && parsed.course) return "course";
+    if (parsed && parsed.module) return "module";
+    if (parsed && parsed.lesson) return "lesson";
+    return "";
+  }
+
+  // Limita os assets importados ao conjunto explicitamente declarado no pacote.
+  function normalizeImportedPackageAssets(rawAssets, extractedAssets) {
+    if (rawAssets && typeof rawAssets === "object" && !Array.isArray(rawAssets)) {
+      return normalizeAssetStore(rawAssets);
+    }
+
+    const fromZip = normalizeAssetStore(extractedAssets);
+    if (!Array.isArray(rawAssets)) return fromZip;
+
+    const picked = {};
+    rawAssets.forEach(function (path) {
+      if (fromZip[path]) picked[path] = fromZip[path];
+    });
+    return picked;
+  }
+
+  // Converte o JSON importado em um pacote interno normalizado, independente do escopo.
+  function normalizeImportedPackagePayload(parsed, extractedAssets) {
+    const scope = detectPackageScope(parsed);
+    if (!scope) throw new Error("Arquivo inválido. O pacote não informa se é app, curso, módulo ou lição.");
+
+    const progress = normalizeImportedProgress(parsed && parsed.progress);
+    const assets = normalizeImportedPackageAssets(parsed && parsed.assets, extractedAssets);
+
+    if (scope === "app") {
+      return {
+        scope: "app",
+        content: normalizeContent(parsed),
+        progress: progress,
+        assets: assets,
+        packageMeta: parsed && parsed.packageMeta ? parsed.packageMeta : {}
+      };
+    }
+
+    if (scope === "course") {
+      const course = normalizeCourse(parsed && parsed.course);
+      if (!course) throw new Error("Pacote de curso inválido.");
+      return {
+        scope: "course",
+        course: course,
+        progress: progress,
+        assets: assets,
+        packageMeta: parsed && parsed.packageMeta ? parsed.packageMeta : {}
+      };
+    }
+
+    if (scope === "module") {
+      const moduleItem = normalizeModule(parsed && parsed.module);
+      if (!moduleItem) throw new Error("Pacote de módulo inválido.");
+      return {
+        scope: "module",
+        module: moduleItem,
+        progress: progress,
+        assets: assets,
+        packageMeta: parsed && parsed.packageMeta ? parsed.packageMeta : {}
+      };
+    }
+
+    const lesson = normalizeLesson(parsed && parsed.lesson);
+    if (!lesson) throw new Error("Pacote de lição inválido.");
+    return {
+      scope: "lesson",
+      lesson: lesson,
+      progress: progress,
+      assets: assets,
+      packageMeta: parsed && parsed.packageMeta ? parsed.packageMeta : {}
+    };
+  }
+
+  function createImportMergeSummary() {
+    return {
+      coursesAdded: 0,
+      modulesAdded: 0,
+      lessonsAdded: 0,
+      stepsAdded: 0,
+      blocksAdded: 0,
+      popupBlocksAdded: 0,
+      assetsUpdated: 0
+    };
+  }
+
+  function formatImportMergeCount(count, singular, plural) {
+    return count + " " + (count === 1 ? singular : plural);
+  }
+
+  function buildImportMergeSummary(summary) {
+    const parts = [];
+    if (summary.coursesAdded) parts.push(formatImportMergeCount(summary.coursesAdded, "curso novo", "cursos novos"));
+    if (summary.modulesAdded) parts.push(formatImportMergeCount(summary.modulesAdded, "módulo novo", "módulos novos"));
+    if (summary.lessonsAdded) parts.push(formatImportMergeCount(summary.lessonsAdded, "lição nova", "lições novas"));
+    if (summary.stepsAdded) parts.push(formatImportMergeCount(summary.stepsAdded, "card novo", "cards novos"));
+    if (summary.blocksAdded) parts.push(formatImportMergeCount(summary.blocksAdded, "bloco novo", "blocos novos"));
+    if (summary.popupBlocksAdded) {
+      parts.push(formatImportMergeCount(summary.popupBlocksAdded, "bloco de popup novo", "blocos de popup novos"));
+    }
+    if (summary.assetsUpdated) parts.push(formatImportMergeCount(summary.assetsUpdated, "asset atualizado", "assets atualizados"));
+    return parts.join(", ");
+  }
+
+  function buildImportMergeMessage(prefix, summary) {
+    const details = buildImportMergeSummary(summary);
+    return details ? prefix + " com " + details + "." : prefix + ".";
+  }
+
+  function cloneWithoutIds(value) {
+    if (Array.isArray(value)) {
+      return value.map(function (item) {
+        return cloneWithoutIds(item);
+      });
+    }
+
+    if (!value || typeof value !== "object") return value;
+
+    const next = {};
+    Object.keys(value).forEach(function (key) {
+      if (key === "id") return;
+      next[key] = cloneWithoutIds(value[key]);
+    });
+    return next;
+  }
+
+  function getBlockMergeSignature(block) {
+    if (!block || typeof block !== "object") return "";
+    const source = cloneWithoutIds(block);
+    if (isButtonKind(source.kind)) {
+      source.popupBlocks = [];
+      source.popupEnabled = false;
+    }
+    return JSON.stringify(source);
+  }
+
+  function findBlockMergeMatch(blocks, importedBlock) {
+    const list = Array.isArray(blocks) ? blocks : [];
+    const importedId = String(importedBlock && importedBlock.id ? importedBlock.id : "").trim();
+    if (importedId) {
+      const idIndex = list.findIndex(function (block) {
+        return String(block && block.id ? block.id : "") === importedId;
+      });
+      if (idIndex > -1) return { item: list[idIndex], index: idIndex, reason: "id" };
+    }
+
+    if (isButtonKind(importedBlock && importedBlock.kind)) {
+      const buttonIndex = list.findIndex(function (block) {
+        return isButtonKind(block && block.kind);
+      });
+      if (buttonIndex > -1) return { item: list[buttonIndex], index: buttonIndex, reason: "button" };
+    }
+
+    const signature = getBlockMergeSignature(importedBlock);
+    if (!signature) return null;
+
+    const signatureIndex = list.findIndex(function (block) {
+      return getBlockMergeSignature(block) === signature;
+    });
+    return signatureIndex > -1 ? { item: list[signatureIndex], index: signatureIndex, reason: "signature" } : null;
+  }
+
+  function insertMergedStep(targetLesson, importedStep) {
+    const steps = Array.isArray(targetLesson.steps) ? targetLesson.steps : [];
+    const stepClone = clone(importedStep);
+    const completionIndex = importedStep.type === "lesson_complete"
+      ? -1
+      : steps.findIndex(function (step) {
+        return step && step.type === "lesson_complete";
+      });
+    const insertIndex = completionIndex > -1 ? completionIndex : steps.length;
+    steps.splice(insertIndex, 0, stepClone);
+    targetLesson.steps = steps;
+  }
+
+  function insertMergedBlock(targetBlocks, importedBlock) {
+    const blocks = Array.isArray(targetBlocks) ? targetBlocks : [];
+    const blockClone = clone(importedBlock);
+    if (isButtonKind(importedBlock && importedBlock.kind)) {
+      blocks.push(blockClone);
+      return blocks;
+    }
+
+    const finalButtonIndex = blocks.findIndex(function (block) {
+      return isButtonKind(block && block.kind);
+    });
+    const insertIndex = finalButtonIndex > -1 ? finalButtonIndex : blocks.length;
+    blocks.splice(insertIndex, 0, blockClone);
+    return blocks;
+  }
+
+  function mergePopupBlocks(targetButton, importedButton, summary) {
+    if (!targetButton || !importedButton) return false;
+
+    let changed = false;
+    const targetPopupBlocks = Array.isArray(targetButton.popupBlocks) ? targetButton.popupBlocks : [];
+    const importedPopupBlocks = Array.isArray(importedButton.popupBlocks) ? importedButton.popupBlocks : [];
+
+    importedPopupBlocks.forEach(function (popupBlock) {
+      if (findBlockMergeMatch(targetPopupBlocks, popupBlock)) return;
+      targetPopupBlocks.push(clone(popupBlock));
+      summary.popupBlocksAdded += 1;
+      changed = true;
+    });
+
+    targetButton.popupBlocks = targetPopupBlocks;
+    if ((importedButton.popupEnabled || targetPopupBlocks.length) && !targetButton.popupEnabled) {
+      targetButton.popupEnabled = true;
+      changed = true;
+    }
+    return changed;
+  }
+
+  function mergeStepBlocks(targetStep, importedStep, summary) {
+    if (!targetStep || !importedStep) return false;
+
+    let changed = false;
+    let targetBlocks = Array.isArray(targetStep.blocks) ? targetStep.blocks : [];
+    const importedBlocks = Array.isArray(importedStep.blocks) ? importedStep.blocks : [];
+
+    importedBlocks.forEach(function (importedBlock) {
+      const match = findBlockMergeMatch(targetBlocks, importedBlock);
+      if (match) {
+        if (isButtonKind(importedBlock && importedBlock.kind) && mergePopupBlocks(match.item, importedBlock, summary)) {
+          changed = true;
+        }
+        return;
+      }
+
+      targetBlocks = insertMergedBlock(targetBlocks, importedBlock);
+      summary.blocksAdded += 1;
+      changed = true;
+    });
+
+    targetStep.blocks = ensureEditorButtonBlock(targetBlocks);
+    if (!String(targetStep.title || "").trim() && String(importedStep.title || "").trim()) {
+      targetStep.title = importedStep.title;
+      changed = true;
+    }
+    if (!String(targetStep.subtitle || "").trim() && String(importedStep.subtitle || "").trim()) {
+      targetStep.subtitle = importedStep.subtitle;
+      changed = true;
+    }
+    return changed;
+  }
+
+  function mergeLessonSteps(targetLesson, importedLesson, summary) {
+    if (!targetLesson || !importedLesson) return false;
+
+    let changed = false;
+    const targetSteps = Array.isArray(targetLesson.steps) ? targetLesson.steps : [];
+    const importedSteps = Array.isArray(importedLesson.steps) ? importedLesson.steps : [];
+
+    importedSteps.forEach(function (importedStep) {
+      const match = findImportMatch(targetSteps, importedStep);
+      if (!match) {
+        insertMergedStep(targetLesson, importedStep);
+        summary.stepsAdded += 1;
+        changed = true;
+        return;
+      }
+
+      if (mergeStepBlocks(match.item, importedStep, summary)) {
+        changed = true;
+      }
+    });
+
+    if (!String(targetLesson.subtitle || "").trim() && String(importedLesson.subtitle || "").trim()) {
+      targetLesson.subtitle = importedLesson.subtitle;
+      changed = true;
+    }
+    return changed;
+  }
+
+  function mergeModuleLessons(targetCourse, targetModule, importedModule, importedProgressRecords, sourceMeta, summary) {
+    if (!targetCourse || !targetModule || !importedModule) return false;
+
+    let changed = false;
+    const targetLessons = Array.isArray(targetModule.lessons) ? targetModule.lessons : [];
+    const importedLessons = Array.isArray(importedModule.lessons) ? importedModule.lessons : [];
+    const sourceCourseId = String(sourceMeta && sourceMeta.courseId ? sourceMeta.courseId : "");
+    const sourceModuleId = String(sourceMeta && sourceMeta.moduleId ? sourceMeta.moduleId : "");
+
+    importedLessons.forEach(function (importedLesson) {
+      const match = findImportMatch(targetLessons, importedLesson);
+      if (!match) {
+        const inserted = cloneLessonForPlacement(importedLesson, null);
+        targetLessons.push(inserted.lesson);
+        mergeProgressRecords(remapLessonProgressToPlacement(
+          importedProgressRecords,
+          sourceCourseId,
+          sourceModuleId,
+          inserted,
+          targetCourse.id,
+          targetModule.id
+        ));
+        summary.lessonsAdded += 1;
+        changed = true;
+        return;
+      }
+
+      if (mergeLessonSteps(match.item, importedLesson, summary)) {
+        changed = true;
+      }
+    });
+
+    targetModule.lessons = targetLessons;
+    return changed;
+  }
+
+  function mergeCourseModules(targetCourse, importedCourse, importedProgressRecords, summary) {
+    if (!targetCourse || !importedCourse) return false;
+
+    let changed = false;
+    const targetModules = Array.isArray(targetCourse.modules) ? targetCourse.modules : [];
+    const importedModules = Array.isArray(importedCourse.modules) ? importedCourse.modules : [];
+
+    importedModules.forEach(function (importedModule) {
+      const match = findImportMatch(targetModules, importedModule);
+      if (!match) {
+        const inserted = cloneModuleForPlacement(importedModule, null);
+        targetModules.push(inserted.module);
+        mergeProgressRecords(remapModuleProgressToPlacement(
+          importedProgressRecords,
+          importedCourse.id,
+          inserted,
+          targetCourse.id
+        ));
+        summary.modulesAdded += 1;
+        changed = true;
+        return;
+      }
+
+      if (mergeModuleLessons(targetCourse, match.item, importedModule, importedProgressRecords, {
+        courseId: importedCourse.id,
+        moduleId: importedModule.id
+      }, summary)) {
+        changed = true;
+      }
+    });
+
+    if (!String(targetCourse.description || "").trim() && String(importedCourse.description || "").trim()) {
+      targetCourse.description = importedCourse.description;
+      changed = true;
+    }
+    targetCourse.modules = targetModules;
+    return changed;
+  }
+
+  function normalizeImportChoice(value) {
+    const text = String(value || "").trim().toLocaleLowerCase("pt-BR");
+    if (text === "m" || text === "mesclar") return "merge";
+    if (text === "s" || text === "substituir") return "replace";
+    if (text === "d" || text === "duplicar") return "duplicate";
+    return "cancel";
+  }
+
+  function normalizeImportTitleKey(value) {
+    return String(value || "").trim().toLocaleLowerCase("pt-BR");
+  }
+
+  function findImportMatch(items, importedItem) {
+    const list = Array.isArray(items) ? items : [];
+    const importedId = String(importedItem && importedItem.id ? importedItem.id : "").trim();
+    if (importedId) {
+      const idIndex = list.findIndex(function (item) {
+        return String(item && item.id ? item.id : "") === importedId;
+      });
+      if (idIndex > -1) return { item: list[idIndex], index: idIndex, reason: "id" };
+    }
+
+    const importedTitle = normalizeImportTitleKey(importedItem && importedItem.title);
+    if (!importedTitle) return null;
+
+    const titleIndex = list.findIndex(function (item) {
+      return normalizeImportTitleKey(item && item.title) === importedTitle;
+    });
+    return titleIndex > -1 ? { item: list[titleIndex], index: titleIndex, reason: "title" } : null;
+  }
+
+  function getImportChoicePromptLabel(choice) {
+    if (choice === "merge") return "mesclar";
+    if (choice === "replace") return "substituir";
+    if (choice === "duplicate") return "duplicar";
+    return "cancelar";
+  }
+
+  function promptImportChoice(scope, existingTitle, importedTitle, locationLabel, allowedChoices, defaultChoice) {
+    const label = getPackageScopeLabel(scope);
+    const location = locationLabel ? " em " + locationLabel : "";
+    const choices = Array.isArray(allowedChoices) && allowedChoices.length
+      ? allowedChoices
+      : ["merge", "replace", "duplicate", "cancel"];
+    const promptChoices = choices.map(getImportChoicePromptLabel).join(", ");
+    const answer = window.prompt(
+      'Já existe ' +
+        label +
+        ' "' +
+        String(existingTitle || importedTitle || label) +
+        '"' +
+        location +
+        '. Digite ' +
+        promptChoices +
+        ".",
+      getImportChoicePromptLabel(defaultChoice || choices[0] || "merge")
+    );
+    const choice = normalizeImportChoice(answer);
+    return choices.indexOf(choice) > -1 ? choice : "cancel";
+  }
+
+  function cloneCourseForDuplicate(sourceCourse) {
+    const course = clone(sourceCourse);
+    const oldCourseId = String(course.id || "");
+    course.id = uid("course");
+    return {
+      course: course,
+      oldCourseId: oldCourseId,
+      newCourseId: String(course.id || "")
+    };
+  }
+
+  function cloneLessonForPlacement(sourceLesson, fixedLessonId) {
+    const lesson = clone(sourceLesson);
+    const oldLessonId = String(lesson.id || "");
+    const stepIdMap = {};
+
+    lesson.id = fixedLessonId || uid("lesson");
+    lesson.steps = (Array.isArray(lesson.steps) ? lesson.steps : []).map(function (step) {
+      const next = clone(step);
+      const oldStepId = String(next.id || "");
+      next.id = uid("step");
+      if (oldStepId) stepIdMap[oldStepId] = next.id;
+      return next;
+    });
+
+    return {
+      lesson: lesson,
+      oldLessonId: oldLessonId,
+      newLessonId: String(lesson.id || ""),
+      stepIdMap: stepIdMap
+    };
+  }
+
+  function cloneModuleForPlacement(sourceModule, fixedModuleId) {
+    const moduleItem = clone(sourceModule);
+    const oldModuleId = String(moduleItem.id || "");
+    const lessonMaps = [];
+
+    moduleItem.id = fixedModuleId || uid("module");
+    moduleItem.lessons = (Array.isArray(moduleItem.lessons) ? moduleItem.lessons : []).map(function (lesson) {
+      const lessonClone = cloneLessonForPlacement(lesson, null);
+      lessonMaps.push(lessonClone);
+      return lessonClone.lesson;
+    });
+
+    return {
+      module: moduleItem,
+      oldModuleId: oldModuleId,
+      newModuleId: String(moduleItem.id || ""),
+      lessonMaps: lessonMaps
+    };
+  }
+
+  function remapProgressRecords(records, overrides) {
+    const stepIdMap = overrides && overrides.stepIdMap ? overrides.stepIdMap : {};
+    return serializeProgressRecords((Array.isArray(records) ? records : []).map(function (record) {
+      const currentStepId = stepIdMap[record.currentStepId] || record.currentStepId;
+      const furthestSource = record.furthestStepId || record.currentStepId || "";
+      return {
+        courseId: overrides.courseId || record.courseId,
+        moduleId: overrides.moduleId || record.moduleId,
+        lessonId: overrides.lessonId || record.lessonId,
+        currentStepId: currentStepId,
+        currentIndexHint: record.currentIndexHint,
+        furthestStepId: stepIdMap[furthestSource] || furthestSource || currentStepId,
+        furthestIndexHint: record.furthestIndexHint,
+        updatedAt: record.updatedAt || new Date().toISOString()
+      };
+    })).lessons;
+  }
+
+  function remapLessonProgressToPlacement(records, sourceCourseId, sourceModuleId, lessonClone, targetCourseId, targetModuleId) {
+    return remapProgressRecords(
+      (Array.isArray(records) ? records : []).filter(function (record) {
+        return (
+          record.courseId === sourceCourseId &&
+          record.moduleId === sourceModuleId &&
+          record.lessonId === lessonClone.oldLessonId
+        );
+      }),
+      {
+        courseId: targetCourseId,
+        moduleId: targetModuleId,
+        lessonId: lessonClone.newLessonId,
+        stepIdMap: lessonClone.stepIdMap
+      }
+    );
+  }
+
+  function remapModuleProgressToPlacement(records, sourceCourseId, moduleClone, targetCourseId) {
+    const lessonMapById = {};
+    moduleClone.lessonMaps.forEach(function (item) {
+      lessonMapById[item.oldLessonId] = item;
+    });
+
+    return serializeProgressRecords((Array.isArray(records) ? records : []).filter(function (record) {
+      return record.courseId === sourceCourseId && record.moduleId === moduleClone.oldModuleId;
+    }).map(function (record) {
+      const lessonClone = lessonMapById[record.lessonId];
+      return lessonClone
+        ? remapProgressRecords([record], {
+          courseId: targetCourseId,
+          moduleId: moduleClone.newModuleId,
+          lessonId: lessonClone.newLessonId,
+          stepIdMap: lessonClone.stepIdMap
+        })[0]
+        : null;
+    }).filter(Boolean)).lessons;
+  }
+
+  function buildImportScopeError(targetScope, importedScope) {
+    if (targetScope === "app") {
+      return (
+        "Este ponto aceita pacote de aplicação inteira ou de curso. " +
+        "Para importar " +
+        getPackageScopeLabel(importedScope) +
+        ", abra primeiro o contêiner que vai receber esse conteúdo."
+      );
+    }
+
+    if (targetScope === "course") {
+      return (
+        "Este curso aceita pacote de curso ou de módulo. " +
+        "Para importar " +
+        getPackageScopeLabel(importedScope) +
+        ", abra primeiro o contêiner compatível."
+      );
+    }
+
+    if (targetScope === "module") {
+      return (
+        "Este módulo aceita pacote de módulo ou de lição. " +
+        "Para importar " +
+        getPackageScopeLabel(importedScope) +
+        ", abra primeiro o contêiner compatível."
+      );
+    }
+
+    return (
+      "Esta lição aceita apenas pacote de lição. " +
+      "Abra um contêiner compatível para importar " +
+      getPackageScopeLabel(importedScope) +
+      "."
+    );
+  }
+
+  // Mescla registros de progresso importados ao armazenamento principal.
+  function mergeProgressRecords(records) {
+    (Array.isArray(records) ? records : []).forEach(function (record) {
+      const key = lessonProgressKey(record.courseId, record.moduleId, record.lessonId);
+      state.progress.lessons[key] = record;
+    });
+  }
+
+  // Mescla assets importados ao armazenamento do app antes da poda final.
+  function mergeImportedAssets(assets) {
+    let changed = 0;
+    Object.keys(assets || {}).forEach(function (path) {
+      if (state.assets[path] === assets[path]) return;
+      state.assets[path] = assets[path];
+      changed += 1;
+    });
+    return changed;
+  }
+
+  // Mescla apenas assets ainda ausentes, usada no bootstrap do conteúdo hardcoded.
+  function mergeMissingAssets(assets) {
+    let changed = 0;
+    Object.keys(assets || {}).forEach(function (path) {
+      if (state.assets[path]) return;
+      state.assets[path] = assets[path];
+      changed += 1;
+    });
+    return changed;
+  }
+
+  function importCourseIntoApp(importedCourse, importedProgress, importedAssets) {
+    const match = findImportMatch(state.content.courses, importedCourse);
+    const importedProgressRecords = getProgressRecordsList(importedProgress);
+
+    if (!match) {
+      state.content.courses.push(clone(importedCourse));
+      mergeProgressRecords(importedProgressRecords);
+      mergeImportedAssets(importedAssets);
+      return {
+        changed: true,
+        message: 'Curso "' + importedCourse.title + '" importado no app.'
+      };
+    }
+
+    const choice = promptImportChoice("course", match.item.title, importedCourse.title, "app");
+    if (choice === "cancel") return { changed: false };
+
+    if (choice === "merge") {
+      const summary = createImportMergeSummary();
+      const changed = mergeCourseModules(match.item, importedCourse, importedProgressRecords, summary);
+      summary.assetsUpdated += mergeImportedAssets(importedAssets);
+      if (!changed && !summary.assetsUpdated) return { changed: false };
+      return {
+        changed: true,
+        message: buildImportMergeMessage('Curso "' + importedCourse.title + '" mesclado no app', summary)
+      };
+    }
+
+    if (choice === "replace") {
+      const nextCourse = clone(importedCourse);
+      nextCourse.id = match.item.id;
+      state.content.courses[match.index] = nextCourse;
+      clearCourseProgressRecords(match.item.id);
+      mergeProgressRecords(remapProgressRecords(importedProgressRecords, {
+        courseId: match.item.id
+      }));
+      mergeImportedAssets(importedAssets);
+      return {
+        changed: true,
+        message: 'Curso "' + importedCourse.title + '" substituiu "' + match.item.title + '".'
+      };
+    }
+
+    const duplicated = cloneCourseForDuplicate(importedCourse);
+    state.content.courses.splice(match.index + 1, 0, duplicated.course);
+    mergeProgressRecords(remapProgressRecords(importedProgressRecords, {
+      courseId: duplicated.newCourseId
+    }));
+    mergeImportedAssets(importedAssets);
+    return {
+      changed: true,
+      message: 'Curso "' + importedCourse.title + '" importado como cópia.'
+    };
+  }
+
+  function importCourseIntoCourseTarget(imported, target) {
+    const index = state.content.courses.findIndex(function (course) {
+      return course.id === target.courseId;
+    });
+    if (index === -1) throw new Error("Curso de destino não encontrado para importação.");
+
+    const currentCourse = state.content.courses[index];
+    const importedProgressRecords = getProgressRecordsList(imported.progress);
+    const choice = promptImportChoice("course", currentCourse.title, imported.course.title, "app");
+    if (choice === "cancel") return { changed: false };
+
+    if (choice === "merge") {
+      const summary = createImportMergeSummary();
+      const changed = mergeCourseModules(currentCourse, imported.course, importedProgressRecords, summary);
+      summary.assetsUpdated += mergeImportedAssets(imported.assets);
+      if (!changed && !summary.assetsUpdated) return { changed: false };
+      return {
+        changed: true,
+        message: buildImportMergeMessage(
+          'Curso "' + imported.course.title + '" mesclado em "' + currentCourse.title + '"',
+          summary
+        )
+      };
+    }
+
+    if (choice === "replace") {
+      const nextCourse = clone(imported.course);
+      nextCourse.id = currentCourse.id;
+      state.content.courses[index] = nextCourse;
+      clearCourseProgressRecords(currentCourse.id);
+      mergeProgressRecords(remapProgressRecords(importedProgressRecords, {
+        courseId: currentCourse.id
+      }));
+      mergeImportedAssets(imported.assets);
+      return {
+        changed: true,
+        message: 'Curso "' + imported.course.title + '" substituiu "' + currentCourse.title + '".'
+      };
+    }
+
+    const duplicated = cloneCourseForDuplicate(imported.course);
+    state.content.courses.splice(index + 1, 0, duplicated.course);
+    mergeProgressRecords(remapProgressRecords(importedProgressRecords, {
+      courseId: duplicated.newCourseId
+    }));
+    mergeImportedAssets(imported.assets);
+    return {
+      changed: true,
+      message: 'Curso "' + imported.course.title + '" importado como cópia.'
+    };
+  }
+
+  function importModuleIntoCourseTarget(imported, target) {
+    const course = getCourse((target && target.courseId) || state.currentCourseId);
+    if (!course) throw new Error("Curso de destino não encontrado para importação.");
+
+    const match = findImportMatch(course.modules, imported.module);
+    const importedProgressRecords = getProgressRecordsList(imported.progress);
+    const sourceMeta = imported.packageMeta && imported.packageMeta.source ? imported.packageMeta.source : {};
+    if (!match) {
+      const inserted = cloneModuleForPlacement(imported.module, null);
+      course.modules.push(inserted.module);
+      mergeProgressRecords(remapModuleProgressToPlacement(
+        importedProgressRecords,
+        String(sourceMeta.courseId || ""),
+        inserted,
+        course.id
+      ));
+      mergeImportedAssets(imported.assets);
+      return {
+        changed: true,
+        message: 'Módulo "' + imported.module.title + '" importado em "' + course.title + '".'
+      };
+    }
+
+    const choice = promptImportChoice("module", match.item.title, imported.module.title, 'curso "' + course.title + '"');
+    if (choice === "cancel") return { changed: false };
+
+    if (choice === "merge") {
+      const summary = createImportMergeSummary();
+      const changed = mergeModuleLessons(course, match.item, imported.module, importedProgressRecords, {
+        courseId: String(sourceMeta.courseId || ""),
+        moduleId: imported.module.id
+      }, summary);
+      summary.assetsUpdated += mergeImportedAssets(imported.assets);
+      if (!changed && !summary.assetsUpdated) return { changed: false };
+      return {
+        changed: true,
+        message: buildImportMergeMessage(
+          'Módulo "' + imported.module.title + '" mesclado em "' + course.title + '"',
+          summary
+        )
+      };
+    }
+
+    if (choice === "replace") {
+      const replaced = cloneModuleForPlacement(imported.module, match.item.id);
+      course.modules[match.index] = replaced.module;
+      clearModuleProgressRecords(course.id, match.item.id);
+      mergeProgressRecords(remapModuleProgressToPlacement(
+        importedProgressRecords,
+        String(sourceMeta.courseId || ""),
+        replaced,
+        course.id
+      ));
+      mergeImportedAssets(imported.assets);
+      return {
+        changed: true,
+        message: 'Módulo "' + imported.module.title + '" substituiu "' + match.item.title + '".'
+      };
+    }
+
+    const duplicated = cloneModuleForPlacement(imported.module, null);
+    course.modules.splice(match.index + 1, 0, duplicated.module);
+    mergeProgressRecords(remapModuleProgressToPlacement(
+      importedProgressRecords,
+      String(sourceMeta.courseId || ""),
+      duplicated,
+      course.id
+    ));
+    mergeImportedAssets(imported.assets);
+    return {
+      changed: true,
+      message: 'Módulo "' + imported.module.title + '" importado como cópia em "' + course.title + '".'
+    };
+  }
+
+  function importModuleIntoModuleTarget(imported, target) {
+    const entry = findModule((target && target.courseId) || state.currentCourseId, target && target.moduleId);
+    if (!entry) throw new Error("Módulo de destino não encontrado para importação.");
+
+    const importedProgressRecords = getProgressRecordsList(imported.progress);
+    const sourceMeta = imported.packageMeta && imported.packageMeta.source ? imported.packageMeta.source : {};
+    const choice = promptImportChoice("module", entry.module.title, imported.module.title, 'curso "' + entry.course.title + '"');
+    if (choice === "cancel") return { changed: false };
+
+    if (choice === "merge") {
+      const summary = createImportMergeSummary();
+      const changed = mergeModuleLessons(entry.course, entry.module, imported.module, importedProgressRecords, {
+        courseId: String(sourceMeta.courseId || ""),
+        moduleId: imported.module.id
+      }, summary);
+      summary.assetsUpdated += mergeImportedAssets(imported.assets);
+      if (!changed && !summary.assetsUpdated) return { changed: false };
+      return {
+        changed: true,
+        message: buildImportMergeMessage(
+          'Módulo "' + imported.module.title + '" mesclado em "' + entry.module.title + '"',
+          summary
+        )
+      };
+    }
+
+    if (choice === "replace") {
+      const replaced = cloneModuleForPlacement(imported.module, entry.module.id);
+      entry.course.modules[entry.moduleIndex] = replaced.module;
+      clearModuleProgressRecords(entry.course.id, entry.module.id);
+      mergeProgressRecords(remapModuleProgressToPlacement(
+        importedProgressRecords,
+        String(sourceMeta.courseId || ""),
+        replaced,
+        entry.course.id
+      ));
+      mergeImportedAssets(imported.assets);
+      return {
+        changed: true,
+        message: 'Módulo "' + imported.module.title + '" substituiu "' + entry.module.title + '".'
+      };
+    }
+
+    const duplicated = cloneModuleForPlacement(imported.module, null);
+    entry.course.modules.splice(entry.moduleIndex + 1, 0, duplicated.module);
+    mergeProgressRecords(remapModuleProgressToPlacement(
+      importedProgressRecords,
+      String(sourceMeta.courseId || ""),
+      duplicated,
+      entry.course.id
+    ));
+    mergeImportedAssets(imported.assets);
+    return {
+      changed: true,
+      message: 'Módulo "' + imported.module.title + '" importado como cópia em "' + entry.course.title + '".'
+    };
+  }
+
+  function importLessonIntoModuleTarget(imported, target) {
+    const moduleEntry = findModule((target && target.courseId) || state.currentCourseId, target && target.moduleId);
+    if (!moduleEntry) throw new Error("Módulo de destino não encontrado para importação.");
+
+    const match = findImportMatch(moduleEntry.module.lessons, imported.lesson);
+    const sourceMeta = imported.packageMeta && imported.packageMeta.source ? imported.packageMeta.source : {};
+    const importedProgressRecords = getProgressRecordsList(imported.progress);
+    if (!match) {
+      const inserted = cloneLessonForPlacement(imported.lesson, null);
+      moduleEntry.module.lessons.push(inserted.lesson);
+      mergeProgressRecords(remapLessonProgressToPlacement(
+        importedProgressRecords,
+        String(sourceMeta.courseId || ""),
+        String(sourceMeta.moduleId || ""),
+        inserted,
+        moduleEntry.course.id,
+        moduleEntry.module.id
+      ));
+      mergeImportedAssets(imported.assets);
+      return {
+        changed: true,
+        message: 'Lição "' + imported.lesson.title + '" importada em "' + moduleEntry.module.title + '".'
+      };
+    }
+
+    const choice = promptImportChoice("lesson", match.item.title, imported.lesson.title, 'módulo "' + moduleEntry.module.title + '"');
+    if (choice === "cancel") return { changed: false };
+
+    if (choice === "merge") {
+      const summary = createImportMergeSummary();
+      const changed = mergeLessonSteps(match.item, imported.lesson, summary);
+      summary.assetsUpdated += mergeImportedAssets(imported.assets);
+      if (!changed && !summary.assetsUpdated) return { changed: false };
+      return {
+        changed: true,
+        message: buildImportMergeMessage(
+          'Lição "' + imported.lesson.title + '" mesclada em "' + moduleEntry.module.title + '"',
+          summary
+        )
+      };
+    }
+
+    if (choice === "replace") {
+      const replaced = cloneLessonForPlacement(imported.lesson, match.item.id);
+      moduleEntry.module.lessons[match.index] = replaced.lesson;
+      clearLessonProgressRecord(moduleEntry.course.id, moduleEntry.module.id, match.item.id);
+      mergeProgressRecords(remapLessonProgressToPlacement(
+        importedProgressRecords,
+        String(sourceMeta.courseId || ""),
+        String(sourceMeta.moduleId || ""),
+        replaced,
+        moduleEntry.course.id,
+        moduleEntry.module.id
+      ));
+      mergeImportedAssets(imported.assets);
+      return {
+        changed: true,
+        message: 'Lição "' + imported.lesson.title + '" substituiu "' + match.item.title + '".'
+      };
+    }
+
+    const duplicated = cloneLessonForPlacement(imported.lesson, null);
+    moduleEntry.module.lessons.splice(match.index + 1, 0, duplicated.lesson);
+    mergeProgressRecords(remapLessonProgressToPlacement(
+      importedProgressRecords,
+      String(sourceMeta.courseId || ""),
+      String(sourceMeta.moduleId || ""),
+      duplicated,
+      moduleEntry.course.id,
+      moduleEntry.module.id
+    ));
+    mergeImportedAssets(imported.assets);
+    return {
+      changed: true,
+      message: 'Lição "' + imported.lesson.title + '" importada como cópia em "' + moduleEntry.module.title + '".'
+    };
+  }
+
+  function importLessonIntoLessonTarget(imported, target) {
+    const moduleEntry = findModule((target && target.courseId) || state.currentCourseId, target && target.moduleId);
+    if (!moduleEntry) throw new Error("Módulo da lição de destino não encontrado.");
+
+    const lessonIndex = moduleEntry.module.lessons.findIndex(function (lessonItem) {
+      return lessonItem.id === target.lessonId;
+    });
+    if (lessonIndex === -1) throw new Error("Lição de destino não encontrada para importação.");
+
+    const currentLesson = moduleEntry.module.lessons[lessonIndex];
+    const sourceMeta = imported.packageMeta && imported.packageMeta.source ? imported.packageMeta.source : {};
+    const importedProgressRecords = getProgressRecordsList(imported.progress);
+    const choice = promptImportChoice("lesson", currentLesson.title, imported.lesson.title, 'módulo "' + moduleEntry.module.title + '"');
+    if (choice === "cancel") return { changed: false };
+
+    if (choice === "merge") {
+      const summary = createImportMergeSummary();
+      const changed = mergeLessonSteps(currentLesson, imported.lesson, summary);
+      summary.assetsUpdated += mergeImportedAssets(imported.assets);
+      if (!changed && !summary.assetsUpdated) return { changed: false };
+      return {
+        changed: true,
+        message: buildImportMergeMessage(
+          'Lição "' + imported.lesson.title + '" mesclada em "' + currentLesson.title + '"',
+          summary
+        )
+      };
+    }
+
+    if (choice === "replace") {
+      const replaced = cloneLessonForPlacement(imported.lesson, currentLesson.id);
+      moduleEntry.module.lessons[lessonIndex] = replaced.lesson;
+      clearLessonProgressRecord(moduleEntry.course.id, moduleEntry.module.id, currentLesson.id);
+      mergeProgressRecords(remapLessonProgressToPlacement(
+        importedProgressRecords,
+        String(sourceMeta.courseId || ""),
+        String(sourceMeta.moduleId || ""),
+        replaced,
+        moduleEntry.course.id,
+        moduleEntry.module.id
+      ));
+      mergeImportedAssets(imported.assets);
+      return {
+        changed: true,
+        message: 'Lição "' + imported.lesson.title + '" substituiu "' + currentLesson.title + '".'
+      };
+    }
+
+    const duplicated = cloneLessonForPlacement(imported.lesson, null);
+    moduleEntry.module.lessons.splice(lessonIndex + 1, 0, duplicated.lesson);
+    mergeProgressRecords(remapLessonProgressToPlacement(
+      importedProgressRecords,
+      String(sourceMeta.courseId || ""),
+      String(sourceMeta.moduleId || ""),
+      duplicated,
+      moduleEntry.course.id,
+      moduleEntry.module.id
+    ));
+    mergeImportedAssets(imported.assets);
+    return {
+      changed: true,
+      message: 'Lição "' + imported.lesson.title + '" importada como cópia em "' + moduleEntry.module.title + '".'
+    };
+  }
+
+  function mergeAppPackageIntoWorkspace(imported) {
+    const summary = createImportMergeSummary();
+    let changed = false;
+    const importedProgressRecords = getProgressRecordsList(imported.progress);
+    const importedContent = imported && imported.content ? imported.content : emptyContent();
+    const importedCourses = Array.isArray(importedContent.courses) ? importedContent.courses : [];
+    const incomingTitle = clean(importedContent.appTitle, DEFAULT_APP_TITLE);
+
+    if (
+      (!String(state.content.appTitle || "").trim() || state.content.appTitle === DEFAULT_APP_TITLE) &&
+      incomingTitle &&
+      incomingTitle !== DEFAULT_APP_TITLE
+    ) {
+      state.content.appTitle = incomingTitle;
+      changed = true;
+    }
+
+    importedCourses.forEach(function (importedCourse) {
+      const match = findImportMatch(state.content.courses, importedCourse);
+      if (!match) {
+        state.content.courses.push(clone(importedCourse));
+        mergeProgressRecords(importedProgressRecords.filter(function (record) {
+          return record.courseId === importedCourse.id;
+        }));
+        summary.coursesAdded += 1;
+        changed = true;
+        return;
+      }
+
+      if (mergeCourseModules(match.item, importedCourse, importedProgressRecords, summary)) {
+        changed = true;
+      }
+    });
+
+    summary.assetsUpdated += mergeImportedAssets(imported.assets);
+    if (!changed && !summary.assetsUpdated) return { changed: false };
+    return {
+      changed: true,
+      message: buildImportMergeMessage("Projeto mesclado", summary)
+    };
+  }
+
+  // Aplica um pacote no contêiner atual, adaptando-se ao escopo real do arquivo.
+  function applyImportedPackage(imported, target) {
+    const targetScope = (target && target.scope) || "app";
+
+    if (targetScope === "app") {
+      if (imported.scope === "app") {
+        if (!hasWorkspaceContent()) {
+          state.content = imported.content;
           state.progress = normalizeImportedProgress(imported.progress);
           state.assets = normalizeAssetStore(imported.assets);
-        } else {
-          const parsed = JSON.parse(utf8Decode(new Uint8Array(result)));
-          state.content = normalizeContent(parsed);
-          state.progress = normalizeImportedProgress(parsed.progress);
-          state.assets = normalizeAssetStore(parsed.assets);
+          return { changed: true, importedScope: "app" };
         }
 
-        pruneProgressStore();
-        saveProgressStore();
-        persistProjectSnapshot();
-        goMain();
-      } catch (_error) {
-        window.alert("Arquivo inválido. Use ZIP exportado pelo app ou JSON válido.");
+        const choice = promptImportChoice(
+          "app",
+          state.content.appTitle || DEFAULT_APP_TITLE,
+          imported.content.appTitle || DEFAULT_APP_TITLE,
+          "app",
+          ["merge", "replace", "cancel"],
+          "merge"
+        );
+        if (choice === "cancel") return { changed: false };
+        if (choice === "merge") {
+          return Object.assign({ importedScope: "app" }, mergeAppPackageIntoWorkspace(imported));
+        }
+
+        state.content = imported.content;
+        state.progress = normalizeImportedProgress(imported.progress);
+        state.assets = normalizeAssetStore(imported.assets);
+        return { changed: true, importedScope: "app" };
       }
-    };
-    if (file.name.toLowerCase().endsWith(".zip")) reader.readAsArrayBuffer(file);
-    else reader.readAsArrayBuffer(file);
+      if (imported.scope === "course") {
+        return Object.assign({ importedScope: "course" }, importCourseIntoApp(imported.course, imported.progress, imported.assets));
+      }
+      throw new Error(buildImportScopeError(targetScope, imported.scope));
+    }
+
+    if (targetScope === "course") {
+      if (imported.scope === "course") {
+        return Object.assign({ importedScope: "course" }, importCourseIntoCourseTarget(imported, target));
+      }
+      if (imported.scope === "module") {
+        return Object.assign({ importedScope: "module" }, importModuleIntoCourseTarget(imported, target));
+      }
+      throw new Error(buildImportScopeError(targetScope, imported.scope));
+    }
+
+    if (targetScope === "module") {
+      if (imported.scope === "module") {
+        return Object.assign({ importedScope: "module" }, importModuleIntoModuleTarget(imported, target));
+      }
+      if (imported.scope === "lesson") {
+        return Object.assign({ importedScope: "lesson" }, importLessonIntoModuleTarget(imported, target));
+      }
+      throw new Error(buildImportScopeError(targetScope, imported.scope));
+    }
+
+    if (imported.scope !== "lesson") {
+      throw new Error(buildImportScopeError(targetScope, imported.scope));
+    }
+    return Object.assign({ importedScope: "lesson" }, importLessonIntoLessonTarget(imported, target));
+  }
+
+  // Importa ZIP (preferencial) ou JSON, detecta o escopo e adapta ao contêiner atual.
+  function importJson(file) {
+    if (!file) {
+      state.ui.pendingImport = null;
+      return;
+    }
+
+    const pendingImport = clone(state.ui.pendingImport || { scope: "app" });
+
+    parsePackageFile(file)
+      .then(function (imported) {
+        const result = applyImportedPackage(imported, pendingImport);
+        state.ui.pendingImport = null;
+        if (!result || !result.changed) return;
+        finalizeImportedState(pendingImport, result.importedScope || imported.scope);
+        renderApp();
+        if (result.message) window.alert(result.message);
+      })
+      .catch(function (error) {
+        state.ui.pendingImport = null;
+        window.alert((error && error.message) || "Arquivo inválido. Use pacote ZIP/JSON exportado pelo app.");
+        renderApp();
+      });
   }
 
   // Verifica assinatura PK inicial de arquivo ZIP.
   function isZipBytes(value) {
-    if (!(value instanceof ArrayBuffer)) return false;
-    const bytes = new Uint8Array(value);
+    const bytes = value instanceof Uint8Array
+      ? value
+      : (value instanceof ArrayBuffer ? new Uint8Array(value) : null);
+    if (!bytes) return false;
     return bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b;
   }
 
-  // Extrai conteúdo/progresso/assets de um ZIP exportado pelo app.
+  // Extrai pacote completo de um ZIP exportado pelo app.
   function parseProjectZip(zipBytes) {
     const entries = parseZip(zipBytes);
     const byPath = {};
@@ -3548,9 +10569,9 @@
     });
 
     const jsonEntry =
-      byPath[DEFAULT_PROJECT_JSON_FILE_NAME] ||
+      byPath[PROJECT_PACKAGE_JSON_FILE_NAME] ||
       entries.find(function (entry) {
-      return entry.path.toLowerCase().endsWith(".json");
+        return entry.path.toLowerCase().endsWith(".json");
       });
     if (!jsonEntry) throw new Error("JSON principal não encontrado no ZIP.");
 
@@ -3562,11 +10583,7 @@
       assets[entry.path] = bytesToDataUrl(entry.bytes, mime);
     });
 
-    return {
-      content: parsed,
-      progress: parsed.progress,
-      assets: assets
-    };
+    return normalizeImportedPackagePayload(parsed, assets);
   }
 
   // Abre seletor de imagem para bloco de imagem no editor.
@@ -3579,16 +10596,17 @@
 
   // Lê imagem selecionada e aplica ao bloco de imagem.
   function importEditorImage(file) {
-    if (!file || !state.editor.open || !state.editor.imageTargetBlockId) return;
+    if (!file || !state.editor.open || !state.editor.imageTarget) return;
 
     const reader = new FileReader();
     reader.onload = function (event) {
       const data = String(event.target.result || "");
-      const block = (state.editor.form.blocks || []).find(function (item) {
-        return item.id === state.editor.imageTargetBlockId;
+      const target = state.editor.imageTarget || {};
+      const block = (state.editor.form && Array.isArray(state.editor.form.blocks) ? state.editor.form.blocks : []).find(function (item) {
+        return item.id === target.blockId;
       });
       if (block) block.value = data;
-      state.editor.imageTargetBlockId = null;
+      state.editor.imageTarget = null;
       renderApp();
     };
     reader.readAsDataURL(file);
@@ -3599,8 +10617,15 @@
   // ============================================================================
   // Roteia todos os cliques da interface via data-action.
   function onRootClick(event) {
+    handleEditorBlockSurfaceClick(event);
     const trigger = event.target.closest("[data-action]");
     if (!trigger) return;
+    if (
+      (typeof trigger.matches === "function" && trigger.matches(":disabled")) ||
+      trigger.getAttribute("aria-disabled") === "true"
+    ) {
+      return;
+    }
 
     const action = trigger.getAttribute("data-action");
 
@@ -3615,25 +10640,14 @@
       case "continue-step": nextStep(); return;
       case "complete-continue": goCourse(state.currentCourseId); return;
       case "toggle-lesson-quick": toggleLessonQuick(); return;
-      case "popup-open":
-        state.inlinePopupOpen = { stepId: (getCurrentStep() || {}).id || "", blockId: INLINE_POPUP_BLOCK_ID };
-        renderApp();
-        return;
       case "step-button-click": {
         const step = getCurrentStep();
         if (!step) return;
         const gate = getStepEditorGate(step);
         if (gate.requiresSolve && !gate.solved) {
           const validation = validateStepEditorExercises(step);
-          if (validation.hasExercise) {
-            renderApp();
-            return;
-          }
-        }
-
-        if (step.type === "token_fill") {
-          tokenContinue();
-          return;
+          renderApp();
+          if (validation.hasExercise && validation.status !== "correct") return;
         }
         const popup = trigger.getAttribute("data-popup") === "1";
         if (popup) {
@@ -3651,17 +10665,17 @@
       case "popup-continue": {
         const step = getCurrentStep();
         if (step) {
+          const popupValidation = validateInteractiveBlocks(step, getOpenPopupInteractiveBlocks(step));
+          if (popupValidation.hasExercise && popupValidation.status !== "correct") {
+            renderApp();
+            return;
+          }
+
           const gate = getStepEditorGate(step);
           if (gate.requiresSolve && !gate.solved) {
             const validation = validateStepEditorExercises(step);
-            if (validation.hasExercise) {
-              renderApp();
-              return;
-            }
-          }
-          if (step.type === "token_fill") {
-            tokenContinue();
-            return;
+            renderApp();
+            if (validation.hasExercise && validation.status !== "correct") return;
           }
         }
         if (step && step.type === "lesson_complete") {
@@ -3671,11 +10685,6 @@
         nextStep();
         return;
       }
-      case "token-option": tokenOptionClick(decodeURIComponent(trigger.getAttribute("data-option") || "")); return;
-      case "token-slot": tokenSlotClick(Number(trigger.getAttribute("data-slot-index"))); return;
-      case "token-reset": tokenReset(); return;
-      case "token-check": tokenCheck(); return;
-      case "token-continue": tokenContinue(); return;
       case "step-editor-reset": {
         const step = getCurrentStep();
         if (!step) return;
@@ -3698,9 +10707,82 @@
       case "terminal-try-again":
         terminalTryAgain(trigger.getAttribute("data-block-id"));
         return;
-      case "feedback-next": nextStep(); return;
-      case "feedback-view-answer": applyAnswer(); return;
-      case "feedback-try-again": state.feedback = null; renderApp(); return;
+      case "flowchart-open-shape":
+        flowchartOpenPopup(trigger.getAttribute("data-block-id"), trigger.getAttribute("data-node-id"), "shape");
+        return;
+      case "flowchart-open-text":
+        flowchartOpenPopup(trigger.getAttribute("data-block-id"), trigger.getAttribute("data-node-id"), "text");
+        return;
+      case "flowchart-zoom-in":
+        setFlowchartViewportScale(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-flowchart-mode"),
+          getFlowchartViewportScale(
+            trigger.getAttribute("data-block-id"),
+            trigger.getAttribute("data-flowchart-mode"),
+            getFlowchartDefaultViewportScale(getAnyCachedFlowchartLayout(trigger.getAttribute("data-block-id")))
+          ) * 1.16
+        );
+        return;
+      case "flowchart-zoom-out":
+        setFlowchartViewportScale(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-flowchart-mode"),
+          getFlowchartViewportScale(
+            trigger.getAttribute("data-block-id"),
+            trigger.getAttribute("data-flowchart-mode"),
+            getFlowchartDefaultViewportScale(getAnyCachedFlowchartLayout(trigger.getAttribute("data-block-id")))
+          ) / 1.16
+        );
+        return;
+      case "flowchart-zoom-reset":
+        setFlowchartViewportScale(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-flowchart-mode"),
+          getFlowchartDefaultViewportScale(getAnyCachedFlowchartLayout(trigger.getAttribute("data-block-id")))
+        );
+        return;
+      case "flowchart-focus-node-shape":
+        focusFlowchartNodeField(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-node-id"),
+          "shape"
+        );
+        return;
+      case "flowchart-focus-node-text":
+        focusFlowchartNodeField(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-node-id"),
+          "text"
+        );
+        return;
+      case "flowchart-set-shape":
+        flowchartSetShape(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-node-id"),
+          trigger.getAttribute("data-shape")
+        );
+        return;
+      case "flowchart-set-text":
+        flowchartSetText(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-node-id"),
+          decodeURIComponent(trigger.getAttribute("data-text") || "")
+        );
+        return;
+      case "flowchart-clear-choice":
+        flowchartClearChoice(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-node-id"),
+          trigger.getAttribute("data-choice-kind")
+        );
+        return;
+      case "flowchart-view-answer":
+        flowchartViewAnswer(trigger.getAttribute("data-block-id"));
+        return;
+      case "flowchart-try-again":
+        flowchartTryAgain(trigger.getAttribute("data-block-id"));
+        return;
       case "open-context":
         openContextMenu({
           kind: trigger.getAttribute("data-kind"),
@@ -3717,6 +10799,30 @@
       case "context-reset": contextActionReset(); return;
       case "context-delete": contextActionDelete(); return;
       case "context-create-lesson": contextActionCreateLesson(); return;
+      case "context-import-course":
+        triggerImport("course", state.ui.contextMenu);
+        return;
+      case "context-export-course":
+        exportScopedPackage("course", state.ui.contextMenu);
+        state.ui.contextMenu = null;
+        renderApp();
+        return;
+      case "context-import-module":
+        triggerImport("module", state.ui.contextMenu);
+        return;
+      case "context-export-module":
+        exportScopedPackage("module", state.ui.contextMenu);
+        state.ui.contextMenu = null;
+        renderApp();
+        return;
+      case "context-import-lesson":
+        triggerImport("lesson", state.ui.contextMenu);
+        return;
+      case "context-export-lesson":
+        exportScopedPackage("lesson", state.ui.contextMenu);
+        state.ui.contextMenu = null;
+        renderApp();
+        return;
       case "step-insert-before": openStepEditor("insert_before"); return;
       case "step-insert-after": openStepEditor("insert_after"); return;
       case "step-edit": openStepEditor("edit"); return;
@@ -3731,37 +10837,226 @@
       case "palette-add":
         addBlock(trigger.getAttribute("data-block-type"));
         return;
+      case "block-style-bold":
+        applyBlockTextStyle(trigger.getAttribute("data-block-id"), "bold");
+        return;
+      case "block-style-italic":
+        applyBlockTextStyle(trigger.getAttribute("data-block-id"), "italic");
+        return;
+      case "open-tone-picker":
+        openTonePicker(trigger.getAttribute("data-block-id"));
+        return;
+      case "tone-picker-close":
+        closeTonePicker();
+        return;
+      case "tone-picker-apply":
+        applyTonePicker(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-tone-id")
+        );
+        return;
+      case "block-style-indent":
+        applyBlockTextStyle(trigger.getAttribute("data-block-id"), "indent");
+        return;
+      case "block-align-left":
+        setBlockAlign(trigger.getAttribute("data-block-id"), "left");
+        return;
+      case "block-align-center":
+        setBlockAlign(trigger.getAttribute("data-block-id"), "center");
+        return;
+      case "block-align-right":
+        setBlockAlign(trigger.getAttribute("data-block-id"), "right");
+        return;
+      case "table-add-column":
+        addTableColumn(trigger.getAttribute("data-block-id"));
+        return;
+      case "table-remove-column":
+        removeTableColumn(
+          trigger.getAttribute("data-block-id"),
+          Number(trigger.getAttribute("data-column-index"))
+        );
+        return;
+      case "table-add-row":
+        addTableRow(trigger.getAttribute("data-block-id"));
+        return;
+      case "table-remove-row":
+        removeTableRow(
+          trigger.getAttribute("data-block-id"),
+          Number(trigger.getAttribute("data-row-index"))
+        );
+        return;
+      case "table-style-bold":
+        toggleActiveTableCellFlag(trigger.getAttribute("data-block-id"), "bold");
+        return;
+      case "table-style-italic":
+        toggleActiveTableCellFlag(trigger.getAttribute("data-block-id"), "italic");
+        return;
+      case "table-open-tone-picker":
+        openTableTonePicker(trigger.getAttribute("data-block-id"));
+        return;
+      case "table-align-left":
+        setActiveTableCellAlign(trigger.getAttribute("data-block-id"), "left");
+        return;
+      case "table-align-center":
+        setActiveTableCellAlign(trigger.getAttribute("data-block-id"), "center");
+        return;
+      case "table-align-right":
+        setActiveTableCellAlign(trigger.getAttribute("data-block-id"), "right");
+        return;
+      case "choice-add-option":
+        addMultipleChoiceOption(trigger.getAttribute("data-block-id"));
+        return;
+      case "choice-toggle-answer":
+        toggleMultipleChoiceOptionAnswer(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id")
+        );
+        return;
+      case "choice-remove-option":
+        removeMultipleChoiceOption(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id")
+        );
+        return;
+      case "simulator-add-option":
+        addSimulatorOption(trigger.getAttribute("data-block-id"));
+        return;
+      case "simulator-remove-option":
+        removeSimulatorOption(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id")
+        );
+        return;
+      case "multiple-choice-toggle":
+        multipleChoiceToggleOption(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id")
+        );
+        return;
+      case "simulator-select":
+        simulatorSelect(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id")
+        );
+        return;
+      case "multiple-choice-view-answer":
+        multipleChoiceViewAnswer(trigger.getAttribute("data-block-id"));
+        return;
+      case "multiple-choice-try-again":
+        multipleChoiceTryAgain(trigger.getAttribute("data-block-id"));
+        return;
+      case "button-edit-popup":
+        openPopupBuilder(trigger.getAttribute("data-block-id"));
+        return;
+      case "popup-builder-close":
+        closePopupBuilder();
+        return;
+      case "popup-builder-save":
+        savePopupBuilder();
+        return;
       case "terminal-add-option":
         addTerminalOption(trigger.getAttribute("data-block-id"));
         return;
       case "terminal-toggle-option":
         toggleTerminalOption(
           trigger.getAttribute("data-block-id"),
-          Number(trigger.getAttribute("data-option-index"))
+          trigger.getAttribute("data-option-id")
         );
         return;
       case "terminal-remove-option":
         removeTerminalOption(
           trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id")
+        );
+        return;
+      case "editor-slot-add-variant":
+        addEditorInputVariant(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id")
+        );
+        return;
+      case "editor-slot-toggle-regex":
+        toggleEditorInputPrimaryRegex(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id")
+        );
+        return;
+      case "editor-slot-toggle-variant-regex":
+        toggleEditorInputVariantRegex(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id"),
+          Number(trigger.getAttribute("data-variant-index"))
+        );
+        return;
+      case "editor-slot-remove-variant":
+        removeEditorInputVariant(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id"),
+          Number(trigger.getAttribute("data-variant-index"))
+        );
+        return;
+      case "flowchart-add-node":
+        addFlowchartNode(trigger.getAttribute("data-block-id"));
+        return;
+      case "flowchart-move-node-up":
+        moveFlowchartNode(trigger.getAttribute("data-block-id"), trigger.getAttribute("data-node-id"), "up");
+        return;
+      case "flowchart-move-node-down":
+        moveFlowchartNode(trigger.getAttribute("data-block-id"), trigger.getAttribute("data-node-id"), "down");
+        return;
+      case "flowchart-select-node-shape-answer":
+        selectFlowchartNodeShapeAnswer(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-node-id"),
           Number(trigger.getAttribute("data-option-index"))
         );
+        return;
+      case "flowchart-select-node-text-answer":
+        selectFlowchartNodeTextAnswer(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-node-id"),
+          Number(trigger.getAttribute("data-option-index"))
+        );
+        return;
+      case "flowchart-add-node-shape-option":
+        addFlowchartNodeShapeOption(trigger.getAttribute("data-block-id"), trigger.getAttribute("data-node-id"));
+        return;
+      case "flowchart-remove-node-shape-option":
+        removeFlowchartNodeShapeOption(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-node-id"),
+          Number(trigger.getAttribute("data-option-index"))
+        );
+        return;
+      case "flowchart-add-node-text-option":
+        addFlowchartNodeTextOption(trigger.getAttribute("data-block-id"), trigger.getAttribute("data-node-id"));
+        return;
+      case "flowchart-remove-node-text-option":
+        removeFlowchartNodeTextOption(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-node-id"),
+          Number(trigger.getAttribute("data-option-index"))
+        );
+        return;
+      case "flowchart-remove-node":
+        removeFlowchartNode(trigger.getAttribute("data-block-id"), trigger.getAttribute("data-node-id"));
         return;
       case "block-remove": removeBlock(trigger.getAttribute("data-block-id")); return;
       case "block-up": moveBlock(trigger.getAttribute("data-block-id"), "up"); return;
       case "block-down": moveBlock(trigger.getAttribute("data-block-id"), "down"); return;
       case "block-pick-image":
         snapshotEditorFromDom();
-        state.editor.imageTargetBlockId = trigger.getAttribute("data-block-id");
+        state.editor.imageTarget = {
+          scope: "main",
+          blockId: trigger.getAttribute("data-block-id")
+        };
         pickEditorImage();
         return;
       case "create-course": createCourse(); return;
       case "edit-app-title": editAppTitle(); return;
       case "create-module": createModule(); return;
-      case "import-json-trigger": triggerImport(); return;
+      case "import-json-trigger": triggerImport("app", null); return;
       case "export-json": exportJson(); return;
-      case "fs-pick-folder": chooseLocalFolderForSync(); return;
-      case "fs-save-now": persistProjectToLocalFolder(true); return;
-      case "fs-disconnect": disconnectLocalFolderSync(); return;
       default: return;
     }
   }
@@ -3779,6 +11074,33 @@
       return;
     }
 
+    if (state.editor.open && target.matches("[data-choice-answer-state]")) {
+      setActiveEditorBlock(target.getAttribute("data-block-id"));
+      setMultipleChoiceAnswerState(target.getAttribute("data-block-id"), target.value);
+      return;
+    }
+
+    if (
+      state.editor.open &&
+      target.matches("[data-editor-interaction]")
+    ) {
+      setActiveEditorBlock(target.getAttribute("data-block-id"));
+      snapshotEditorFromDom();
+      renderApp();
+      return;
+    }
+
+    if (
+      state.editor.open &&
+      target.matches(
+        "[data-flowchart-node-shape], [data-flowchart-node-text], [data-flowchart-node-output], [data-flowchart-node-output-label], [data-flowchart-node-shape-option], [data-flowchart-node-text-option]"
+      )
+    ) {
+      snapshotEditorFromDom();
+      renderApp();
+      return;
+    }
+
     if (target.id === "import-json-file") {
       importJson(target.files && target.files[0]);
       return;
@@ -3792,85 +11114,147 @@
   // Trata eventos input para sincronizacao em tempo real no editor.
   function onRootInput(event) {
     const target = event.target;
-    if (!target || !state.editor.open) return;
+    if (!target) return;
 
-    if (target.matches("[data-terminal-option]")) {
-      const blockId = target.getAttribute("data-block-id");
-      const optionIndex = Number(target.getAttribute("data-option-index"));
-      syncTerminalOptionToTemplate(blockId, optionIndex, target.value);
+    if (target.matches("[data-terminal-inline-input]")) {
+      setTerminalInputDraft(
+        target.getAttribute("data-block-id"),
+        Number(target.getAttribute("data-slot-index")),
+        target.value
+      );
+      syncTerminalInlineInputWidth(target);
       return;
     }
 
-    if (target.matches("[data-terminal-template]")) {
+    if (!state.editor.open) return;
+
+    if (target.matches("[data-template-rich-input]")) {
       const blockId = target.getAttribute("data-block-id");
-      syncTerminalTemplateToOptions(blockId, target);
+      setActiveEditorBlock(blockId);
+      if (target.matches("[data-terminal-template]")) {
+        syncTerminalTemplateBlockFromNode(blockId, target);
+      } else if (target.matches("[data-simulator-template]")) {
+        syncSimulatorTemplateBlockFromNode(blockId, target);
+      }
+      syncBlockTextStyleTools(blockId);
+      return;
     }
+
+    if (target.matches("[data-block-rich-input]")) {
+      const blockNode = target.closest(".builder-block");
+      if (!blockNode) return;
+      const blockId = blockNode.getAttribute("data-block-id");
+      setActiveEditorBlock(blockId);
+      syncParagraphBlockFromNode(blockId, target);
+      syncBlockTextStyleTools(blockId);
+      return;
+    }
+
+    if (target.matches("[data-terminal-option]")) {
+      const blockId = target.getAttribute("data-block-id");
+      setActiveEditorBlock(blockId);
+      syncTerminalOptionToTemplate(blockId, target.getAttribute("data-option-id"), target.value);
+      return;
+    }
+
+    if (target.matches("[data-editor-slot-answer]")) {
+      const blockId = target.getAttribute("data-block-id");
+      setActiveEditorBlock(blockId);
+      syncTerminalInputAnswerToTemplate(
+        blockId,
+        target.getAttribute("data-option-id"),
+        target.value
+      );
+      return;
+    }
+
+    if (target.matches("[data-editor-slot-variant]")) {
+      const blockId = target.getAttribute("data-block-id");
+      setActiveEditorBlock(blockId);
+      syncTerminalInputVariant(
+        blockId,
+        target.getAttribute("data-option-id"),
+        Number(target.getAttribute("data-variant-index")),
+        target.value
+      );
+      return;
+    }
+
+    if (target.matches("[data-choice-option], [data-simulator-label], [data-simulator-output]")) {
+      setActiveEditorBlock(target.getAttribute("data-block-id"));
+      return;
+    }
+
+    if (target.matches("[data-table-header-cell], [data-table-cell], [data-table-title]")) {
+      const blockNode = target.closest(".builder-block");
+      if (!blockNode) return;
+      setActiveEditorBlock(blockNode.getAttribute("data-block-id"));
+      if (target.matches("[data-table-header-cell], [data-table-cell], [data-table-title]")) {
+        setActiveTableCell(getTableCellRefFromField(target));
+      }
+      syncTableEditorColumnWidths(blockNode);
+      return;
+    }
+
   }
 
   // Habilita/desabilita campos de popup do bloco botao.
   function syncButtonPopupFields(blockNode, enabled) {
-    const popupText = blockNode.querySelector("[data-button-popup-text]");
-    if (popupText) popupText.disabled = !enabled;
+    const popupMeta = blockNode ? blockNode.querySelector(".button-popup-meta") : null;
+    if (popupMeta) popupMeta.classList.toggle("disabled", !enabled);
+
+    const editButton = blockNode ? blockNode.querySelector('[data-action="button-edit-popup"]') : null;
+    if (editButton) {
+      editButton.disabled = !enabled;
+      editButton.classList.toggle("disabled-icon", !enabled);
+      if (enabled) editButton.removeAttribute("aria-disabled");
+      else editButton.setAttribute("aria-disabled", "true");
+    }
+
+    const blockId = blockNode ? blockNode.getAttribute("data-block-id") : "";
+    const block = getEditorBlock(blockId);
+    if (block && block.kind === "button") block.popupEnabled = !!enabled;
+  }
+
+  // Busca índice estrutural de uma opção do Editor pelo ID estável.
+  function getEditorOptionIndexById(options, optionId) {
+    return normalizeEditorOptions(options).findIndex(function (option) {
+      return option.id === optionId;
+    });
   }
 
   // Sincroniza input de opção para o texto [[...]] correspondente.
-  function syncTerminalOptionToTemplate(blockId, optionIndex, value) {
-    if (!Number.isInteger(optionIndex) || optionIndex < 0) return;
+  function syncTerminalOptionToTemplate(blockId, optionId, value) {
+    if (!optionId) return;
 
-    const blockNode = root.querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
-    if (!blockNode) return;
+    const blockNode = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
+    const block = getEditorBlock(blockId);
+    if (!blockNode || !block || !isEditorKind(block.kind)) return;
+
+    block.kind = "editor";
+    block.options = collectTerminalOptionsFromBlockNode(blockNode);
+    const optionIndex = getEditorOptionIndexById(block.options, optionId);
+    if (optionIndex < 0) return;
+
+    const enabledIndexes = getEnabledOptionIndexes(block.options);
+    const markerIndex = enabledIndexes.indexOf(optionIndex);
+    block.options[optionIndex].value = String(value || "");
+    if (markerIndex > -1) {
+      block.value = replaceMarkerAtIndex(String(block.value || ""), markerIndex, String(value || ""));
+    }
+    normalizeTerminalEditorBlock(block);
 
     const templateField = blockNode.querySelector("[data-terminal-template]");
-    if (!templateField) return;
-
-    const rows = Array.from(blockNode.querySelectorAll("[data-terminal-option-row]"));
-    const enabledIndexes = rows
-      .map(function (row, idx) { return row.getAttribute("data-option-enabled") !== "0" ? idx : -1; })
-      .filter(function (idx) { return idx > -1; });
-    const markerIndex = enabledIndexes.indexOf(optionIndex);
-    if (markerIndex === -1) return;
-
-    const markers = parseOptionMarkers(templateField.value);
-    if (markerIndex >= markers.length) return;
-
-    templateField.value = replaceMarkerAtIndex(templateField.value, markerIndex, value);
-    state.editor.terminalGuardByBlockId[blockId] = templateField.value;
-  }
-
-  // Sincroniza texto [[...]] para a lista de opções.
-  function syncTerminalTemplateToOptions(blockId, templateField) {
-    const blockNode = templateField.closest(".builder-block");
-    if (!blockNode) return;
-
-    const rows = Array.from(blockNode.querySelectorAll("[data-terminal-option-row]"));
-    const optionInputs = Array.from(blockNode.querySelectorAll("[data-terminal-option]"));
-    const enabledIndexes = rows
-      .map(function (row, idx) { return row.getAttribute("data-option-enabled") !== "0" ? idx : -1; })
-      .filter(function (idx) { return idx > -1; });
-    const markers = parseOptionMarkers(templateField.value);
-    const expectedCount = enabledIndexes.length;
-
-    if (markers.length !== expectedCount) {
-      const fallback = state.editor.terminalGuardByBlockId[blockId];
-      if (typeof fallback === "string") {
-        templateField.value = fallback;
-      }
-      return;
-    }
-
-    markers.forEach(function (marker, enabledIndex) {
-      const optionIndex = enabledIndexes[enabledIndex];
-      if (Number.isInteger(optionIndex) && optionInputs[optionIndex]) {
-        optionInputs[optionIndex].value = marker.value;
-      }
-    });
-    state.editor.terminalGuardByBlockId[blockId] = templateField.value;
+    refreshTemplateInputFromBlock(blockNode, block, templateField ? getEditableSelectionOffsets(templateField) : null);
+    syncTerminalOptionRowsFromBlockNode(blockNode, block.options);
+    state.editor.terminalGuardByBlockId[blockId] = block.value;
   }
 
   // Inicia drag and drop no editor.
   function onRootDragStart(event) {
     if (!state.editor.open) return;
     clearDragIndicators();
+    clearTerminalOptionDragIndicators();
 
     const palette = event.target.closest("[data-block-type]");
     if (palette) {
@@ -3879,6 +11263,18 @@
       if (event.dataTransfer) {
         event.dataTransfer.setData("text/plain", state.editor.dragType);
         event.dataTransfer.setData("application/x-editor-drag", "add");
+      }
+      return;
+    }
+
+    const optionHandle = event.target.closest("[data-action='terminal-start-drag']");
+    if (optionHandle) {
+      snapshotEditorFromDom();
+      setActiveEditorBlock(optionHandle.getAttribute("data-block-id"));
+      if (event.dataTransfer) {
+        event.dataTransfer.setData("application/x-editor-drag", "move-option");
+        event.dataTransfer.setData("application/x-editor-option-block-id", optionHandle.getAttribute("data-block-id") || "");
+        event.dataTransfer.setData("application/x-editor-option-id", optionHandle.getAttribute("data-option-id") || "");
       }
       return;
     }
@@ -3903,6 +11299,22 @@
   // Atualiza alvo visual durante arraste no editor.
   function onRootDragOver(event) {
     if (!state.editor.open) return;
+
+    const optionMode = event.dataTransfer ? event.dataTransfer.getData("application/x-editor-drag") : "";
+    const optionRow = event.target.closest("[data-terminal-option-row]");
+    if (optionMode === "move-option" && optionRow) {
+      event.preventDefault();
+      const draggedOptionId = event.dataTransfer ? event.dataTransfer.getData("application/x-editor-option-id") : "";
+      const targetOptionId = optionRow.getAttribute("data-option-id") || "";
+      if (!draggedOptionId || !targetOptionId || draggedOptionId === targetOptionId) {
+        clearTerminalOptionDragIndicators();
+        return;
+      }
+      const rect = optionRow.getBoundingClientRect();
+      const position = event.clientY > rect.top + rect.height / 2 ? "after" : "before";
+      setTerminalOptionDragIndicator(optionRow, position);
+      return;
+    }
 
     const canvas = event.target.closest("[data-dropzone='canvas']");
     const blockNode = event.target.closest(".builder-block");
@@ -3930,6 +11342,24 @@
   // Finaliza drop no editor para mover/adicionar bloco.
   function onRootDrop(event) {
     if (!state.editor.open) return;
+
+    const optionRow = event.target.closest("[data-terminal-option-row]");
+    const optionMode = event.dataTransfer ? event.dataTransfer.getData("application/x-editor-drag") : "";
+    if (optionRow && optionMode === "move-option") {
+      event.preventDefault();
+      snapshotEditorFromDom();
+      clearTerminalOptionDragIndicators();
+
+      const blockId = event.dataTransfer ? event.dataTransfer.getData("application/x-editor-option-block-id") : "";
+      const draggedOptionId = event.dataTransfer ? event.dataTransfer.getData("application/x-editor-option-id") : "";
+      const targetOptionId = optionRow.getAttribute("data-option-id") || "";
+      const rect = optionRow.getBoundingClientRect();
+      const position = event.clientY > rect.top + rect.height / 2 ? "after" : "before";
+      if (reorderTerminalOptionDisplay(blockId, draggedOptionId, targetOptionId, position)) {
+        renderApp();
+      }
+      return;
+    }
 
     const canvas = event.target.closest("[data-dropzone='canvas']");
     const blockNode = event.target.closest(".builder-block");
@@ -3978,10 +11408,19 @@
     state.editor.blockDragId = null;
     state.editor.dragType = null;
     clearDragIndicators();
+    clearTerminalOptionDragIndicators();
   }
 
   // Inicia arraste por ponteiro (mouse/toque) no botao de arrastar.
   function onRootPointerDown(event) {
+    const textTool = event.target.closest(
+      "[data-action='block-style-bold'], [data-action='block-style-italic'], [data-action='block-style-indent'], [data-action='open-tone-picker']"
+    );
+    if (textTool && state.editor.open) {
+      event.preventDefault();
+      return;
+    }
+
     const handle = event.target.closest("[data-action='block-start-drag']");
     if (!handle || !state.editor.open) return;
     clearDragIndicators();
@@ -3996,6 +11435,143 @@
 
     document.body.classList.add("dragging-block");
     event.preventDefault();
+  }
+
+  // Permite zoom por Ctrl+roda do mouse dentro do quadro de fluxograma no desktop.
+  function onRootWheel(event) {
+    const scrollNode = event.target.closest("[data-flowchart-scroll='true']");
+    if (!scrollNode || !(event.ctrlKey || event.metaKey)) return;
+
+    event.preventDefault();
+    const blockId = scrollNode.getAttribute("data-block-id") || "";
+    const mode = scrollNode.getAttribute("data-flowchart-mode") || "editor";
+    const currentScale = getFlowchartViewportScale(blockId, mode);
+    const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
+
+    setFlowchartViewportScale(blockId, mode, currentScale * factor, event.clientX, event.clientY);
+  }
+
+  // Mede a distância entre dois toques para o gesto de pinça.
+  function getTouchDistance(touchA, touchB) {
+    if (!touchA || !touchB) return 0;
+    const dx = touchA.clientX - touchB.clientX;
+    const dy = touchA.clientY - touchB.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Calcula o ponto médio entre dois toques ativos.
+  function getTouchMidpoint(touchA, touchB) {
+    return {
+      x: (touchA.clientX + touchB.clientX) / 2,
+      y: (touchA.clientY + touchB.clientY) / 2
+    };
+  }
+
+  // Inicia gesto de pinça apenas quando o usuário usa dois dedos dentro da área do fluxograma.
+  function onRootTouchStart(event) {
+    const scrollNode = event.target.closest("[data-flowchart-scroll='true']");
+    if (!scrollNode || !event.touches || event.touches.length < 2) return;
+
+    const touchA = event.touches[0];
+    const touchB = event.touches[1];
+    const blockId = scrollNode.getAttribute("data-block-id") || "";
+    const mode = scrollNode.getAttribute("data-flowchart-mode") || "editor";
+
+    state.ui.flowchartPinch = {
+      blockId: blockId,
+      mode: mode,
+      startScale: getFlowchartViewportScale(blockId, mode),
+      startDistance: getTouchDistance(touchA, touchB)
+    };
+    event.preventDefault();
+  }
+
+  // Atualiza o zoom por pinça mantendo o ponto médio dos dedos como âncora visual.
+  function onRootTouchMove(event) {
+    const pinch = state.ui.flowchartPinch;
+    if (!pinch || !event.touches || event.touches.length < 2) return;
+
+    const touchA = event.touches[0];
+    const touchB = event.touches[1];
+    const distance = getTouchDistance(touchA, touchB);
+    if (!distance || !pinch.startDistance) return;
+
+    const midpoint = getTouchMidpoint(touchA, touchB);
+    const nextScale = pinch.startScale * (distance / pinch.startDistance);
+    setFlowchartViewportScale(pinch.blockId, pinch.mode, nextScale, midpoint.x, midpoint.y);
+    event.preventDefault();
+  }
+
+  // Encerra o gesto quando restam menos de dois toques ativos.
+  function onRootTouchEnd(event) {
+    if (state.ui.flowchartPinch && (!event.touches || event.touches.length < 2)) {
+      state.ui.flowchartPinch = null;
+    }
+  }
+
+  // Normaliza o HTML do parágrafo rico ao perder foco.
+  function onRootFocusOut(event) {
+    const target = event.target;
+    if (target && target.matches && target.matches("[data-template-rich-input]")) {
+      const blockId = target.getAttribute("data-block-id") || "";
+      if (target.matches("[data-terminal-template]")) {
+        syncTerminalTemplateBlockFromNode(blockId, target, { preserveSelection: false });
+      }
+      if (target.matches("[data-simulator-template]")) {
+        syncSimulatorTemplateBlockFromNode(blockId, target, { preserveSelection: false });
+      }
+      return;
+    }
+    if (
+      !target ||
+      !target.matches ||
+      !target.matches("[data-block-rich-input]") ||
+      target.matches("[data-template-rich-input]")
+    ) {
+      return;
+    }
+
+    const safeHtmlValue = sanitizeInlineRichText(target.innerHTML);
+    if (target.innerHTML !== safeHtmlValue) {
+      target.innerHTML = safeHtmlValue;
+    }
+
+    const blockNode = target.closest(".builder-block");
+    if (blockNode) syncParagraphBlockFromNode(blockNode.getAttribute("data-block-id"), target);
+  }
+
+  // Atualiza o bloco ativo quando o foco entra em um campo de autoria.
+  function onRootFocusIn(event) {
+    const target = event.target;
+    if (!target || !state.editor.open) return;
+    const blockNode = target.closest ? target.closest(".builder-block") : null;
+    if (!blockNode) return;
+    const blockId = blockNode.getAttribute("data-block-id");
+    setActiveEditorBlock(blockId);
+    syncBlockAlignTools(blockId);
+    syncBlockTextStyleTools(blockId);
+    if (target.matches && target.matches("[data-table-header-cell], [data-table-cell]")) {
+      setActiveTableCell(getTableCellRefFromField(target));
+    } else if (target.matches && target.matches("[data-table-title]")) {
+      setActiveTableCell(getTableCellRefFromField(target));
+    }
+  }
+
+  // Mantém a toolbar inline em sincronia quando o autor apenas muda a seleção.
+  function onDocumentSelectionChange() {
+    if (!state.editor.open) return;
+    const selection = window.getSelection ? window.getSelection() : null;
+    if (!selection || !selection.rangeCount) {
+      if (state.editor.activeBlockId) syncBlockTextStyleTools(state.editor.activeBlockId);
+      return;
+    }
+
+    const probe = selection.anchorNode
+      ? (selection.anchorNode.nodeType === 1 ? selection.anchorNode : selection.anchorNode.parentElement)
+      : null;
+    const blockNode = probe && probe.closest ? probe.closest(".builder-block") : null;
+    const blockId = blockNode ? blockNode.getAttribute("data-block-id") : state.editor.activeBlockId;
+    if (blockId) syncBlockTextStyleTools(blockId);
   }
 
   // Processa movimento de arraste por ponteiro.
@@ -4039,16 +11615,30 @@
   // Marca visualmente posicao de drop antes/depois de um bloco.
   function setDragIndicator(blockId, position) {
     clearDragIndicators();
-    const node = root.querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
+    const node = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
     if (!node) return;
     node.classList.add(position === "after" ? "drop-after" : "drop-before");
     state.editor.dragOverTargetId = blockId;
     state.editor.dragOverPosition = position;
   }
 
+  // Marca visualmente a posição de drop entre opções do Editor.
+  function setTerminalOptionDragIndicator(rowNode, position) {
+    clearTerminalOptionDragIndicators();
+    if (!rowNode) return;
+    rowNode.classList.add(position === "after" ? "option-drop-after" : "option-drop-before");
+  }
+
+  // Limpa indicadores visuais de arraste entre opções do Editor.
+  function clearTerminalOptionDragIndicators() {
+    getEditorDomScope().querySelectorAll("[data-terminal-option-row].option-drop-before, [data-terminal-option-row].option-drop-after").forEach(function (node) {
+      node.classList.remove("option-drop-before", "option-drop-after");
+    });
+  }
+
   // Limpa indicadores visuais de arraste.
   function clearDragIndicators() {
-    root.querySelectorAll(".builder-block.drop-before, .builder-block.drop-after").forEach(function (node) {
+    getEditorDomScope().querySelectorAll(".builder-block.drop-before, .builder-block.drop-after").forEach(function (node) {
       node.classList.remove("drop-before", "drop-after");
     });
     state.editor.dragOverTargetId = null;
@@ -4097,242 +11687,20 @@
       if (!inPopup && !onLegacyPopupButton && !onStepButton) {
         state.inlinePopupOpen = null;
         renderApp();
+        return;
+      }
+    }
+
+    if (state.flowchartPopupOpen && state.currentView === "lesson_step") {
+      const inPopup = event.target.closest("[data-flowchart-popup='true']");
+      const onShapeTrigger = event.target.closest("[data-action='flowchart-open-shape']");
+      const onTextTrigger = event.target.closest("[data-action='flowchart-open-text']");
+      if (!inPopup && !onShapeTrigger && !onTextTrigger) {
+        state.flowchartPopupOpen = null;
+        renderApp();
       }
     }
   }
-
-  // ============================================================================
-  // Normalizacao de Conteudo
-  // ============================================================================
-  // Normaliza estrutura raiz de conteudo carregado.
-  function normalizeContent(raw) {
-    const source = raw && typeof raw === "object" ? clone(raw) : {};
-    const normalized = {
-      appTitle: clean(source.appTitle, DEFAULT_APP_TITLE),
-      courses: Array.isArray(source.courses)
-        ? source.courses.map(normalizeCourse).filter(Boolean)
-        : []
-    };
-
-    if (!normalized.courses.length) normalized.courses.push(defaultCourse("Curso inicial"));
-    return normalized;
-  }
-
-  // Normaliza objeto de curso.
-  function normalizeCourse(raw) {
-    if (!raw || typeof raw !== "object") return null;
-
-    const course = {
-      id: raw.id || uid("course"),
-      title: clean(raw.title, "Curso sem nome"),
-      description: String(raw.description || ""),
-      modules: Array.isArray(raw.modules)
-        ? raw.modules.map(normalizeModule).filter(Boolean)
-        : []
-    };
-
-    if (!course.modules.length) course.modules.push(defaultModule("Módulo inicial"));
-    return course;
-  }
-
-  // Normaliza objeto de modulo.
-  function normalizeModule(raw) {
-    if (!raw || typeof raw !== "object") return null;
-
-    const moduleItem = {
-      id: raw.id || uid("module"),
-      title: clean(raw.title, "Módulo sem nome"),
-      lessons: Array.isArray(raw.lessons)
-        ? raw.lessons.map(normalizeLesson).filter(Boolean)
-        : []
-    };
-
-    if (!moduleItem.lessons.length) moduleItem.lessons.push(defaultLesson("Nova lição"));
-    return moduleItem;
-  }
-
-  // Normaliza objeto de licao.
-  function normalizeLesson(raw) {
-    if (!raw || typeof raw !== "object") return null;
-
-    const lesson = {
-      id: raw.id || uid("lesson"),
-      title: clean(raw.title, "Lição sem nome"),
-      subtitle: String(raw.subtitle || ""),
-      steps: Array.isArray(raw.steps)
-        ? raw.steps.map(normalizeStep).filter(Boolean)
-        : []
-    };
-
-    if (!lesson.steps.length) lesson.steps.push(defaultContentStep(), defaultCompleteStep());
-    return lesson;
-  }
-
-  // Normaliza step conforme tipo (content, popup, token_fill, complete).
-  function normalizeStep(raw) {
-    if (!raw || typeof raw !== "object") return null;
-    const type = STEP_TYPES.indexOf(raw.type) > -1 ? raw.type : "content";
-
-    if (type === "token_fill") {
-      const options = Array.isArray(raw.options) ? raw.options.map(String).filter(Boolean) : [];
-      const answer = Array.isArray(raw.answer) ? raw.answer.map(String).filter(Boolean) : [];
-      const slots = Math.max(1, Number(raw.slots) || answer.length || 2);
-
-      while (answer.length < slots) answer.push(options[answer.length] || "resposta");
-      answer.slice(0, slots).forEach(function (token) {
-        if (options.indexOf(token) === -1) options.push(token);
-      });
-      if (!options.length) options.push("opção 1", "opção 2");
-
-      return {
-        id: raw.id || uid("step"),
-        type: "token_fill",
-        title: clean(raw.title, "PREENCHA"),
-        prompt: clean(raw.prompt, "Monte o comando."),
-        slots: slots,
-        options: options,
-        answer: answer.slice(0, slots),
-        correct: {
-          output: raw.correct && raw.correct.output ? String(raw.correct.output) : "",
-          explanation: raw.correct && raw.correct.explanation ? String(raw.correct.explanation) : ""
-        },
-        incorrect: {
-          message: raw.incorrect && raw.incorrect.message ? String(raw.incorrect.message) : "Tente novamente"
-        }
-      };
-    }
-
-    const step = {
-      id: raw.id || uid("step"),
-      type: type,
-      title: clean(raw.title, type === "lesson_complete" ? "Lição concluída" : "Novo card"),
-      buttonText: clean(raw.buttonText, "CONTINUAR")
-    };
-
-    if (Array.isArray(raw.blocks)) {
-      step.blocks = raw.blocks.map(normalizeStepBlock).filter(Boolean);
-      step.blocks = ensureEditorButtonBlock(step.blocks);
-      const firstHeading = step.blocks.find(function (block) {
-        return block.kind === "heading" && String(block.value || "").trim();
-      });
-      const firstButton = step.blocks.find(function (block) {
-        return block.kind === "button" && String(block.value || "").trim();
-      });
-      if (firstHeading) step.title = firstHeading.value.trim();
-      if (firstButton) step.buttonText = firstButton.value.trim();
-    }
-
-    if (raw.image) step.image = String(raw.image);
-    if (raw.terminal) step.terminal = String(raw.terminal);
-    if (typeof raw.bodyHtml === "string" && raw.bodyHtml.trim()) step.bodyHtml = safeHtml(raw.bodyHtml);
-    else if (Array.isArray(raw.text)) {
-      step.bodyHtml = raw.text.map(function (line) { return "<p>" + esc(String(line)) + "</p>"; }).join("");
-    }
-
-    if (type === "content_with_inline_popup") {
-      step.popupTriggerLabel = clean(raw.popupTriggerLabel, "Abrir explicação");
-      step.popupText = clean(raw.popupText, "Explique este ponto.");
-    }
-
-    if (type === "lesson_complete" && raw.subtitle) {
-      step.subtitle = String(raw.subtitle);
-    }
-
-    return step;
-  }
-
-  // Normaliza bloco individual de step (heading, paragraph etc.).
-  function normalizeStepBlock(raw) {
-    if (!raw || typeof raw !== "object") return null;
-
-    const rawKind = String(raw.kind || "paragraph");
-    const kind = isEditorKind(rawKind) ? "editor" : rawKind;
-    const allowed = ["heading", "paragraph", "bold", "italic", "image", "editor", "button"];
-    if (allowed.indexOf(kind) === -1) return null;
-
-    const block = {
-      id: raw.id || uid("block"),
-      kind: kind,
-      value: String(raw.value || "")
-    };
-
-    if (kind === "editor") {
-      block.options = normalizeEditorOptions(raw.options);
-      normalizeTerminalEditorBlock(block);
-    }
-
-    if (kind === "button") {
-      block.popupEnabled = !!raw.popupEnabled;
-      block.popupText = String(raw.popupText || "");
-    }
-
-    return block;
-  }
-
-
-  // ============================================================================
-  // Modelos Padrao (Defaults)
-  // ============================================================================
-  // Cria curso padrao minimo.
-  function defaultCourse(title) {
-    return {
-      id: slug(title, "curso"),
-      title: title,
-      description: "Descricao do curso.",
-      modules: [defaultModule("Módulo 1")]
-    };
-  }
-
-  // Cria modulo padrao minimo.
-  function defaultModule(title) {
-    return {
-      id: slug(title, "modulo"),
-      title: title,
-      lessons: [defaultLesson("Lição 1")]
-    };
-  }
-
-  // Cria licao padrao minima.
-  function defaultLesson(title) {
-    return {
-      id: slug(title, "licao"),
-      title: title,
-      subtitle: "",
-      steps: [defaultContentStep(), defaultCompleteStep()]
-    };
-  }
-
-  // Cria card de conteudo padrao.
-  function defaultContentStep() {
-    return {
-      id: uid("step"),
-      type: "content",
-      title: "Novo card",
-      bodyHtml: "<p>Novo conteúdo.</p>",
-      buttonText: "CONTINUAR",
-      blocks: [
-        { id: uid("block"), kind: "heading", value: "Novo card" },
-        { id: uid("block"), kind: "paragraph", value: "Novo conteúdo." },
-        { id: uid("block"), kind: "button", value: "CONTINUAR", popupEnabled: false, popupText: "" }
-      ]
-    };
-  }
-
-  // Cria card de conclusao padrao.
-  function defaultCompleteStep() {
-    return {
-      id: uid("step"),
-      type: "lesson_complete",
-      title: "Lição concluída",
-      subtitle: "",
-      buttonText: "CONTINUAR",
-      blocks: [
-        { id: uid("block"), kind: "heading", value: "Lição concluída" },
-        { id: uid("block"), kind: "button", value: "CONTINUAR", popupEnabled: false, popupText: "" }
-      ]
-    };
-  }
-
 
   // ============================================================================
   // Consulta de Entidades Atuais
@@ -4412,632 +11780,10 @@
     fill.style.width = pct + "%";
   }
 
-
-  // ============================================================================
-  // Transformacao de Texto e Blocos
-  // ============================================================================
-  // Transforma texto em lista de linhas limpas.
-  function parseLines(text) {
-    return String(text || "")
-      .split(/\r?\n|,/)
-      .map(function (item) { return item.trim(); })
-      .filter(Boolean);
-  }
-
-  // Converte bodyHtml/text em blocos editaveis no editor.
-  function extractBodyBlocks(step) {
-    if (typeof step.bodyHtml === "string" && step.bodyHtml.trim()) {
-      const container = document.createElement("div");
-      container.innerHTML = step.bodyHtml;
-
-      const blocks = [];
-      const nodes = Array.from(container.childNodes).filter(function (node) {
-        return node.nodeType === 1 || (node.nodeType === 3 && String(node.textContent || "").trim());
-      });
-
-      if (!nodes.length && container.textContent && container.textContent.trim()) {
-        blocks.push({ kind: "paragraph", value: container.textContent.trim() });
-      }
-
-      nodes.forEach(function (node) {
-        if (node.nodeType === 3) {
-          const textNode = String(node.textContent || "").trim();
-          if (textNode) blocks.push({ kind: "paragraph", value: textNode });
-          return;
-        }
-
-        const element = node;
-        const tag = element.tagName.toLowerCase();
-        const text = nodeTextPreservingBreaks(element);
-        if (!text) return;
-
-        if (tag === "p") {
-          const childElements = Array.from(element.children);
-          const nonEmptyTextNodes = Array.from(element.childNodes).filter(function (child) {
-            return child.nodeType === 3 && String(child.textContent || "").trim();
-          });
-
-          if (!nonEmptyTextNodes.length && childElements.length === 1) {
-            const childTag = childElements[0].tagName.toLowerCase();
-            if (childTag === "strong") {
-              blocks.push({ kind: "bold", value: nodeTextPreservingBreaks(childElements[0]) });
-              return;
-            }
-            if (childTag === "em") {
-              blocks.push({ kind: "italic", value: nodeTextPreservingBreaks(childElements[0]) });
-              return;
-            }
-          }
-
-          blocks.push({ kind: "paragraph", value: text });
-          return;
-        }
-
-        if (tag === "strong") {
-          blocks.push({ kind: "bold", value: text });
-          return;
-        }
-        if (tag === "em") {
-          blocks.push({ kind: "italic", value: text });
-          return;
-        }
-
-        blocks.push({ kind: "paragraph", value: text });
-      });
-
-      if (blocks.length) return blocks;
-    }
-
-    if (Array.isArray(step.text)) {
-      return step.text
-        .map(String)
-        .map(function (line) { return line.trim(); })
-        .filter(Boolean)
-        .map(function (line) { return { kind: "paragraph", value: line }; });
-    }
-
-    return [];
-  }
-
-  // Extrai texto preservando quebras de linha de <br>.
-  function nodeTextPreservingBreaks(node) {
-    const clone = node.cloneNode(true);
-    if (clone.querySelectorAll) {
-      clone.querySelectorAll("br").forEach(function (br) {
-        br.replaceWith("\n");
-      });
-    }
-    return String(clone.textContent || "").replace(/\r/g, "").trim();
-  }
-
-  // Converte bloco de corpo para HTML de paragrafo.
-  function bodyBlockToHtml(block) {
-    if (!block || !String(block.value || "").trim()) return "";
-
-    if (block.kind === "bold") return textToParagraphHtml(block.value, "strong");
-    if (block.kind === "italic") return textToParagraphHtml(block.value, "em");
-    return textToParagraphHtml(block.value, "");
-  }
-
-  // Converte texto com quebras em <p> e <br>.
-  function textToParagraphHtml(text, inlineTag) {
-    const chunks = String(text || "")
-      .replace(/\r/g, "")
-      .split(/\n\s*\n/)
-      .map(function (part) { return part.trim(); })
-      .filter(Boolean);
-
-    return chunks
-      .map(function (chunk) {
-        const lineHtml = esc(chunk).replace(/\n/g, "<br>");
-        const wrapped = inlineTag ? "<" + inlineTag + ">" + lineHtml + "</" + inlineTag + ">" : lineHtml;
-        return "<p>" + wrapped + "</p>";
-      })
-      .join("");
-  }
-
-  // Retorna primeiro valor preenchido de um tipo de bloco.
-  function firstValue(blocks, kind) {
-    const item = blocks.find(function (block) {
-      return block.kind === kind && String(block.value || "").trim();
-    });
-    return item ? item.value.trim() : "";
-  }
-
   // Le valor de input por ID com fallback.
   function getValue(id, fallback) {
     const element = document.getElementById(id);
     return element ? element.value : fallback;
-  }
-
-  // ============================================================================
-  // Utilitarios de Arquivo/ZIP/Imagem
-  // ============================================================================
-  // Codifica texto UTF-8 em bytes.
-  function utf8Encode(text) {
-    if (typeof TextEncoder !== "undefined") {
-      return new TextEncoder().encode(String(text || ""));
-    }
-
-    // Fallback para navegadores antigos.
-    const encoded = unescape(encodeURIComponent(String(text || "")));
-    const bytes = new Uint8Array(encoded.length);
-    for (let i = 0; i < encoded.length; i += 1) {
-      bytes[i] = encoded.charCodeAt(i);
-    }
-    return bytes;
-  }
-
-  // Decodifica bytes UTF-8 para texto.
-  function utf8Decode(bytes) {
-    const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
-    if (typeof TextDecoder !== "undefined") {
-      return new TextDecoder("utf-8").decode(source);
-    }
-
-    // Fallback para navegadores antigos.
-    let binary = "";
-    for (let i = 0; i < source.length; i += 1) {
-      binary += String.fromCharCode(source[i]);
-    }
-    try {
-      return decodeURIComponent(escape(binary));
-    } catch (_error) {
-      return binary;
-    }
-  }
-
-  // Converte Blob para Data URL (base64).
-  function blobToDataUrl(blob) {
-    return new Promise(function (resolve, reject) {
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        resolve(String(event.target.result || ""));
-      };
-      reader.onerror = function () {
-        reject(reader.error || new Error("Falha ao ler blob."));
-      };
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  // Extrai MIME de um Data URL.
-  function dataUrlMimeType(dataUrl) {
-    const text = String(dataUrl || "");
-    const match = text.match(/^data:([^;,]+)(?:;[^,]*)?,/i);
-    return match ? String(match[1]).toLowerCase() : "";
-  }
-
-  // Converte Data URL em bytes brutos.
-  function dataUrlToBytes(dataUrl) {
-    const text = String(dataUrl || "");
-    if (!/^data:/i.test(text)) return null;
-
-    const commaIndex = text.indexOf(",");
-    if (commaIndex === -1) return null;
-
-    const header = text.slice(5, commaIndex);
-    const payload = text.slice(commaIndex + 1);
-    const mime = dataUrlMimeType(text) || "application/octet-stream";
-    const isBase64 = /;base64/i.test(header);
-
-    if (!payload) return { mime: mime, bytes: new Uint8Array(0) };
-
-    if (isBase64) {
-      const cleanPayload = payload.replace(/\s+/g, "");
-      const binary = window.atob(cleanPayload);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i += 1) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-      return { mime: mime, bytes: bytes };
-    }
-
-    const decoded = decodeURIComponent(payload);
-    return { mime: mime, bytes: utf8Encode(decoded) };
-  }
-
-  // Converte bytes em Data URL com MIME informado.
-  function bytesToDataUrl(bytes, mimeType) {
-    const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
-    const mime = String(mimeType || "application/octet-stream");
-    return "data:" + mime + ";base64," + bytesToBase64(source);
-  }
-
-  // Converte bytes para base64.
-  function bytesToBase64(bytes) {
-    let binary = "";
-    const chunkSize = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.subarray(i, i + chunkSize);
-      binary += String.fromCharCode.apply(null, chunk);
-    }
-    return window.btoa(binary);
-  }
-
-  // Detecta se o app esta rodando dentro do wrapper Android nativo.
-  function isAndroidHostAvailable() {
-    return !!(
-      typeof window !== "undefined" &&
-      window.AndroidHost &&
-      typeof window.AndroidHost.saveExportFile === "function"
-    );
-  }
-
-  // Mapeia MIME de imagem para extensão preferencial.
-  function mimeToExtension(mimeType) {
-    const mime = String(mimeType || "").toLowerCase().trim();
-    if (!mime) return "";
-
-    const map = {
-      "image/jpeg": "jpg",
-      "image/jpg": "jpg",
-      "image/png": "png",
-      "image/gif": "gif",
-      "image/webp": "webp",
-      "image/svg+xml": "svg",
-      "image/bmp": "bmp",
-      "image/x-icon": "ico",
-      "image/vnd.microsoft.icon": "ico",
-      "image/avif": "avif"
-    };
-    if (map[mime]) return map[mime];
-
-    if (mime.indexOf("image/") === 0) {
-      const subtype = mime.split("/")[1].split(";")[0].split("+")[0];
-      return cleanAssetExtension(subtype);
-    }
-    return "";
-  }
-
-  // Mapeia extensão de arquivo para MIME de imagem.
-  function mimeFromExtension(pathOrExt) {
-    const ext = cleanAssetExtension(inferExtensionFromPath(pathOrExt) || pathOrExt);
-    const map = {
-      jpg: "image/jpeg",
-      jpeg: "image/jpeg",
-      png: "image/png",
-      gif: "image/gif",
-      webp: "image/webp",
-      svg: "image/svg+xml",
-      bmp: "image/bmp",
-      ico: "image/x-icon",
-      avif: "image/avif"
-    };
-    return map[ext] || "";
-  }
-
-  // Extrai extensão de caminho/URL.
-  function inferExtensionFromPath(path) {
-    const text = String(path || "").trim();
-    if (!text) return "";
-
-    const noQuery = text.split("?")[0].split("#")[0];
-    const match = noQuery.match(/\.([a-z0-9]+)$/i);
-    return match ? cleanAssetExtension(match[1]) : "";
-  }
-
-  // Sanitiza extensão para uso em nome de arquivo.
-  function cleanAssetExtension(ext) {
-    const raw = String(ext || "")
-      .toLowerCase()
-      .replace(/^\./, "")
-      .replace(/[^a-z0-9]/g, "");
-    if (!raw) return "";
-    if (raw === "jpeg") return "jpg";
-    return raw;
-  }
-
-  // Converte Date para formato DOS usado em cabecalho ZIP.
-  function toDosDateTime(date) {
-    const d = date instanceof Date ? date : new Date();
-    let year = d.getFullYear();
-    if (year < 1980) year = 1980;
-    if (year > 2107) year = 2107;
-    const month = d.getMonth() + 1;
-    const day = d.getDate();
-    const hour = d.getHours();
-    const minute = d.getMinutes();
-    const second = Math.floor(d.getSeconds() / 2);
-
-    const dosDate = ((year - 1980) << 9) | (month << 5) | day;
-    const dosTime = (hour << 11) | (minute << 5) | second;
-    return { dosDate: dosDate, dosTime: dosTime };
-  }
-
-  // Calcula CRC32 (obrigatorio no formato ZIP).
-  let crc32Table = null;
-  function crc32(bytes) {
-    const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
-    if (!crc32Table) {
-      crc32Table = new Uint32Array(256);
-      for (let i = 0; i < 256; i += 1) {
-        let c = i;
-        for (let k = 0; k < 8; k += 1) {
-          c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
-        }
-        crc32Table[i] = c >>> 0;
-      }
-    }
-
-    let crc = 0xffffffff;
-    for (let i = 0; i < source.length; i += 1) {
-      crc = crc32Table[(crc ^ source[i]) & 0xff] ^ (crc >>> 8);
-    }
-    return (crc ^ 0xffffffff) >>> 0;
-  }
-
-  // Escreve inteiro little-endian 16 bits.
-  function writeUInt16(view, offset, value) {
-    view.setUint16(offset, value & 0xffff, true);
-  }
-
-  // Escreve inteiro little-endian 32 bits.
-  function writeUInt32(view, offset, value) {
-    view.setUint32(offset, value >>> 0, true);
-  }
-
-  // Le inteiro little-endian 16 bits de Uint8Array.
-  function readUInt16(bytes, offset) {
-    return bytes[offset] | (bytes[offset + 1] << 8);
-  }
-
-  // Le inteiro little-endian 32 bits de Uint8Array.
-  function readUInt32(bytes, offset) {
-    return (
-      (bytes[offset]) |
-      (bytes[offset + 1] << 8) |
-      (bytes[offset + 2] << 16) |
-      ((bytes[offset + 3] << 24) >>> 0)
-    ) >>> 0;
-  }
-
-  // Normaliza caminho interno do ZIP para evitar formatos inconsistentes.
-  function normalizeZipPath(path) {
-    const normalized = String(path || "")
-      .replace(/\\/g, "/")
-      .replace(/^\.\/+/, "")
-      .replace(/^\/+/, "")
-      .replace(/\/{2,}/g, "/")
-      .trim();
-    return normalized;
-  }
-
-  // Junta varios blocos Uint8Array em um unico buffer.
-  function concatBytes(parts, totalLength) {
-    const output = new Uint8Array(totalLength);
-    let offset = 0;
-    parts.forEach(function (part) {
-      output.set(part, offset);
-      offset += part.length;
-    });
-    return output;
-  }
-
-  // Cria ZIP simples (sem compressao) com caminhos/bytes informados.
-  function createZip(entries) {
-    const list = Array.isArray(entries) ? entries : [];
-    const now = toDosDateTime(new Date());
-    const localParts = [];
-    const centralParts = [];
-    const centralMeta = [];
-    let localLength = 0;
-
-    list.forEach(function (entry) {
-      const path = normalizeZipPath(entry && entry.path);
-      if (!path) return;
-
-      const fileBytes =
-        entry.bytes instanceof Uint8Array ? entry.bytes : new Uint8Array(entry.bytes || []);
-      const nameBytes = utf8Encode(path);
-      const crc = crc32(fileBytes);
-      const localOffset = localLength;
-
-      const localHeader = new Uint8Array(30);
-      const localView = new DataView(localHeader.buffer);
-      writeUInt32(localView, 0, 0x04034b50);
-      writeUInt16(localView, 4, 20); // versao minima
-      writeUInt16(localView, 6, 0x0800); // UTF-8
-      writeUInt16(localView, 8, 0); // metodo: store (sem compressao)
-      writeUInt16(localView, 10, now.dosTime);
-      writeUInt16(localView, 12, now.dosDate);
-      writeUInt32(localView, 14, crc);
-      writeUInt32(localView, 18, fileBytes.length);
-      writeUInt32(localView, 22, fileBytes.length);
-      writeUInt16(localView, 26, nameBytes.length);
-      writeUInt16(localView, 28, 0); // extra
-
-      localParts.push(localHeader, nameBytes, fileBytes);
-      localLength += localHeader.length + nameBytes.length + fileBytes.length;
-
-      centralMeta.push({
-        path: path,
-        nameBytes: nameBytes,
-        size: fileBytes.length,
-        crc: crc,
-        localOffset: localOffset
-      });
-    });
-
-    let centralLength = 0;
-    centralMeta.forEach(function (meta) {
-      const centralHeader = new Uint8Array(46);
-      const centralView = new DataView(centralHeader.buffer);
-      writeUInt32(centralView, 0, 0x02014b50);
-      writeUInt16(centralView, 4, 20); // versao criadora
-      writeUInt16(centralView, 6, 20); // versao minima
-      writeUInt16(centralView, 8, 0x0800); // UTF-8
-      writeUInt16(centralView, 10, 0); // store
-      writeUInt16(centralView, 12, now.dosTime);
-      writeUInt16(centralView, 14, now.dosDate);
-      writeUInt32(centralView, 16, meta.crc);
-      writeUInt32(centralView, 20, meta.size);
-      writeUInt32(centralView, 24, meta.size);
-      writeUInt16(centralView, 28, meta.nameBytes.length);
-      writeUInt16(centralView, 30, 0); // extra len
-      writeUInt16(centralView, 32, 0); // comment len
-      writeUInt16(centralView, 34, 0); // disk start
-      writeUInt16(centralView, 36, 0); // internal attrs
-      writeUInt32(centralView, 38, 0); // external attrs
-      writeUInt32(centralView, 42, meta.localOffset);
-
-      centralParts.push(centralHeader, meta.nameBytes);
-      centralLength += centralHeader.length + meta.nameBytes.length;
-    });
-
-    const endHeader = new Uint8Array(22);
-    const endView = new DataView(endHeader.buffer);
-    writeUInt32(endView, 0, 0x06054b50);
-    writeUInt16(endView, 4, 0); // disk number
-    writeUInt16(endView, 6, 0); // central dir start disk
-    writeUInt16(endView, 8, centralMeta.length);
-    writeUInt16(endView, 10, centralMeta.length);
-    writeUInt32(endView, 12, centralLength);
-    writeUInt32(endView, 16, localLength);
-    writeUInt16(endView, 20, 0); // comment len
-
-    const totalLength = localLength + centralLength + endHeader.length;
-    return concatBytes(localParts.concat(centralParts, [endHeader]), totalLength);
-  }
-
-  // Faz parse de ZIP simples (store, sem compressao).
-  function parseZip(zipBytes) {
-    const bytes = zipBytes instanceof Uint8Array ? zipBytes : new Uint8Array(zipBytes || []);
-    if (bytes.length < 22) throw new Error("ZIP inválido (arquivo muito pequeno).");
-
-    // Procura EOCD nos ultimos 64 KiB + cabecalho.
-    const minOffset = Math.max(0, bytes.length - 65557);
-    let eocdOffset = -1;
-    for (let i = bytes.length - 22; i >= minOffset; i -= 1) {
-      if (
-        bytes[i] === 0x50 &&
-        bytes[i + 1] === 0x4b &&
-        bytes[i + 2] === 0x05 &&
-        bytes[i + 3] === 0x06
-      ) {
-        eocdOffset = i;
-        break;
-      }
-    }
-    if (eocdOffset < 0) throw new Error("ZIP inválido (EOCD não encontrado).");
-
-    const totalEntries = readUInt16(bytes, eocdOffset + 10);
-    const centralOffset = readUInt32(bytes, eocdOffset + 16);
-    if (centralOffset >= bytes.length) throw new Error("ZIP inválido (offset de diretório central).");
-
-    let cursor = centralOffset;
-    const entries = [];
-
-    for (let index = 0; index < totalEntries; index += 1) {
-      if (cursor + 46 > bytes.length) throw new Error("ZIP inválido (cabeçalho central truncado).");
-      const signature = readUInt32(bytes, cursor);
-      if (signature !== 0x02014b50) throw new Error("ZIP inválido (assinatura central inesperada).");
-
-      const compression = readUInt16(bytes, cursor + 10);
-      const compressedSize = readUInt32(bytes, cursor + 20);
-      const fileNameLen = readUInt16(bytes, cursor + 28);
-      const extraLen = readUInt16(bytes, cursor + 30);
-      const commentLen = readUInt16(bytes, cursor + 32);
-      const localOffset = readUInt32(bytes, cursor + 42);
-
-      const nameStart = cursor + 46;
-      const nameEnd = nameStart + fileNameLen;
-      if (nameEnd > bytes.length) throw new Error("ZIP inválido (nome de arquivo truncado).");
-      const path = normalizeZipPath(utf8Decode(bytes.subarray(nameStart, nameEnd)));
-
-      cursor = nameEnd + extraLen + commentLen;
-
-      if (localOffset + 30 > bytes.length) throw new Error("ZIP inválido (cabeçalho local truncado).");
-      if (readUInt32(bytes, localOffset) !== 0x04034b50) {
-        throw new Error("ZIP inválido (assinatura local inesperada).");
-      }
-
-      const localNameLen = readUInt16(bytes, localOffset + 26);
-      const localExtraLen = readUInt16(bytes, localOffset + 28);
-      const dataStart = localOffset + 30 + localNameLen + localExtraLen;
-      const dataEnd = dataStart + compressedSize;
-      if (dataEnd > bytes.length) throw new Error("ZIP inválido (dados de arquivo truncados).");
-
-      if (compression !== 0) {
-        throw new Error("ZIP com compressão não suportada. Use o ZIP exportado pelo app.");
-      }
-
-      entries.push({
-        path: path,
-        bytes: bytes.slice(dataStart, dataEnd)
-      });
-    }
-
-    return entries;
-  }
-
-
-  // ============================================================================
-  // Utilitarios Gerais
-  // ============================================================================
-  // Normaliza string com trim e fallback.
-  function clean(value, fallback) {
-    const text = String(value || "").trim();
-    return text || fallback;
-  }
-
-  // Limita numero dentro de um intervalo minimo/maximo.
-  function clamp(value, min, max) {
-    if (!Number.isFinite(value)) return min;
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
-  }
-
-  // Gera ID unico simples para entidades em memoria.
-  function uid(prefix) {
-    idSeq += 1;
-    return prefix + "-" + Date.now().toString(36) + "-" + idSeq.toString(36);
-  }
-
-  // Gera slug simples para IDs de negocio.
-  function slug(text, fallback) {
-    const base = String(text || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-    return (base || fallback || "item") + "-" + Date.now().toString(36);
-  }
-
-  // Clona objeto via JSON (deep clone simples).
-  function clone(value) {
-    return JSON.parse(JSON.stringify(value));
-  }
-
-  // Remove scripts/eventos inline para reduzir risco de XSS.
-  function safeHtml(value) {
-    return String(value)
-      .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
-      .replace(/\son\w+=\"[^\"]*\"/gi, "")
-      .replace(/\son\w+='[^']*'/gi, "");
-  }
-
-  // Escapa texto para HTML seguro.
-  function esc(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
-  // Escapa texto para atributo HTML.
-  function escAttr(value) {
-    return esc(value);
-  }
-
-  // Escapa texto para seletor CSS.
-  function cssEsc(value) {
-    if (typeof CSS !== "undefined" && CSS.escape) return CSS.escape(String(value));
-    return String(value).replace(/(["\\.#:[\]])/g, "\\$1");
   }
 
   // Trata o botao fisico/gesto de voltar do Android de forma mais natural.
@@ -5048,12 +11794,12 @@
     }
 
     let changed = false;
-    if (state.feedback) {
-      state.feedback = null;
-      changed = true;
-    }
     if (state.inlinePopupOpen) {
       state.inlinePopupOpen = null;
+      changed = true;
+    }
+    if (state.flowchartPopupOpen) {
+      state.flowchartPopupOpen = null;
       changed = true;
     }
     if (state.ui.contextMenu) {
@@ -5074,7 +11820,7 @@
     }
 
     if (state.currentView === "lesson_step") {
-      backStep();
+      prevStep();
       return true;
     }
 
@@ -5086,12 +11832,82 @@
     return false;
   }
 
+  // Destaca temporariamente o card do nó para orientar o autor da lição.
+  function flashFlowchartNodeCard(card) {
+    if (!card) return;
+    card.classList.remove("focus-target");
+    void card.offsetWidth;
+    card.classList.add("focus-target");
+    window.setTimeout(function () {
+      card.classList.remove("focus-target");
+    }, 900);
+  }
+
+  // Leva do esquema do fluxograma ao campo correspondente no editor.
+  function focusFlowchartNodeField(blockId, nodeId, kind) {
+    if (!blockId || !nodeId || !state.editor.open) return;
+
+    scrollEditorBlockIntoView(blockId);
+    window.setTimeout(function () {
+      const blockNode = getEditorDomScope().querySelector(
+        '.builder-block[data-block-id="' + cssEsc(blockId) + '"]'
+      );
+      if (!blockNode) return;
+
+      const card = blockNode.querySelector(
+        '[data-flowchart-node-card="true"][data-flowchart-node-id="' + cssEsc(nodeId) + '"]'
+      );
+      if (!card) return;
+
+      try {
+        card.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+      } catch (error) {
+        card.scrollIntoView();
+      }
+
+      flashFlowchartNodeCard(card);
+
+      const selector = kind === "text" ? "[data-flowchart-node-text]" : "[data-flowchart-node-shape]";
+      const field = card.querySelector(selector);
+      if (!field || typeof field.focus !== "function") return;
+
+      try {
+        field.focus({ preventScroll: true });
+      } catch (error) {
+        field.focus();
+      }
+
+      if (kind === "text" && typeof field.select === "function") {
+        field.select();
+      }
+    }, 150);
+  }
+
   // Rola editor ate o bloco recem-criado/alterado.
   function scrollEditorBlockIntoView(blockId) {
-    const node = root.querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
+    const node = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
     if (!node) return;
 
-    node.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const containers = [node.closest(".canvas-col"), node.closest(".editor-sheet")].filter(Boolean);
+    containers.forEach(function (container) {
+      const containerRect = container.getBoundingClientRect();
+      const nodeRect = node.getBoundingClientRect();
+      const currentTop = container.scrollTop;
+      const targetTop = currentTop + (nodeRect.top - containerRect.top) - 18;
+      const targetBottom = targetTop + nodeRect.height + 36;
+
+      if (nodeRect.top < containerRect.top + 18) {
+        container.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+        return;
+      }
+      if (nodeRect.bottom > containerRect.bottom - 18) {
+        container.scrollTo({
+          top: Math.max(0, targetBottom - container.clientHeight),
+          behavior: "smooth"
+        });
+      }
+    });
+
     node.classList.add("new-block");
     window.setTimeout(function () {
       node.classList.remove("new-block");
@@ -5112,9 +11928,17 @@
   root.addEventListener("drop", onRootDrop);
   root.addEventListener("dragend", onRootDragEnd);
   root.addEventListener("pointerdown", onRootPointerDown);
+  root.addEventListener("wheel", onRootWheel, { passive: false });
+  root.addEventListener("touchstart", onRootTouchStart, { passive: false });
+  root.addEventListener("touchmove", onRootTouchMove, { passive: false });
+  root.addEventListener("touchend", onRootTouchEnd, { passive: false });
+  root.addEventListener("touchcancel", onRootTouchEnd, { passive: false });
+  root.addEventListener("focusin", onRootFocusIn, true);
+  root.addEventListener("focusout", onRootFocusOut, true);
   document.addEventListener("pointermove", onDocumentPointerMove);
   document.addEventListener("pointerup", onDocumentPointerUp);
   document.addEventListener("click", onDocumentClick);
+  document.addEventListener("selectionchange", onDocumentSelectionChange);
 
   if (state.content.courses.length) state.currentCourseId = state.content.courses[0].id;
   renderApp();

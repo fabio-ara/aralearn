@@ -37,15 +37,15 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
-    private PendingExport pendingExport;
+    private PendingDocumentWrite pendingExport;
     private WebViewAssetLoader assetLoader;
 
-    private static final class PendingExport {
+    private static final class PendingDocumentWrite {
         final byte[] bytes;
         final String fileName;
         final String mimeType;
 
-        PendingExport(byte[] bytes, String fileName, String mimeType) {
+        PendingDocumentWrite(byte[] bytes, String fileName, String mimeType) {
             this.bytes = bytes;
             this.fileName = fileName;
             this.mimeType = mimeType;
@@ -153,7 +153,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void openExportDocument(PendingExport exportData) {
+    private void openExportDocument(PendingDocumentWrite exportData) {
         pendingExport = exportData;
 
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -170,17 +170,23 @@ public class MainActivity extends Activity {
     }
 
     private void savePendingExport(Uri uri) {
-        PendingExport exportData = pendingExport;
+        PendingDocumentWrite exportData = pendingExport;
         pendingExport = null;
         if (exportData == null) return;
 
-        try (OutputStream output = getContentResolver().openOutputStream(uri, "w")) {
-            if (output == null) throw new IOException("Destino indisponivel.");
-            output.write(exportData.bytes);
-            output.flush();
+        try {
+            writeBytesToUri(uri, exportData.bytes);
             showToast(getString(R.string.export_success, exportData.fileName));
         } catch (IOException error) {
             showToast(getString(R.string.export_error));
+        }
+    }
+
+    private void writeBytesToUri(Uri uri, byte[] bytes) throws IOException {
+        try (OutputStream output = getContentResolver().openOutputStream(uri, "w")) {
+            if (output == null) throw new IOException("Destino indisponível.");
+            output.write(bytes);
+            output.flush();
         }
     }
 
@@ -256,7 +262,7 @@ public class MainActivity extends Activity {
                 return false;
             }
 
-            final PendingExport exportData = new PendingExport(
+            final PendingDocumentWrite exportData = new PendingDocumentWrite(
                 bytes,
                 sanitizeFileName(fileName, DEFAULT_EXPORT_NAME),
                 sanitizeMimeType(mimeType)

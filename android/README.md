@@ -1,32 +1,29 @@
 # Android do AraLearn
 
-Este wrapper gera um APK Android usando o mesmo front-end web da raiz do projeto.
+Este wrapper empacota a mesma base web da raiz do projeto em um `WebView`.
 
 ## O que entra no APK
 
 - `index.html`
 - `app.js`
-- `content.js`
 - `styles.css`
-- tudo que estiver em `../assets/`
+- `modules/`
+- `assets/`
 
-Durante o build, esses arquivos são copiados automaticamente para `app/src/main/assets` gerados em tempo de compilação.
+Durante o build, esses arquivos são copiados automaticamente para `app/src/main/assets` gerados em compilação.
 
 ## Build local
 
-1. Garanta JDK 17 e Android SDK instalados.
-2. Gere o APK de debug:
-   - `.\gradlew.bat assembleDebug`
+1. Garanta `JDK 17` e Android SDK instalados.
+2. Rode `.\gradlew.bat assembleDebug`.
 
 Saída esperada:
 
 - `app/build/outputs/apk/debug/app-debug.apk`
 
-Se você mover o projeto para outra máquina, ajuste `local.properties` ou defina `ANDROID_SDK_ROOT` para o caminho correto da SDK Android.
+## Persistência e arquivos
 
-## Observações
-
-- `localStorage` funciona dentro do WebView.
-- Importação de imagens e de `ZIP/JSON` usa o seletor nativo de arquivos do Android.
-- Exportação de ZIP usa o seletor nativo de salvamento do Android.
-- A sincronização com pasta local via File System Access API continua disponível só em navegadores com suporte a essa API.
+- o app mantém um workspace local persistente dentro do `WebView`;
+- importação de pacote usa o seletor nativo de arquivos do Android;
+- exportação de pacote usa o seletor nativo de salvamento;
+- não existe vínculo contínuo com arquivo externo.
