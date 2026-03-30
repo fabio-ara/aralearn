@@ -60,8 +60,30 @@ test("a paleta de cor permite voltar ao tom padrão no contêiner de parágrafo"
   await advanceStep(page);
   await expect(page.locator(".lesson-card .inline-tone-gold")).toHaveCount(0);
 
-  const snapshotJson = await page.evaluate(() => localStorage.getItem("aralearn_project_v1") || "");
-  expect(snapshotJson).not.toContain("inline-tone-gold");
+  const savedParagraph = await page.evaluate(() => {
+    const snapshotJson = localStorage.getItem("aralearn_project_v1") || "{}";
+    const snapshot = JSON.parse(snapshotJson);
+    const courses = Array.isArray(snapshot.content && snapshot.content.courses) ? snapshot.content.courses : [];
+    for (const course of courses) {
+      const modules = Array.isArray(course && course.modules) ? course.modules : [];
+      for (const module of modules) {
+        const lessons = Array.isArray(module && module.lessons) ? module.lessons : [];
+        for (const lesson of lessons) {
+          const steps = Array.isArray(lesson && lesson.steps) ? lesson.steps : [];
+          for (const step of steps) {
+            const blocks = Array.isArray(step && step.blocks) ? step.blocks : [];
+            const match = blocks.find(
+              (block) => block && block.kind === "paragraph" && block.value === "Texto com tom temporário"
+            );
+            if (match) return match;
+          }
+        }
+      }
+    }
+    return null;
+  });
+  expect(savedParagraph).toBeTruthy();
+  expect(savedParagraph.richText || "").not.toContain("inline-tone-gold");
 });
 
 test("usa negrito, itálico e paleta de cor dentro do contêiner de parágrafo e persiste ao reabrir o editor", async ({ page }) => {

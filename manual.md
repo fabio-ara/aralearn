@@ -41,7 +41,7 @@ Princípios do produto:
 - sem backend obrigatório;
 - mesma base web para navegador e APK;
 - conteúdo mutável e externo ao núcleo do motor;
-- o app pode embarcar um curso-padrão separado em `content/`, sem misturar esse hardcoded ao código do motor;
+- o app pode embarcar um catálogo de cursos separado em `content/`, sem misturar esse hardcoded ao código do motor;
 - suporte a cursos de naturezas diferentes, como programação, administração, processos, ferramentas e disciplinas teóricas;
 - combinação livre de narrativa, tabela, terminal, múltipla escolha, simulador e fluxograma conforme o objetivo didático;
 - persistência local imediata;
@@ -156,7 +156,7 @@ Responsabilidades:
 - `app.js`: estado, renderização, eventos, autoria, navegação, persistência e bootstrap do hardcoded separado;
 - `styles.css`: identidade visual e layout;
 - `modules/`: funções puras e catálogos auxiliares;
-- `content/`: fonte do curso hardcoded e arquivo runtime gerado para o boot local.
+- `content/`: fontes dos cursos hardcoded e arquivo runtime gerado para o boot local.
 
 ### 4.2 Módulos principais
 
@@ -192,17 +192,32 @@ Regra atual:
 
 - o motor não deve embutir cursos diretamente dentro de `app.js`;
 - o hardcoded oficial deve ficar separado em `content/`;
-- o runtime local usa `content/hardcoded-content.js`, gerado a partir do único `.json` ativo em `content/`;
+- o runtime local usa `content/hardcoded-content.js`, gerado a partir dos `.json` ativos em `content/`;
 - a inicialização carrega primeiro o workspace local persistido e depois só complementa o que estiver faltando a partir do hardcoded.
 
 Consequências:
 
-- o curso-padrão pode ser trocado sem editar o núcleo do app;
-- o usuário pode editar localmente o curso hardcoded já carregado;
+- o catálogo-padrão pode ser trocado sem editar o núcleo do app;
+- o usuário pode editar localmente os cursos hardcoded já carregados;
 - em caso de conflito entre hardcoded e workspace local, o conteúdo salvo localmente prevalece;
 - cursos, módulos, lições e cards continuam não pertencendo ao código-fonte do motor;
 - o manual não documenta cursos específicos;
 - fixtures de teste podem existir na suíte, mas não no runtime do app.
+
+Regras mínimas para o hardcoded oficial:
+
+- card de prática precisa ser autossuficiente no próprio step, sem depender do card anterior para contexto essencial;
+- texto visível ao estudante não deve expor bastidor editorial como "o curso quer", "a lição quer", "blueprint", "formato mobile" ou comentários sobre adaptação ao app;
+- texto visível ao estudante também não deve depender de frases genéricas de sequenciamento autoral, como "nos próximos cards", "use este checklist" ou "objetivo deste card";
+- texto visível ao estudante também não deve falar sobre a própria mecânica didática com expressões como "no próprio card", "esta lição", "neste curso", "o app como motor" ou equivalentes, exceto quando o termo fizer parte do conteúdo técnico real, como `app.js`;
+- cards recorrentes como `Vocabulário em foco`, `Confusões comuns` e `Fechamento rápido` precisam explicar o conceito ou o erro local da própria lição, em vez de reutilizar popup ou resumo genérico;
+- `lesson_complete` deve trazer `heading` e `paragraph` centralizados já no JSON-fonte;
+- o runtime pode reforçar visualmente o alinhamento central do `lesson_complete`, mas isso não substitui corrigir a fonte.
+- quando o texto corrido mencionar sintaxe, comandos, tags, seletores, propriedades, atributos, métodos ou nomes de arquivo, a fonte deve preferir `richText` com destaque inline para esses fragmentos, em vez de deixá-los perdidos no parágrafo.
+- em `editor` e `simulator`, sintaxe literal como `<p>`, `</div>` ou `<!DOCTYPE html>` não pode ser engolida pelo saneamento inline; o runtime precisa mostrá-la como código visível e comparar as respostas preservando essa literalidade.
+- em popup de feedback, o conteúdo deve ir direto ao motivo técnico; evite frases como "você acertou" e evite repetir a alternativa correta quando ela já está visível no próprio card.
+- assets `image` do hardcoded oficial precisam privilegiar leitura em viewport mobile, usar paleta compatível com o app e evitar texto corrido dentro do SVG; prefira poucos rótulos curtos, formas grandes e contraste estável.
+- em `editor` com `interactionMode: "choice"`, a ordem visual das opções deve vir por `displayOrder` embaralhado de forma não trivial; a ordem estrutural correta pertence a `slotOrder` e não deve vazar pela posição inicial das fichas.
 
 ---
 
@@ -436,11 +451,12 @@ Critério visual explícito:
 ## 8.5 Simulator
 
 - seletor de opções com painel inferior associado;
-- a primeira opção válida nasce ativa;
+- nenhuma opção nasce ativa por padrão;
 - cada opção persiste `id`, `value` e `result`;
 - a autoria usa o mesmo campo rico do `editor`, mas com exatamente uma única lacuna;
 - a lacuna do template é visualmente destacada como chip autoral vazio, sem expor `[[...]]` cru nem texto técnico interno ao autor;
-- a opção ativa preenche a lacuna do template e atualiza o painel inferior;
+- a opção escolhida preenche a lacuna do template e atualiza o painel inferior;
+- a ordem visual das opções não deve funcionar como dica involuntária da resposta;
 - as opções do runtime usam o mesmo idioma visual de fichas do `editor`;
 - não bloqueia avanço por padrão.
 
@@ -480,11 +496,16 @@ Critério visual explícito:
 - variantes literais entram por lacuna, sem exigir duplicação do template inteiro;
 - regex é um recurso avançado por lacuna ou variante, não o fluxo principal;
 - por padrão, o motor não descobre sozinho soluções semanticamente equivalentes nem "sinônimos" de código que produzam o mesmo resultado;
-- no runtime de `choice`, tocar numa lacuna vazia a torna alvo explícito da próxima ficha;
-- se nenhuma lacuna estiver selecionada, o runtime tenta colocar a ficha numa lacuna vazia compatível com aquela resposta; se houver mais de uma possibilidade igual, usa a primeira ainda vazia;
+- no runtime de `choice`, a primeira lacuna vazia começa selecionada automaticamente;
+- no runtime de `choice`, ao preencher uma lacuna, a seleção avança para a próxima lacuna vazia na ordem do template;
+- tocar numa lacuna vazia permite redirecionar explicitamente a próxima ficha para ela;
 - clicar numa lacuna já preenchida remove o valor atual e deixa essa mesma lacuna pronta para receber outra ficha;
 - se uma lacuna do `editor` for salva vazia, ela deve ser eliminada do template em vez de permanecer como placeholder vazio;
 - quebras de linha imediatamente antes ou depois de lacunas devem ser preservadas na autoria e no runtime.
+- o campo `value` do `editor` é o template bruto canônico e usa `\n` como quebra de linha persistida;
+- linhas vazias intermediárias e espaços iniciais de cada linha fazem parte do contrato do `value` e não podem ser colapsados ao editar, salvar, exportar ou reimportar;
+- fora das próprias lacunas `[[...]]`, autoria, preview e runtime precisam usar a mesma renderização literal do terminal: tags HTML fora do conjunto inline aprovado aparecem como código visível, e não como estrutura interpretada;
+- valores de opções e variantes do `editor` não podem sofrer `trim` destrutivo se esse whitespace fizer parte da resposta canônica declarada;
 - o conteúdo do terminal pode usar ênfase inline segura para destacar expressões de linguagem, como `print()`, sem perder portabilidade no JSON.
 
 ## 8.7 Multiple choice
@@ -525,16 +546,16 @@ Critério visual explícito:
 
 Princípio central:
 
-- o JSON precisa ser legível para humanos e para geração por LLM, mas só é confiável se cada contêiner deixar explícito qual campo é estrutural, qual campo é apenas visual e o que o motor pode ou não derivar sem mudar o sentido didático do card.
+- o JSON precisa ser legível para humanos e para fluxos de autoria assistida, mas só é confiável se cada contêiner deixar explícito qual campo é estrutural, qual campo é apenas visual e o que o motor pode ou não derivar sem mudar o sentido didático do card.
 
 Contrato por contêiner:
 
 - `heading`: `value` e `align` são a fonte de verdade; o runtime pode reaproveitar o primeiro `heading` preenchido como `step.title`, mas não inventa formatação inline nem subtítulo.
-- `paragraph`: `value` é o texto canônico; `richText` é a visualização rica equivalente. O motor pode derivar um a partir do outro quando não houver ambiguidade, mas não deve preservar `richText` que contradiga o texto canônico.
+- `paragraph`: `value` é o texto canônico; `richText` é a visualização rica equivalente. O motor pode derivar um a partir do outro quando não houver ambiguidade, mas não deve preservar `richText` que contradiga o texto canônico. Em `lesson_complete`, `paragraph.align` e `heading.align` devem vir como `center`.
 - `image`: `value` é o caminho lógico ou data URL resolvida; o runtime apenas carrega esse recurso e não deduz legenda, recorte ou contexto.
 - `table`: a ordem de `headers[]` e `rows[][]` é a ordem de renderização; não há ordenação automática. Estilo é por célula inteira, não por trecho interno, e a tabela não participa de validação de resposta.
-- `simulator`: o template e a ordem de `options[]` definem a experiência. Existe exatamente uma lacuna estrutural e cada opção injeta seu `value` nela, mostrando `result` abaixo. O motor não "corrige" opções nem infere avaliação semântica, porque o bloco é de exploração, não de prova.
-- `editor`: o template em `value` e as opções habilitadas são a fonte de verdade. `slotOrder` define a ordem estrutural das lacunas corretas; `displayOrder` define apenas a ordem visual das fichas. Duplicatas são válidas e precisam continuar distintas. Em `input`, variantes aceitas precisam estar declaradas; o runtime não inventa equivalências de código, fórmula ou comando.
+- `simulator`: o template e a ordem de `options[]` definem a experiência. Existe exatamente uma lacuna estrutural e cada opção injeta seu `value` nela, mostrando `result` abaixo. O motor não "corrige" opções nem infere avaliação semântica, porque o bloco é de exploração, não de prova. O runtime não deve pré-selecionar automaticamente a primeira opção.
+- `editor`: o template em `value` e as opções habilitadas são a fonte de verdade. `value` persiste com quebras `\n`, preserva linhas vazias intermediárias e espaços iniciais de cada linha, e continua legível no JSON mesmo quando o preview usa chips para `[[...]]`. `slotOrder` define a ordem estrutural das lacunas corretas; `displayOrder` define apenas a ordem visual das fichas. Duplicatas são válidas e precisam continuar distintas. Em `choice`, o runtime preenche a lacuna atualmente selecionada e, por padrão, mantém selecionada a primeira lacuna vazia na ordem do template. Em `input`, variantes aceitas precisam estar declaradas; o runtime não inventa equivalências de código, fórmula ou comando. Exportação e importação precisam devolver exatamente o mesmo `value`, salvo a canonicalização de quebra para `\n`.
 - `multiple_choice`: a ordem do array é a ordem visível no runtime, porque o bloco não tem `displayOrder`. `answerState` define só o idioma visual do selecionado; quem define o conjunto esperado é `option.answer`. O motor não usa cor para "descobrir" resposta.
 - `flowchart`: `nodes[]` e `links[]` definem o diagrama; opções extras por nó definem as lacunas praticáveis. `outputSlot` governa a lateralidade da seta e, em decisão binária, sustenta a convenção `Não` à esquerda e `Sim` à direita. O runtime valida apenas símbolo e texto das lacunas abertas, não a "intenção algorítmica" inteira fora do que foi explicitado.
 - `button`: o botão final governa o avanço do step e, opcionalmente, o popup. `popupBlocks[]` pertencem ao próprio botão. O runtime primeiro exige a resolução dos exercícios do card principal e, se o popup também tiver exercícios, exige a resolução deles antes de continuar.
@@ -638,16 +659,16 @@ Comportamento:
 
 ## 10.3 Bootstrap do hardcoded
 
-O curso-padrão embarcado não substitui cegamente o workspace local.
+O catálogo embarcado não substitui cegamente o workspace local.
 
 Comportamento:
 
 - o app lê `content/hardcoded-content.js` no boot;
-- esse arquivo é gerado a partir do único `.json` ativo em `content/`;
+- esse arquivo é gerado a partir dos `.json` ativos em `content/`;
 - o hardcoded entra como semente complementar;
 - se o usuário já tiver editado localmente o mesmo curso, módulo, lição, step ou bloco, a versão local prevalece;
 - itens ausentes no armazenamento local podem ser acrescentados a partir do hardcoded sem apagar o restante;
-- trocar o hardcoded oficial não exige editar o motor, apenas atualizar o JSON-fonte e regenerar o runtime.
+- trocar o hardcoded oficial não exige editar o motor, apenas atualizar os JSONs-fonte e regenerar o runtime.
 
 ---
 
@@ -697,7 +718,9 @@ Regra:
 ## 11.3 Regras de importação
 
 - aceitar ZIP exportado pelo app;
+- aceitar ZIP `stored` e ZIP com compressão `DEFLATE`;
 - aceitar JSON compatível;
+- exigir `project.json` dentro do `.zip`;
 - detectar escopo real do pacote;
 - adaptar o arquivo ao contêiner atual quando houver compatibilidade hierárquica;
 - permitir:
@@ -710,6 +733,7 @@ Regra:
 - quando o escopo do arquivo for menor que o do ponto de importação compatível, inserir o conteúdo no contêiner atual com mensagem informativa;
 - rejeitar apenas combinações sem contêiner compatível;
 - normalizar conteúdo, progresso e assets;
+- falhar com mensagem distinta para ZIP corrompido, `project.json` ausente, JSON inválido, asset ausente e método de compressão realmente não suportado;
 - podar assets órfãos;
 - reconciliar progresso;
 - persistir o resultado.
@@ -740,6 +764,13 @@ No navegador:
 - `Exportar` baixa um `.zip` do escopo pedido;
 - não existe vínculo contínuo com arquivo externo.
 
+## 12.3 Publicação estática
+
+Na publicação estática do projeto:
+
+- o artefato precisa incluir `index.html`, `app.js`, `styles.css`, `assets/`, `modules/` e `content/`;
+- o runtime do hardcoded deve ser regenerado antes do deploy, para manter `content/hardcoded-content.js` coerente com os JSONs-fonte ativos.
+
 ---
 
 ## 13. Android
@@ -759,6 +790,7 @@ No APK:
 
 Validações obrigatórias:
 
+- `node ./scripts/audit-course-content.mjs`
 - `npm run test:unit`
 - `npm run test:e2e`
 - `pwsh -NoProfile -File ./scripts/validate.ps1`
@@ -766,8 +798,10 @@ Validações obrigatórias:
 
 Cobertura mínima esperada:
 
-- boot com curso hardcoded separado;
-- preservação de edição local sobre o mesmo curso hardcoded;
+- boot com catálogo hardcoded separado;
+- auditoria do hardcoded contra textos de bastidor, dependência de card anterior e desalinhamento de `lesson_complete`;
+- `simulator` sem pré-seleção automática de opção;
+- preservação de edição local sobre os mesmos cursos hardcoded;
 - retomada de progresso;
 - edição e persistência de cards;
 - popup estruturado;

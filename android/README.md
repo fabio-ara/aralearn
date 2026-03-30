@@ -9,6 +9,7 @@ Este wrapper empacota a mesma base web da raiz do projeto em um `WebView`.
 - `styles.css`
 - `modules/`
 - `assets/`
+- `content/`
 
 Durante o build, esses arquivos são copiados automaticamente para `app/src/main/assets` gerados em compilação.
 

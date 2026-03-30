@@ -31,13 +31,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Build hardcoded runtime
+        run: node scripts/sync-hardcoded-content.mjs
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Prepare web artifact
         run: |
           mkdir -p .pages
+          touch .pages/.nojekyll
           cp index.html app.js styles.css .pages/
           cp -R assets .pages/assets
+          cp -R content .pages/content
           cp -R modules .pages/modules
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

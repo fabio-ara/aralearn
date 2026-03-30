@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { createSampleProjectSnapshot, openFirstCourse, openFirstLesson, seedProject } from "./helpers/app.mjs";
 
-test("editor em modo opções respeita duplicatas, permite mirar lacuna e aceita preenchimento fora de ordem", async ({ page }) => {
+test("editor em modo opções respeita duplicatas, começa pela primeira lacuna vazia e avança em ordem", async ({ page }) => {
   const snapshot = createSampleProjectSnapshot();
   snapshot.content.courses[0].modules[0].lessons[0].steps = [
     {
@@ -52,30 +52,90 @@ test("editor em modo opções respeita duplicatas, permite mirar lacuna e aceita
   const slot3 = page.locator('[data-action="terminal-slot"][data-slot-index="3"]');
 
   await expect(slot0).toHaveClass(/empty/);
+  await expect(slot0).toHaveClass(/is-active/);
   await expect(
     page.locator(".token-option").evaluateAll((nodes) => nodes.filter((node) => node.textContent.trim() === "#").length)
   ).resolves.toBe(2);
+
+  await page.locator(".token-option", { hasText: "#" }).first().click();
+  await expect(slot0).toContainText("#");
+  await expect(slot1).toHaveClass(/is-active/);
+  await expect(slot2).toHaveClass(/empty/);
+  await expect(
+    page.locator(".token-option").evaluateAll((nodes) => nodes.filter((node) => node.textContent.trim() === "#").length)
+  ).resolves.toBe(1);
 
   await slot2.click();
   await expect(slot2).toHaveClass(/is-active/);
   await page.locator(".token-option", { hasText: "#" }).first().click();
   await expect(slot2).toContainText("#");
-  await expect(slot0).toHaveClass(/empty/);
+  await expect(slot1).toHaveClass(/is-active/);
   await expect(
     page.locator(".token-option").evaluateAll((nodes) => nodes.filter((node) => node.textContent.trim() === "#").length)
-  ).resolves.toBe(1);
-
-  await page.locator(".token-option", { hasText: "Cookies" }).click();
-  await expect(slot3).toContainText("Cookies");
-  await expect(slot0).toHaveClass(/empty/);
+  ).resolves.toBe(0);
 
   await page.locator(".token-option", { hasText: "Pies" }).click();
   await expect(slot1).toContainText("Pies");
+  await expect(slot3).toHaveClass(/is-active/);
 
-  await page.locator(".token-option", { hasText: "#" }).click();
-  await expect(slot0).toContainText("#");
+  await page.locator(".token-option", { hasText: "Cookies" }).click();
+  await expect(slot3).toContainText("Cookies");
 
   await page.locator('[data-action="step-button-click"]').click();
   await expect(page.locator(".inline-popup")).toBeVisible();
   await expect(page.locator(".inline-popup .terminal-box")).toContainText("Menu");
+});
+
+test("editor em modo opções preserva HTML literal visível e aceita fechamento de tag como resposta", async ({ page }) => {
+  const snapshot = createSampleProjectSnapshot();
+  snapshot.content.courses[0].modules[0].lessons[0].steps = [
+    {
+      id: "literal-html-step",
+      type: "content",
+      title: "Fechando um parágrafo",
+      blocks: [
+        { id: "literal-html-heading", kind: "heading", value: "Fechando um parágrafo" },
+        {
+          id: "literal-html-paragraph",
+          kind: "paragraph",
+          value: "Complete a tag de fechamento correta do elemento de parágrafo."
+        },
+        {
+          id: "literal-html-editor",
+          kind: "editor",
+          interactionMode: "choice",
+          value: "<p>Olá, mundo[[</p>]]",
+          options: [
+            { id: "opt-h1", value: "</h1>", enabled: false, displayOrder: 0, slotOrder: 1 },
+            { id: "opt-p", value: "</p>", enabled: true, displayOrder: 1, slotOrder: 0 },
+            { id: "opt-body", value: "</body>", enabled: false, displayOrder: 2, slotOrder: 2 }
+          ]
+        },
+        {
+          id: "literal-html-button",
+          kind: "button",
+          popupEnabled: true,
+          popupBlocks: [
+            { id: "literal-html-popup-heading", kind: "heading", value: "Boa!" },
+            { id: "literal-html-popup-editor", kind: "editor", value: "<p>Olá, mundo</p>", options: [] }
+          ]
+        }
+      ]
+    }
+  ];
+
+  await seedProject(page, snapshot);
+  await openFirstCourse(page);
+  await openFirstLesson(page);
+
+  const terminal = page.locator(".terminal-box.exercise-terminal");
+  await expect(terminal).toContainText("<p>Olá, mundo");
+  await expect(page.locator(".token-option", { hasText: "</p>" })).toBeVisible();
+
+  await page.locator(".token-option", { hasText: "</p>" }).click();
+  await expect(page.locator('[data-action="terminal-slot"][data-slot-index="0"]')).toContainText("</p>");
+
+  await page.locator('[data-action="step-button-click"]').click();
+  await expect(page.locator(".inline-popup")).toBeVisible();
+  await expect(page.locator(".inline-popup .terminal-box")).toContainText("<p>Olá, mundo</p>");
 });

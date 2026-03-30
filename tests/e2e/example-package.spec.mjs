@@ -7,12 +7,15 @@ const examplePackagePath = path.resolve(__dirname, "../../examples/python-gettin
 
 test("importa o pacote de exemplo de Python como conteúdo semântico", async ({ page }) => {
   await page.goto("/");
-  const bundledTitle = await page.evaluate(() => window.AraLearnBundledContent.content.courses[0].title);
+  const bundledTitles = await page.evaluate(() => window.AraLearnBundledContent.content.courses.map((course) => course.title));
   await page.evaluate(() => {
     localStorage.clear();
   });
   await page.reload();
-  await expect(page.locator(".course-card")).toContainText(bundledTitle);
+  await expect(page.locator(".course-card")).toHaveCount(bundledTitles.length);
+  for (const bundledTitle of bundledTitles) {
+    await expect(page.locator(`.course-card:has-text("${bundledTitle}")`)).toHaveCount(1);
+  }
 
   await page.locator('[data-action="toggle-side"]').click();
   await page.locator('[data-action="import-json-trigger"]').click();
@@ -38,8 +41,10 @@ test("importa o pacote de exemplo de Python como conteúdo semântico", async ({
   });
 
   expect(snapshot).toBeTruthy();
-  expect(snapshot.content.courses).toHaveLength(2);
-  expect(snapshot.content.courses.some((course) => course.title === bundledTitle)).toBeTruthy();
+  expect(snapshot.content.courses).toHaveLength(bundledTitles.length + 1);
+  bundledTitles.forEach((bundledTitle) => {
+    expect(snapshot.content.courses.some((course) => course.title === bundledTitle)).toBeTruthy();
+  });
   const pythonCourse = snapshot.content.courses.find((course) => course.title === "Python");
   expect(pythonCourse).toBeTruthy();
   expect(pythonCourse.modules).toHaveLength(1);

@@ -14,6 +14,36 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 
+function Test-ServerHealth {
+  param(
+    [int]$Port = 4173
+  )
+
+  try {
+    $response = Invoke-WebRequest -Uri "http://127.0.0.1:$Port/healthz" -UseBasicParsing -TimeoutSec 2
+    return $response.StatusCode -eq 200
+  } catch {
+    return $false
+  }
+}
+
+function Wait-ServerHealth {
+  param(
+    [int]$Port = 4173,
+    [int]$TimeoutSeconds = 20
+  )
+
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+  while ((Get-Date) -lt $deadline) {
+    if (Test-ServerHealth -Port $Port) {
+      return $true
+    }
+    Start-Sleep -Milliseconds 250
+  }
+
+  throw "O servidor de testes não respondeu em http://127.0.0.1:$Port/healthz dentro de $TimeoutSeconds segundos."
+}
+
 function Invoke-Step {
   param(
     [string]$Title,
@@ -43,6 +73,10 @@ Invoke-Step "Gerando runtime do hardcoded" {
   npm run build:hardcoded-content
 }
 
+Invoke-Step "Auditando conteúdo embarcado" {
+  node ./scripts/audit-course-content.mjs
+}
+
 Invoke-Step "Executando testes unitários" {
   npm run test:unit
 }
@@ -53,13 +87,28 @@ if (-not $SkipBrowsers) {
   }
 }
 
-Invoke-Step "Executando testes E2E" {
-  if ($Headed) {
-    npm run test:e2e:headed
-  } elseif ($UpdateSnapshots) {
-    npx playwright test --update-snapshots
+$managedServer = $null
+$reusedServer = $false
+try {
+  if (Test-ServerHealth) {
+    $reusedServer = $true
   } else {
-    npm run test:e2e
+    $managedServer = Start-Process node -ArgumentList "scripts/test-server.mjs" -WorkingDirectory $projectRoot -PassThru -WindowStyle Hidden
+    Wait-ServerHealth
+  }
+
+  Invoke-Step "Executando testes E2E" {
+    if ($Headed) {
+      npm run test:e2e:headed
+    } elseif ($UpdateSnapshots) {
+      npx playwright test --update-snapshots
+    } else {
+      npm run test:e2e
+    }
+  }
+} finally {
+  if ($managedServer -and -not $managedServer.HasExited) {
+    Stop-Process -Id $managedServer.Id -Force
   }
 }
 

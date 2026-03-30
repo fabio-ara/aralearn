@@ -3,12 +3,12 @@
   "courses": [
     {
       "id": "matematica-para-informatica-ads-logica-vetores-matrizes-grafos",
-      "title": "Matemática para Informática — oferta focada em lógica proposicional, vetores/matrizes e teoria dos grafos",
-      "description": "Disciplina de Matemática para Informática no curso de Tecnologia em Análise e Desenvolvimento de Sistemas, modelada para o app AraLearn em formato mobile-first e offline-first.",
+      "title": "Matemática para Informática",
+      "description": "Disciplina ofertada pelo Prof. João Vianei Tamanini no curso de ADS do IFSP.\nAborda lógica proposicional, equivalências, técnicas básicas de demonstração, indução matemática, vetores e matrizes e teoria dos grafos.",
       "modules": [
         {
           "id": "mod-1-logica-proposicional",
-          "title": "Lógica proposicional com leitura natural e formalização gradual",
+          "title": "Lógica proposicional, equivalências e demonstração inicial",
           "lessons": [
             {
               "id": "logica-01-proposicoes-traducao",
@@ -28,7 +28,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Nesta lição, uma proposição é um enunciado declarativo que pode ser classificado como verdadeiro ou falso.",
+                      "value": "Uma proposição é um enunciado declarativo cujo significado pode ser avaliado por condições de verdade: em que situações ela seria verdadeira ou falsa.",
                       "align": "left",
                       "id": "logica-01-proposicoes-traducao-step-01-block-02-paragraph"
                     },
@@ -401,7 +401,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual leitura corresponde melhor a ~Q?",
+                      "value": "Use Q = boleto pago. Qual leitura em português natural corresponde melhor a ~Q?",
                       "align": "left",
                       "id": "logica-01-proposicoes-traducao-step-06-block-02-paragraph"
                     },
@@ -415,7 +415,7 @@
                           "id": "logica-01-proposicoes-traducao-step-06-block-03-multiple-choice-option-01"
                         },
                         {
-                          "value": "Não Q.",
+                          "value": "O boleto não foi pago.",
                           "answer": true,
                           "id": "logica-01-proposicoes-traducao-step-06-block-03-multiple-choice-option-02"
                         },
@@ -540,7 +540,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Ainda com P = matrícula ativa, qual frase representa melhor ~P?",
+                      "value": "Considere P = matrícula ativa. Qual frase representa melhor ~P?",
                       "align": "left",
                       "id": "logica-01-proposicoes-traducao-step-08-block-02-paragraph"
                     },
@@ -834,11 +834,6 @@
                       "value": "O enunciado [[]] entra na lógica proposicional.",
                       "options": [
                         {
-                          "value": "'O servidor respondeu.'",
-                          "result": "Entra, porque é declarativo e pode ser verdadeiro ou falso.",
-                          "id": "logica-01-proposicoes-traducao-step-11-block-03-simulator-option-01"
-                        },
-                        {
                           "value": "'Atualize a senha.'",
                           "result": "Não entra, porque é comando.",
                           "id": "logica-01-proposicoes-traducao-step-11-block-03-simulator-option-02"
@@ -847,6 +842,11 @@
                           "value": "'x > 5'",
                           "result": "Não entra como proposição fechada.",
                           "id": "logica-01-proposicoes-traducao-step-11-block-03-simulator-option-03"
+                        },
+                        {
+                          "value": "'O servidor respondeu.'",
+                          "result": "Entra, porque é declarativo e pode ser verdadeiro ou falso.",
+                          "id": "logica-01-proposicoes-traducao-step-11-block-03-simulator-option-01"
                         }
                       ],
                       "id": "logica-01-proposicoes-traducao-step-11-block-03-simulator"
@@ -1047,7 +1047,7 @@
                             "align": "left"
                           },
                           {
-                            "value": "não ocorre que P e Q",
+                            "value": "não é verdade que a senha está correta e o token está válido",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -1063,7 +1063,7 @@
                             "align": "left"
                           },
                           {
-                            "value": "não P, e Q",
+                            "value": "a senha não está correta e o token está válido",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -1233,7 +1233,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Ainda com P e Q, complete a fórmula de: a senha está correta ou o token está válido.",
+                      "value": "Use P = senha correta e Q = token válido. Complete a fórmula de: a senha está correta ou o token está válido.",
                       "align": "left",
                       "id": "logica-02-conectivos-basicos-step-05-block-02-paragraph"
                     },
@@ -1316,14 +1316,14 @@
                       "value": "Se P = [[]] e Q = verdadeiro, qual é a leitura de P v Q?",
                       "options": [
                         {
-                          "value": "verdadeiro",
-                          "result": "Com P verdadeiro e Q verdadeiro, a disjunção continua verdadeira.",
-                          "id": "logica-02-conectivos-basicos-step-06-block-03-simulator-option-01"
-                        },
-                        {
                           "value": "falso",
                           "result": "Se as duas forem falsas, aí sim a disjunção falha.",
                           "id": "logica-02-conectivos-basicos-step-06-block-03-simulator-option-02"
+                        },
+                        {
+                          "value": "verdadeiro",
+                          "result": "Com P verdadeiro e Q verdadeiro, a disjunção continua verdadeira.",
+                          "id": "logica-02-conectivos-basicos-step-06-block-03-simulator-option-01"
                         }
                       ],
                       "id": "logica-02-conectivos-basicos-step-06-block-03-simulator"
@@ -1479,7 +1479,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "A fórmula é P v Q. Marque a leitura mais justa para o curso.",
+                      "value": "A fórmula é P v Q. Qual leitura natural preserva a disjunção inclusiva?",
                       "align": "left",
                       "id": "logica-02-conectivos-basicos-step-09-block-02-paragraph"
                     },
@@ -1593,7 +1593,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Os parênteses mantêm a negação sobre a frase inteira, que era o objetivo deste card.",
+                          "value": "Os parênteses mantêm a negação sobre a frase inteira, não só sobre uma palavra.",
                           "align": "left",
                           "id": "logica-02-conectivos-basicos-step-10-block-04-button-popup-02-paragraph"
                         }
@@ -1658,7 +1658,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Os dois tropeços mais frequentes aqui são o ou exclusivo e a negação aplicada ao pedaço errado.",
+                          "value": "Os erros mais comuns aqui são ler o ou como exclusivo e negar o trecho errado da fórmula.",
                           "align": "left",
                           "id": "logica-02-conectivos-basicos-step-11-block-04-button-popup-02-paragraph"
                         }
@@ -1799,7 +1799,7 @@
             },
             {
               "id": "logica-03-implicacao-bicondicional",
-              "title": "Implicação e bicondicional sem tropeço",
+              "title": "Implicação e bicondicional sem confusão",
               "subtitle": "Entender como implicação e bicondicional funcionam, tanto na leitura intuitiva quanto na formalização lógica.",
               "steps": [
                 {
@@ -2544,7 +2544,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Marque as interpretações que o curso considera inadequadas.",
+                      "value": "Marque as interpretações logicamente inadequadas.",
                       "align": "left",
                       "id": "logica-03-implicacao-bicondicional-step-09-block-02-paragraph"
                     },
@@ -2587,7 +2587,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Aqui o foco é lógico: casos de verdade e direção da relação, não causalidade automática.",
+                          "value": "Na implicação, importam os casos de verdade e a direção da relação, não causalidade automática.",
                           "align": "left",
                           "id": "logica-03-implicacao-bicondicional-step-09-block-04-button-popup-02-paragraph"
                         }
@@ -3033,7 +3033,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Para P e Q, a tabela precisa cobrir as quatro combinações possíveis.",
+                      "value": "Use a ordem padrão VV, VF, FV, FF ao listar as quatro combinações de P e Q.",
                       "align": "left",
                       "id": "logica-04-tabelas-verdade-step-02-block-02-paragraph"
                     },
@@ -3508,7 +3508,7 @@
                             "align": "left"
                           },
                           {
-                            "value": "V",
+                            "value": "F",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -3575,7 +3575,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual coluna final está correta para P ^ Q?",
+                      "value": "Usando a ordem VV, VF, FV, FF, qual coluna final está correta para P ^ Q?",
                       "align": "left",
                       "id": "logica-04-tabelas-verdade-step-06-block-02-paragraph"
                     },
@@ -3756,7 +3756,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Na implicação, só a linha V/F gera falso.",
+                      "value": "Usando a ordem VV, VF, FV, FF, qual coluna final combina com P -> Q?",
                       "align": "left",
                       "id": "logica-04-tabelas-verdade-step-08-block-02-paragraph"
                     },
@@ -4296,11 +4296,11 @@
                 {
                   "id": "logica-04-tabelas-verdade-step-12",
                   "type": "content",
-                  "title": "Diagnóstico de tropeço",
+                  "title": "Diagnóstico conceitual",
                   "blocks": [
                     {
                       "kind": "heading",
-                      "value": "Diagnóstico de tropeço",
+                      "value": "Diagnóstico conceitual",
                       "align": "left",
                       "id": "logica-04-tabelas-verdade-step-12-block-01-heading"
                     },
@@ -4349,7 +4349,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Os erros graves aqui são justamente os que transformam o procedimento em adivinhação.",
+                          "value": "Sem coluna intermediária ou sem ordem completa de linhas, a tabela perde o procedimento correto.",
                           "align": "left",
                           "id": "logica-04-tabelas-verdade-step-12-block-04-button-popup-02-paragraph"
                         }
@@ -4474,7 +4474,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual coluna final combina com P <-> Q?",
+                      "value": "Usando a ordem VV, VF, FV, FF, qual coluna final combina com P <-> Q?",
                       "align": "left",
                       "id": "logica-04-tabelas-verdade-step-14-block-02-paragraph"
                     },
@@ -4556,7 +4556,7 @@
             {
               "id": "logica-05-equivalencia-e-classificacao",
               "title": "Equivalência lógica e leitura final das fórmulas",
-              "subtitle": "Comparar fórmulas por tabela-verdade e usar a leitura completa da tabela para reconhecer equivalências e classificar casos simples.",
+              "subtitle": "Fórmulas equivalentes preservam valor lógico; tabelas, leitura natural e leis ajudam a comparar sem cair na aparência.",
               "steps": [
                 {
                   "id": "logica-05-equivalencia-e-classificacao-step-01",
@@ -4955,7 +4955,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual afirmação está alinhada com a regra do curso?",
+                      "value": "Qual afirmação respeita o critério correto de equivalência?",
                       "align": "left",
                       "id": "logica-05-equivalencia-e-classificacao-step-04-block-02-paragraph"
                     },
@@ -5217,7 +5217,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Considere as fórmulas ~(P v Q) e ~P ^ ~Q. O que você precisa observar para decidir se elas são equivalentes?",
+                      "value": "Considere ~(P v Q). Qual fórmula é equivalente a ela pela lei de De Morgan?",
                       "align": "left",
                       "id": "logica-05-equivalencia-e-classificacao-step-08-block-02-paragraph"
                     },
@@ -5226,22 +5226,22 @@
                       "answerState": "correct",
                       "options": [
                         {
-                          "value": "Se as colunas finais das duas fórmulas coincidirem linha a linha.",
+                          "value": "~P ^ ~Q",
                           "answer": true,
                           "id": "logica-05-equivalencia-e-classificacao-step-08-block-03-multiple-choice-option-01"
                         },
                         {
-                          "value": "Se as fórmulas tiverem o mesmo número de símbolos.",
+                          "value": "~P v ~Q",
                           "answer": false,
                           "id": "logica-05-equivalencia-e-classificacao-step-08-block-03-multiple-choice-option-02"
                         },
                         {
-                          "value": "Se as duas começarem com negação.",
+                          "value": "P v Q",
                           "answer": false,
                           "id": "logica-05-equivalencia-e-classificacao-step-08-block-03-multiple-choice-option-03"
                         },
                         {
-                          "value": "Se a primeira parecer mais simples.",
+                          "value": "P ^ Q",
                           "answer": false,
                           "id": "logica-05-equivalencia-e-classificacao-step-08-block-03-multiple-choice-option-04"
                         }
@@ -5282,15 +5282,15 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "A coluna final abaixo veio de uma fórmula em contexto de software. Classifique-a.",
+                      "value": "A coluna final abaixo veio de uma fórmula em contexto de software. Classifique essa coluna.",
                       "align": "left",
                       "id": "logica-05-equivalencia-e-classificacao-step-09-block-02-paragraph"
                     },
                     {
                       "kind": "table",
-                      "title": "Coluna final",
+                      "title": "Coluna final observada",
                       "titleStyle": {
-                        "value": "Coluna final",
+                        "value": "Coluna final observada",
                         "bold": true,
                         "italic": false,
                         "tone": "default",
@@ -5298,28 +5298,14 @@
                       },
                       "headers": [
                         {
-                          "value": "Linha 1",
+                          "value": "Linha",
                           "bold": true,
                           "italic": false,
                           "tone": "default",
                           "align": "left"
                         },
                         {
-                          "value": "Linha 2",
-                          "bold": true,
-                          "italic": false,
-                          "tone": "default",
-                          "align": "left"
-                        },
-                        {
-                          "value": "Linha 3",
-                          "bold": true,
-                          "italic": false,
-                          "tone": "default",
-                          "align": "left"
-                        },
-                        {
-                          "value": "Linha 4",
+                          "value": "Valor",
                           "bold": true,
                           "italic": false,
                           "tone": "default",
@@ -5329,7 +5315,23 @@
                       "rows": [
                         [
                           {
+                            "value": "1",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
                             "value": "V",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "2",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -5341,9 +5343,27 @@
                             "italic": false,
                             "tone": "default",
                             "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "3",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
                           },
                           {
                             "value": "V",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "4",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -5547,15 +5567,15 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "A leitura natural continua útil: ela ajuda a lembrar o que a fórmula quer dizer, mas quem decide equivalência, tautologia, contradição e contingência é a tabela.",
+                      "value": "A leitura em português natural continua útil para lembrar as condições de verdade, e as leis de equivalência ajudam a transformar fórmulas sem depender só da tabela.",
                       "align": "left",
                       "id": "logica-05-equivalencia-e-classificacao-step-12-block-02-paragraph"
                     },
                     {
                       "kind": "table",
-                      "title": "Ponte final",
+                      "title": "Ponte entre leitura e checagem",
                       "titleStyle": {
-                        "value": "Ponte final",
+                        "value": "Ponte entre leitura e checagem",
                         "bold": true,
                         "italic": false,
                         "tone": "default",
@@ -5563,14 +5583,14 @@
                       },
                       "headers": [
                         {
-                          "value": "Leitura natural",
+                          "value": "Tarefa",
                           "bold": true,
                           "italic": false,
                           "tone": "default",
                           "align": "left"
                         },
                         {
-                          "value": "Checagem formal",
+                          "value": "Ferramenta principal",
                           "bold": true,
                           "italic": false,
                           "tone": "default",
@@ -5580,14 +5600,14 @@
                       "rows": [
                         [
                           {
-                            "value": "entender a frase",
+                            "value": "Entender a frase",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
                             "align": "left"
                           },
                           {
-                            "value": "sim",
+                            "value": "leitura natural e condições de verdade",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -5596,14 +5616,14 @@
                         ],
                         [
                           {
-                            "value": "provar equivalência",
+                            "value": "Comparar fórmulas linha a linha",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
                             "align": "left"
                           },
                           {
-                            "value": "tabela",
+                            "value": "tabela-verdade",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -5612,14 +5632,14 @@
                         ],
                         [
                           {
-                            "value": "classificar a fórmula",
+                            "value": "Reescrever a fórmula sem mudar o sentido",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
                             "align": "left"
                           },
                           {
-                            "value": "coluna final",
+                            "value": "leis de equivalência",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -5644,13 +5664,13 @@
                   "blocks": [
                     {
                       "kind": "heading",
-                      "value": "Fechamento do módulo de lógica",
+                      "value": "Fechamento da base inicial de lógica",
                       "align": "left",
                       "id": "logica-05-equivalencia-e-classificacao-step-13-block-01-heading"
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Você percorreu o ciclo completo: frase natural, fórmula, conectivos, tabelas-verdade e comparação formal.",
+                      "value": "Até aqui, sua base inicial reúne leitura natural, conectivos, tabelas-verdade, equivalência e classificação das fórmulas.",
                       "align": "left",
                       "id": "logica-05-equivalencia-e-classificacao-step-13-block-02-paragraph"
                     },
@@ -5659,14 +5679,14 @@
                       "value": "Se duas fórmulas têm [[]] em todas as linhas, então são equivalentes.",
                       "options": [
                         {
-                          "value": "a mesma coluna final",
-                          "result": "Esse é exatamente o critério formal de equivalência.",
-                          "id": "logica-05-equivalencia-e-classificacao-step-13-block-03-simulator-option-01"
-                        },
-                        {
                           "value": "o mesmo número de símbolos",
                           "result": "Isso não basta para provar equivalência.",
                           "id": "logica-05-equivalencia-e-classificacao-step-13-block-03-simulator-option-02"
+                        },
+                        {
+                          "value": "a mesma coluna final",
+                          "result": "Esse é exatamente o critério formal de equivalência.",
+                          "id": "logica-05-equivalencia-e-classificacao-step-13-block-03-simulator-option-01"
                         }
                       ],
                       "id": "logica-05-equivalencia-e-classificacao-step-13-block-03-simulator"
@@ -5692,7 +5712,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Você já usa a tabela-verdade para comparar fórmulas e para classificar leituras globais como tautologia, contradição e contingência.",
+                      "value": "Você já usa tabela-verdade, leitura natural e equivalências clássicas para comparar e classificar fórmulas nesta base inicial.",
                       "align": "center",
                       "id": "logica-05-equivalencia-e-classificacao-step-14-block-02-paragraph"
                     },
@@ -5705,12 +5725,2045 @@
                   ]
                 }
               ]
+            },
+            {
+              "id": "logica-06-leis-de-equivalencia",
+              "title": "Leis de equivalência em símbolos e em português",
+              "subtitle": "Você vai operar equivalências clássicas em símbolos e em português natural, sem depender só da tabela-verdade.",
+              "steps": [
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-01",
+                  "type": "content",
+                  "title": "Leis de equivalência em símbolos e em português",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Leis de equivalência em símbolos e em português",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-01-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Uma equivalência lógica preserva as condições de verdade da fórmula. Em português natural, isso significa descrever as mesmas situações em que a frase seria verdadeira ou falsa.",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-01-block-02-paragraph"
+                    },
+                    {
+                      "kind": "table",
+                      "title": "Leis centrais",
+                      "titleStyle": {
+                        "value": "Leis centrais",
+                        "bold": true,
+                        "italic": false,
+                        "tone": "default",
+                        "align": "left"
+                      },
+                      "headers": [
+                        {
+                          "value": "Lei",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "Fórmula",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "Leitura útil",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        }
+                      ],
+                      "rows": [
+                        [
+                          {
+                            "value": "dupla negação",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "~~P ≡ P",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "negar duas vezes devolve a frase original",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "De Morgan",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "~(P ^ Q) ≡ ~P v ~Q",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "negar um E abre um OU entre negações",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "implicação",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "P -> Q ≡ ~P v Q",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "a seta falha só no caso V/F",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ]
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-01-block-03-table"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-01-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-02",
+                  "type": "content",
+                  "title": "Reconheça a dupla negação",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Reconheça a dupla negação",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-02-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Se P = servidor online, qual fórmula é equivalente a ~~P?",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-02-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-02-block-03-multiple-choice-option-01",
+                          "value": "P",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-02-block-03-multiple-choice-option-02",
+                          "value": "~P",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-02-block-03-multiple-choice-option-03",
+                          "value": "P v ~P",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-02-block-03-multiple-choice-option-04",
+                          "value": "P ^ ~P",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-02-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-02-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-03",
+                  "type": "content",
+                  "title": "Use De Morgan na conjunção",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Use De Morgan na conjunção",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-03-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Complete a equivalência clássica de De Morgan.",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-03-block-02-paragraph"
+                    },
+                    {
+                      "kind": "editor",
+                      "value": "~(P ^ Q) ≡ [[~P v ~Q]]",
+                      "interactionMode": "choice",
+                      "options": [
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-03-block-03-editor-option-01",
+                          "value": "~P v ~Q",
+                          "enabled": true,
+                          "displayOrder": 0,
+                          "slotOrder": 0
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-03-block-03-editor-option-02",
+                          "value": "~P ^ ~Q",
+                          "enabled": false,
+                          "displayOrder": 1,
+                          "slotOrder": 1
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-03-block-03-editor-option-03",
+                          "value": "P v Q",
+                          "enabled": false,
+                          "displayOrder": 2,
+                          "slotOrder": 2
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-03-block-03-editor-option-04",
+                          "value": "P ^ Q",
+                          "enabled": false,
+                          "displayOrder": 3,
+                          "slotOrder": 3
+                        }
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-03-block-03-editor"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-03-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-04",
+                  "type": "content",
+                  "title": "Leia De Morgan em português",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Leia De Morgan em português",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-04-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Considere P = senha correta e Q = token válido. Qual leitura corresponde melhor a ~(P v Q)?",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-04-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-04-block-03-multiple-choice-option-01",
+                          "value": "A senha não está correta e o token não está válido.",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-04-block-03-multiple-choice-option-02",
+                          "value": "A senha não está correta ou o token está válido.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-04-block-03-multiple-choice-option-03",
+                          "value": "A senha está correta e o token está válido.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-04-block-03-multiple-choice-option-04",
+                          "value": "Se a senha está correta, então o token está válido.",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-04-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-04-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-05",
+                  "type": "content",
+                  "title": "Reescreva uma implicação",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Reescreva uma implicação",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-05-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Complete a equivalência clássica da implicação.",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-05-block-02-paragraph"
+                    },
+                    {
+                      "kind": "editor",
+                      "value": "P -> Q ≡ [[~P v Q]]",
+                      "interactionMode": "choice",
+                      "options": [
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-05-block-03-editor-option-01",
+                          "value": "~P v Q",
+                          "enabled": true,
+                          "displayOrder": 0,
+                          "slotOrder": 0
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-05-block-03-editor-option-02",
+                          "value": "P v ~Q",
+                          "enabled": false,
+                          "displayOrder": 1,
+                          "slotOrder": 1
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-05-block-03-editor-option-03",
+                          "value": "~P ^ Q",
+                          "enabled": false,
+                          "displayOrder": 2,
+                          "slotOrder": 2
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-05-block-03-editor-option-04",
+                          "value": "P ^ Q",
+                          "enabled": false,
+                          "displayOrder": 3,
+                          "slotOrder": 3
+                        }
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-05-block-03-editor"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-05-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-06",
+                  "type": "content",
+                  "title": "Entenda o que a equivalência preserva",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Entenda o que a equivalência preserva",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-06-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Qual afirmação está correta sobre P -> Q e ~P v Q?",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-06-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-06-block-03-multiple-choice-option-01",
+                          "value": "Elas preservam as mesmas condições de verdade.",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-06-block-03-multiple-choice-option-02",
+                          "value": "Só são equivalentes quando P e Q são ambos verdadeiros.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-06-block-03-multiple-choice-option-03",
+                          "value": "Parecem parecidas, mas não podem ser comparadas formalmente.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-06-block-03-multiple-choice-option-04",
+                          "value": "Têm a mesma quantidade de símbolos, por isso bastam.",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-06-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-06-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-07",
+                  "type": "content",
+                  "title": "Desmonte o bicondicional",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Desmonte o bicondicional",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-07-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "O bicondicional exige ida e volta: cada lado precisa implicar o outro.",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-07-block-02-paragraph"
+                    },
+                    {
+                      "kind": "table",
+                      "title": "Leitura do bicondicional",
+                      "titleStyle": {
+                        "value": "Leitura do bicondicional",
+                        "bold": true,
+                        "italic": false,
+                        "tone": "default",
+                        "align": "left"
+                      },
+                      "headers": [
+                        {
+                          "value": "Forma",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "Leitura útil",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        }
+                      ],
+                      "rows": [
+                        [
+                          {
+                            "value": "P <-> Q",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "P e Q têm o mesmo valor de verdade",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "P -> Q",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "sempre que P vale, Q também vale",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "Q -> P",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "sempre que Q vale, P também vale",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ]
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-07-block-03-table"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-07-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-08",
+                  "type": "content",
+                  "title": "Complete a equivalência do bicondicional",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Complete a equivalência do bicondicional",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-08-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Reescreva o bicondicional como conjunção de duas implicações.",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-08-block-02-paragraph"
+                    },
+                    {
+                      "kind": "editor",
+                      "value": "P <-> Q ≡ [[(P -> Q) ^ (Q -> P)]]",
+                      "interactionMode": "choice",
+                      "options": [
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-08-block-03-editor-option-01",
+                          "value": "(P -> Q) ^ (Q -> P)",
+                          "enabled": true,
+                          "displayOrder": 0,
+                          "slotOrder": 0
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-08-block-03-editor-option-02",
+                          "value": "(P -> Q) v (Q -> P)",
+                          "enabled": false,
+                          "displayOrder": 1,
+                          "slotOrder": 1
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-08-block-03-editor-option-03",
+                          "value": "~P v ~Q",
+                          "enabled": false,
+                          "displayOrder": 2,
+                          "slotOrder": 2
+                        }
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-08-block-03-editor"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-08-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-09",
+                  "type": "content",
+                  "title": "Escolha uma cadeia válida",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Escolha uma cadeia válida",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-09-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Qual sequência usa leis de equivalência corretamente para reescrever ~(P v Q)?",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-09-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-09-block-03-multiple-choice-option-01",
+                          "value": "~(P v Q) ≡ ~P ^ ~Q",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-09-block-03-multiple-choice-option-02",
+                          "value": "~(P v Q) ≡ ~P v ~Q",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-09-block-03-multiple-choice-option-03",
+                          "value": "~(P v Q) ≡ P ^ Q",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-06-leis-de-equivalencia-step-09-block-03-multiple-choice-option-04",
+                          "value": "~(P v Q) ≡ P v Q",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-09-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-09-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-10",
+                  "type": "content",
+                  "title": "Tabela e leis se complementam",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Tabela e leis se complementam",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-10-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Quando a tabela-verdade cresce, as leis de equivalência ajudam a transformar a fórmula sem perder as condições de verdade.",
+                      "align": "left",
+                      "id": "logica-06-leis-de-equivalencia-step-10-block-02-paragraph"
+                    },
+                    {
+                      "kind": "table",
+                      "title": "Escolha da ferramenta",
+                      "titleStyle": {
+                        "value": "Escolha da ferramenta",
+                        "bold": true,
+                        "italic": false,
+                        "tone": "default",
+                        "align": "left"
+                      },
+                      "headers": [
+                        {
+                          "value": "Meta",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "Ferramenta principal",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        }
+                      ],
+                      "rows": [
+                        [
+                          {
+                            "value": "lembrar o sentido da fórmula",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "leitura natural",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "comparar duas fórmulas por exaustão",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "tabela-verdade",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "simplificar ou reescrever a fórmula",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "leis de equivalência",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ]
+                      ],
+                      "id": "logica-06-leis-de-equivalencia-step-10-block-03-table"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-10-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-06-leis-de-equivalencia-step-11",
+                  "type": "lesson_complete",
+                  "title": "Lição concluída",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Lição concluída",
+                      "align": "center",
+                      "id": "logica-06-leis-de-equivalencia-step-11-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Você já usa dupla negação, De Morgan, implicação e bicondicional como equivalências operáveis em símbolo e em português.",
+                      "align": "center",
+                      "id": "logica-06-leis-de-equivalencia-step-11-block-02-paragraph"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-06-leis-de-equivalencia-step-11-block-03-button"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "logica-07-contraposicao-e-contradicao",
+              "title": "Contraposição e contradição: primeiros esquemas de prova",
+              "subtitle": "Técnicas de prova começam pela forma da sentença: implicação pede hipótese, contraposição troca o foco e contradição assume o oposto.",
+              "steps": [
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-01",
+                  "type": "content",
+                  "title": "Contraposição e contradição: primeiros esquemas de prova",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Contraposição e contradição: primeiros esquemas de prova",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-01-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Escolher a técnica certa já organiza metade da prova: a forma da sentença indica por onde começar.",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-01-block-02-paragraph"
+                    },
+                    {
+                      "kind": "table",
+                      "title": "Mapa inicial",
+                      "titleStyle": {
+                        "value": "Mapa inicial",
+                        "bold": true,
+                        "italic": false,
+                        "tone": "default",
+                        "align": "left"
+                      },
+                      "headers": [
+                        {
+                          "value": "Forma da sentença",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "Primeiro movimento",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        }
+                      ],
+                      "rows": [
+                        [
+                          {
+                            "value": "P -> Q",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "assuma P e tente provar Q",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "P -> Q difícil",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "tente a contrapositiva ~Q -> ~P",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "quer provar P",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "assuma ~P e derive uma contradição",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ]
+                      ],
+                      "id": "logica-07-contraposicao-e-contradicao-step-01-block-03-table"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-01-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-02",
+                  "type": "content",
+                  "title": "Ache a contrapositiva",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Ache a contrapositiva",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-02-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Qual é a contrapositiva de P -> Q?",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-02-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-02-block-03-multiple-choice-option-01",
+                          "value": "~Q -> ~P",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-02-block-03-multiple-choice-option-02",
+                          "value": "~P -> ~Q",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-02-block-03-multiple-choice-option-03",
+                          "value": "Q -> P",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-02-block-03-multiple-choice-option-04",
+                          "value": "~P v Q",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-07-contraposicao-e-contradicao-step-02-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-02-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-03",
+                  "type": "content",
+                  "title": "Complete a contrapositiva",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Complete a contrapositiva",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-03-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "P -> Q equivale à sua contrapositiva. Complete a fórmula.",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-03-block-02-paragraph"
+                    },
+                    {
+                      "kind": "editor",
+                      "value": "~Q -> [[~P]]",
+                      "interactionMode": "choice",
+                      "options": [
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-03-block-03-editor-option-01",
+                          "value": "~P",
+                          "enabled": true,
+                          "displayOrder": 0,
+                          "slotOrder": 0
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-03-block-03-editor-option-02",
+                          "value": "P",
+                          "enabled": false,
+                          "displayOrder": 1,
+                          "slotOrder": 1
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-03-block-03-editor-option-03",
+                          "value": "Q",
+                          "enabled": false,
+                          "displayOrder": 2,
+                          "slotOrder": 2
+                        }
+                      ],
+                      "id": "logica-07-contraposicao-e-contradicao-step-03-block-03-editor"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-03-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-04",
+                  "type": "content",
+                  "title": "Leia a mudança de foco",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Leia a mudança de foco",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-04-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Se P = n é múltiplo de 10 e Q = n é par, qual frase expressa a contrapositiva?",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-04-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-04-block-03-multiple-choice-option-01",
+                          "value": "Se n não é par, então n não é múltiplo de 10.",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-04-block-03-multiple-choice-option-02",
+                          "value": "Se n é par, então n é múltiplo de 10.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-04-block-03-multiple-choice-option-03",
+                          "value": "Se n é múltiplo de 10, então n não é par.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-04-block-03-multiple-choice-option-04",
+                          "value": "n é par se, e somente se, n é múltiplo de 10.",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-07-contraposicao-e-contradicao-step-04-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-04-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-05",
+                  "type": "content",
+                  "title": "Entenda a prova por contradição",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Entenda a prova por contradição",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-05-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Na contradição, você assume o oposto do que quer provar e mostra que essa hipótese leva a um absurdo.",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-05-block-02-paragraph"
+                    },
+                    {
+                      "kind": "table",
+                      "title": "Esqueleto da contradição",
+                      "titleStyle": {
+                        "value": "Esqueleto da contradição",
+                        "bold": true,
+                        "italic": false,
+                        "tone": "default",
+                        "align": "left"
+                      },
+                      "headers": [
+                        {
+                          "value": "Etapa",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "Ideia",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        }
+                      ],
+                      "rows": [
+                        [
+                          {
+                            "value": "objetivo P",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "assuma ~P",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "desenvolvimento",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "derive uma impossibilidade",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "conclusão",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "~P não pode ser verdade, então P vale",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ]
+                      ],
+                      "id": "logica-07-contraposicao-e-contradicao-step-05-block-03-table"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-05-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-06",
+                  "type": "content",
+                  "title": "Escolha o começo correto",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Escolha o começo correto",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-06-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Para provar P por contradição, qual movimento inicial está correto?",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-06-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-06-block-03-multiple-choice-option-01",
+                          "value": "Assumir ~P e procurar uma impossibilidade.",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-06-block-03-multiple-choice-option-02",
+                          "value": "Assumir P e declarar o resultado óbvio.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-06-block-03-multiple-choice-option-03",
+                          "value": "Montar uma tabela-verdade mesmo sem fórmula.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-06-block-03-multiple-choice-option-04",
+                          "value": "Trocar imediatamente P por Q.",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-07-contraposicao-e-contradicao-step-06-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-06-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-07",
+                  "type": "content",
+                  "title": "Planeje uma prova direta",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Planeje uma prova direta",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-07-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Qual plano combina com a prova de: se n é múltiplo de 10, então n é par?",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-07-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-07-block-03-multiple-choice-option-01",
+                          "value": "Assuma n = 10k e mostre que n = 2(5k).",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-07-block-03-multiple-choice-option-02",
+                          "value": "Assuma que n é par e conclua que ele é múltiplo de 10.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-07-block-03-multiple-choice-option-03",
+                          "value": "Basta dar o exemplo n = 20.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-07-block-03-multiple-choice-option-04",
+                          "value": "Troque a afirmação por um bicondicional.",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-07-contraposicao-e-contradicao-step-07-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-07-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-08",
+                  "type": "content",
+                  "title": "Evite salto de fé",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Evite salto de fé",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-08-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Qual hábito prejudica uma prova curta mesmo quando a ideia geral está certa?",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-08-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-08-block-03-multiple-choice-option-01",
+                          "value": "Escrever “é óbvio” sem justificar o passo.",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-08-block-03-multiple-choice-option-02",
+                          "value": "Dizer qual hipótese está sendo usada.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-08-block-03-multiple-choice-option-03",
+                          "value": "Separar o objetivo em subtarefas.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-07-contraposicao-e-contradicao-step-08-block-03-multiple-choice-option-04",
+                          "value": "Nomear a contrapositiva antes de começar.",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-07-contraposicao-e-contradicao-step-08-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-08-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-09",
+                  "type": "content",
+                  "title": "Relacione técnica e formato",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Relacione técnica e formato",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-09-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "A forma da sentença sugere o desenho da prova antes mesmo dos detalhes matemáticos.",
+                      "align": "left",
+                      "id": "logica-07-contraposicao-e-contradicao-step-09-block-02-paragraph"
+                    },
+                    {
+                      "kind": "table",
+                      "title": "Atalhos de leitura",
+                      "titleStyle": {
+                        "value": "Atalhos de leitura",
+                        "bold": true,
+                        "italic": false,
+                        "tone": "default",
+                        "align": "left"
+                      },
+                      "headers": [
+                        {
+                          "value": "Objetivo",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "Pergunta inicial",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        }
+                      ],
+                      "rows": [
+                        [
+                          {
+                            "value": "afirmação sobre todo natural n",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "qual elemento arbitrário vou fixar?",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "P -> Q",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "qual hipótese entra primeiro?",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "P <-> Q",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "quais duas implicações precisam ser provadas?",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ]
+                      ],
+                      "id": "logica-07-contraposicao-e-contradicao-step-09-block-03-table"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-09-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-07-contraposicao-e-contradicao-step-10",
+                  "type": "lesson_complete",
+                  "title": "Lição concluída",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Lição concluída",
+                      "align": "center",
+                      "id": "logica-07-contraposicao-e-contradicao-step-10-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Você já reconhece quando começar por prova direta, contraposição ou contradição e evita os atalhos de justificativa mais frágeis.",
+                      "align": "center",
+                      "id": "logica-07-contraposicao-e-contradicao-step-10-block-02-paragraph"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-07-contraposicao-e-contradicao-step-10-block-03-button"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "logica-08-inducao-matematica-introdutoria",
+              "title": "Indução matemática: base, hipótese e passo",
+              "subtitle": "Indução prova afirmações sobre todos os naturais com base, hipótese indutiva e passo indutivo.",
+              "steps": [
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-01",
+                  "type": "content",
+                  "title": "Indução matemática: base, hipótese e passo",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Indução matemática: base, hipótese e passo",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-01-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Para provar uma afirmação sobre todo número natural, a indução fixa um ponto de partida e mostra como avançar do caso n para n + 1.",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-01-block-02-paragraph"
+                    },
+                    {
+                      "kind": "table",
+                      "title": "Peças da indução",
+                      "titleStyle": {
+                        "value": "Peças da indução",
+                        "bold": true,
+                        "italic": false,
+                        "tone": "default",
+                        "align": "left"
+                      },
+                      "headers": [
+                        {
+                          "value": "Peça",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "Pergunta",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        }
+                      ],
+                      "rows": [
+                        [
+                          {
+                            "value": "base",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "a afirmação vale no primeiro caso?",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "hipótese indutiva",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "o que posso assumir para um n arbitrário?",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "passo indutivo",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "como mostro o caso n + 1?",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ]
+                      ],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-01-block-03-table"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-01-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-02",
+                  "type": "content",
+                  "title": "Escolha a base",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Escolha a base",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-02-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Para P(n): 1 + 2 + ... + n = n(n + 1)/2, qual é o caso base mais natural nesta trilha?",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-02-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-02-block-03-multiple-choice-option-01",
+                          "value": "n = 0",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-02-block-03-multiple-choice-option-02",
+                          "value": "n = 7",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-02-block-03-multiple-choice-option-03",
+                          "value": "n = 10",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-02-block-03-multiple-choice-option-04",
+                          "value": "qualquer n já serve como base",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-02-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-02-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-03",
+                  "type": "content",
+                  "title": "Formule o passo",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Formule o passo",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-03-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "No passo indutivo, você assume P(n) e precisa provar o caso seguinte.",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-03-block-02-paragraph"
+                    },
+                    {
+                      "kind": "editor",
+                      "value": "Assuma P(n) e prove [[P(n + 1)]].",
+                      "interactionMode": "choice",
+                      "options": [
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-03-block-03-editor-option-01",
+                          "value": "P(n + 1)",
+                          "enabled": true,
+                          "displayOrder": 0,
+                          "slotOrder": 0
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-03-block-03-editor-option-02",
+                          "value": "P(n - 1)",
+                          "enabled": false,
+                          "displayOrder": 1,
+                          "slotOrder": 1
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-03-block-03-editor-option-03",
+                          "value": "P(0)",
+                          "enabled": false,
+                          "displayOrder": 2,
+                          "slotOrder": 2
+                        }
+                      ],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-03-block-03-editor"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-03-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-04",
+                  "type": "content",
+                  "title": "Leia a hipótese indutiva",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Leia a hipótese indutiva",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-04-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Se P(n) afirma 1 + 2 + ... + n = n(n + 1)/2, o que a hipótese indutiva autoriza usar?",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-04-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-04-block-03-multiple-choice-option-01",
+                          "value": "Que 1 + 2 + ... + n = n(n + 1)/2 vale para um n arbitrário.",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-04-block-03-multiple-choice-option-02",
+                          "value": "Que P(n + 1) já está provada.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-04-block-03-multiple-choice-option-03",
+                          "value": "Que a fórmula vale só para n = 1.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-04-block-03-multiple-choice-option-04",
+                          "value": "Que toda soma é automaticamente verdadeira.",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-04-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-04-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-05",
+                  "type": "content",
+                  "title": "Passe para n + 1",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Passe para n + 1",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-05-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "A passagem principal é acrescentar n + 1 aos dois lados da igualdade da hipótese indutiva.",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-05-block-02-paragraph"
+                    },
+                    {
+                      "kind": "table",
+                      "title": "Movimento do passo",
+                      "titleStyle": {
+                        "value": "Movimento do passo",
+                        "bold": true,
+                        "italic": false,
+                        "tone": "default",
+                        "align": "left"
+                      },
+                      "headers": [
+                        {
+                          "value": "Lado",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "Depois de somar n + 1",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        }
+                      ],
+                      "rows": [
+                        [
+                          {
+                            "value": "1 + 2 + ... + n",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "1 + 2 + ... + n + (n + 1)",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "n(n + 1)/2",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "n(n + 1)/2 + (n + 1)",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ]
+                      ],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-05-block-03-table"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-05-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-06",
+                  "type": "content",
+                  "title": "Complete a expressão final",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Complete a expressão final",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-06-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Depois de simplificar o passo indutivo, qual forma correta aparece para o caso n + 1?",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-06-block-02-paragraph"
+                    },
+                    {
+                      "kind": "editor",
+                      "value": "1 + 2 + ... + n + (n + 1) = [[(n + 1)(n + 2)/2]]",
+                      "interactionMode": "choice",
+                      "options": [
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-06-block-03-editor-option-01",
+                          "value": "(n + 1)(n + 2)/2",
+                          "enabled": true,
+                          "displayOrder": 0,
+                          "slotOrder": 0
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-06-block-03-editor-option-02",
+                          "value": "n(n + 1)/2",
+                          "enabled": false,
+                          "displayOrder": 1,
+                          "slotOrder": 1
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-06-block-03-editor-option-03",
+                          "value": "(n + 2)(n + 3)/2",
+                          "enabled": false,
+                          "displayOrder": 2,
+                          "slotOrder": 2
+                        }
+                      ],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-06-block-03-editor"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-06-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-07",
+                  "type": "content",
+                  "title": "Diagnostique um erro comum",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Diagnostique um erro comum",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-07-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Qual atitude invalida o passo indutivo?",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-07-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-07-block-03-multiple-choice-option-01",
+                          "value": "Assumir P(n + 1) em vez de prová-la.",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-07-block-03-multiple-choice-option-02",
+                          "value": "Usar a hipótese indutiva para P(n).",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-07-block-03-multiple-choice-option-03",
+                          "value": "Checar um caso base antes do passo.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-07-block-03-multiple-choice-option-04",
+                          "value": "Simplificar a expressão do lado direito.",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-07-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-07-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-08",
+                  "type": "content",
+                  "title": "Veja a ideia da indução forte",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Veja a ideia da indução forte",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-08-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Na indução forte, o passo pode usar todos os casos anteriores até n, e não só o caso n isolado.",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-08-block-02-paragraph"
+                    },
+                    {
+                      "kind": "table",
+                      "title": "Comparação rápida",
+                      "titleStyle": {
+                        "value": "Comparação rápida",
+                        "bold": true,
+                        "italic": false,
+                        "tone": "default",
+                        "align": "left"
+                      },
+                      "headers": [
+                        {
+                          "value": "Forma",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        },
+                        {
+                          "value": "O que pode ser usado no passo",
+                          "bold": true,
+                          "italic": false,
+                          "tone": "default",
+                          "align": "left"
+                        }
+                      ],
+                      "rows": [
+                        [
+                          {
+                            "value": "indução simples",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "apenas P(n)",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "indução forte",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "P(0), P(1), ..., P(n)",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ]
+                      ],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-08-block-03-table"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-08-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-09",
+                  "type": "content",
+                  "title": "Quando a indução forte ajuda?",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Quando a indução forte ajuda?",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-09-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Em que situação a indução forte costuma ser a escolha mais natural?",
+                      "align": "left",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-09-block-02-paragraph"
+                    },
+                    {
+                      "kind": "multiple_choice",
+                      "answerState": "correct",
+                      "options": [
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-09-block-03-multiple-choice-option-01",
+                          "value": "Quando o caso n + 1 depende de vários casos menores, e não só de n.",
+                          "answer": true
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-09-block-03-multiple-choice-option-02",
+                          "value": "Quando não existe caso base.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-09-block-03-multiple-choice-option-03",
+                          "value": "Quando queremos evitar qualquer hipótese.",
+                          "answer": false
+                        },
+                        {
+                          "id": "logica-08-inducao-matematica-introdutoria-step-09-block-03-multiple-choice-option-04",
+                          "value": "Quando a sentença não fala sobre naturais.",
+                          "answer": false
+                        }
+                      ],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-09-block-03-multiple-choice"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-09-block-04-button"
+                    }
+                  ]
+                },
+                {
+                  "id": "logica-08-inducao-matematica-introdutoria-step-10",
+                  "type": "lesson_complete",
+                  "title": "Lição concluída",
+                  "blocks": [
+                    {
+                      "kind": "heading",
+                      "value": "Lição concluída",
+                      "align": "center",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-10-block-01-heading"
+                    },
+                    {
+                      "kind": "paragraph",
+                      "value": "Você já identifica base, hipótese e passo indutivo e reconhece quando a indução forte entra como variação útil.",
+                      "align": "center",
+                      "id": "logica-08-inducao-matematica-introdutoria-step-10-block-02-paragraph"
+                    },
+                    {
+                      "kind": "button",
+                      "popupEnabled": false,
+                      "popupBlocks": [],
+                      "id": "logica-08-inducao-matematica-introdutoria-step-10-block-03-button"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
         {
           "id": "mod-2-vetores-matrizes",
-          "title": "Vetores e matrizes em faixa aplicada para ADS",
+          "title": "Vetores e matrizes",
           "lessons": [
             {
               "id": "vetores-01-representacao-soma-escalar",
@@ -5817,7 +7870,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "No vetor (4, -2), qual componente está ligada ao eixo y?",
+                      "value": "No vetor (4, -2), qual componente corresponde ao eixo y?",
                       "align": "left",
                       "id": "vetores-01-representacao-soma-escalar-step-02-block-02-paragraph"
                     },
@@ -6341,7 +8394,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "No app, a leitura geométrica entra como deslocamento textual curto, sem depender de desenho fino.",
+                      "value": "Aqui, a leitura geométrica aparece como deslocamento em coordenadas, sem depender de desenho detalhado.",
                       "align": "left",
                       "id": "vetores-01-representacao-soma-escalar-step-09-block-02-paragraph"
                     },
@@ -6949,7 +9002,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "O produto escalar do par escolhido zera, então ele entra como ortogonal neste curso.",
+                          "value": "O produto escalar do par escolhido é zero, então os vetores são ortogonais.",
                           "align": "left",
                           "id": "vetores-02-produto-escalar-modulo-step-05-block-04-button-popup-02-paragraph"
                         }
@@ -7407,17 +9460,17 @@
                     },
                     {
                       "kind": "simulator",
-                      "value": "Se u · v = [[]], o curso passa a suspeitar de ortogonalidade.",
+                      "value": "Se u · v = [[]], suspeitamos de ortogonalidade.",
                       "options": [
-                        {
-                          "value": "0",
-                          "result": "Esse é o caso-pista que vale revisar primeiro.",
-                          "id": "vetores-02-produto-escalar-modulo-step-12-block-03-simulator-option-01"
-                        },
                         {
                           "value": "10",
                           "result": "Aqui a pista de ortogonalidade não aparece.",
                           "id": "vetores-02-produto-escalar-modulo-step-12-block-03-simulator-option-02"
+                        },
+                        {
+                          "value": "0",
+                          "result": "Esse é o caso-pista que vale revisar primeiro.",
+                          "id": "vetores-02-produto-escalar-modulo-step-12-block-03-simulator-option-01"
                         }
                       ],
                       "id": "vetores-02-produto-escalar-modulo-step-12-block-03-simulator"
@@ -7562,7 +9615,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Quando o produto escalar é zero, o caso mais importante aqui é o ângulo reto.",
+                      "value": "Para vetores não nulos, produto escalar zero indica qual relação angular mais importante?",
                       "align": "left",
                       "id": "vetores-03-angulo-distancia-step-02-block-02-paragraph"
                     },
@@ -8335,15 +10388,15 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Neste recorte, a matriz nasce da imagem dos vetores-base e1 e e2. Isso estabiliza a leitura do i/j corrompido na lista original.",
+                      "value": "Uma transformação linear satisfaz T(u + v) = T(u) + T(v) e T(cu) = cT(u). Por isso, basta conhecer T(e1) e T(e2), com e1 = (1, 0) e e2 = (0, 1).",
                       "align": "left",
                       "id": "matrizes-04-transformacoes-lineares-step-01-block-02-paragraph"
                     },
                     {
                       "kind": "table",
-                      "title": "Vocabulário mínimo",
+                      "title": "Base da construção",
                       "titleStyle": {
-                        "value": "Vocabulário mínimo",
+                        "value": "Base da construção",
                         "bold": true,
                         "italic": false,
                         "tone": "default",
@@ -8351,14 +10404,14 @@
                       },
                       "headers": [
                         {
-                          "value": "Símbolo",
+                          "value": "Fato",
                           "bold": true,
                           "italic": false,
                           "tone": "default",
                           "align": "left"
                         },
                         {
-                          "value": "Leitura usada aqui",
+                          "value": "Leitura",
                           "bold": true,
                           "italic": false,
                           "tone": "default",
@@ -8368,14 +10421,14 @@
                       "rows": [
                         [
                           {
-                            "value": "e1",
+                            "value": "T(u + v) = T(u) + T(v)",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
                             "align": "left"
                           },
                           {
-                            "value": "(1, 0)",
+                            "value": "a transformação preserva soma",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -8384,14 +10437,30 @@
                         ],
                         [
                           {
-                            "value": "e2",
+                            "value": "T(cu) = cT(u)",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
                             "align": "left"
                           },
                           {
-                            "value": "(0, 1)",
+                            "value": "a transformação preserva multiplicação por escalar",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          }
+                        ],
+                        [
+                          {
+                            "value": "T(e1) e T(e2)",
+                            "bold": false,
+                            "italic": false,
+                            "tone": "default",
+                            "align": "left"
+                          },
+                          {
+                            "value": "essas imagens viram as colunas da matriz",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -8574,7 +10643,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual erro o curso quer evitar aqui?",
+                      "value": "Se T(e1) e T(e2) viram colunas da matriz, qual confusão deve ser evitada?",
                       "align": "left",
                       "id": "matrizes-04-transformacoes-lineares-step-04-block-02-paragraph"
                     },
@@ -8617,7 +10686,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Esse é o tropeço mais frequente quando a lista vem só com as imagens de e1 e e2.",
+                          "value": "O erro comum é ler as imagens de e1 e e2 como linhas, quando elas formam as colunas da matriz.",
                           "align": "left",
                           "id": "matrizes-04-transformacoes-lineares-step-04-block-04-button-popup-02-paragraph"
                         }
@@ -8759,17 +10828,17 @@
                 {
                   "id": "matrizes-04-transformacoes-lineares-step-07",
                   "type": "content",
-                  "title": "Produto matriz-vetor no nível necessário",
+                  "title": "Produto matriz-vetor pela base",
                   "blocks": [
                     {
                       "kind": "heading",
-                      "value": "Produto matriz-vetor no nível necessário",
+                      "value": "Produto matriz-vetor pela base",
                       "align": "left",
                       "id": "matrizes-04-transformacoes-lineares-step-07-block-01-heading"
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Para este curso, basta ler A·(x, y) como x·T(e1) + y·T(e2).",
+                      "value": "Como (x, y) = x·e1 + y·e2, segue que T(x, y) = x·T(e1) + y·T(e2). Para A = [[2, 1], [0, 1]], essa leitura coincide com A·(x, y).",
                       "align": "left",
                       "id": "matrizes-04-transformacoes-lineares-step-07-block-02-paragraph"
                     },
@@ -9135,17 +11204,17 @@
                 {
                   "id": "matrizes-04-transformacoes-lineares-step-12",
                   "type": "content",
-                  "title": "Escolha a leitura certa do material",
+                  "title": "Leia as imagens da base",
                   "blocks": [
                     {
                       "kind": "heading",
-                      "value": "Escolha a leitura certa do material",
+                      "value": "Leia as imagens da base",
                       "align": "left",
                       "id": "matrizes-04-transformacoes-lineares-step-12-block-01-heading"
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Quando a lista falar em imagem de i e j, como o curso lê isso aqui?",
+                      "value": "Se T(e1) = (2, 0) e T(e2) = (1, 1), qual leitura está correta sobre a matriz da transformação?",
                       "align": "left",
                       "id": "matrizes-04-transformacoes-lineares-step-12-block-02-paragraph"
                     },
@@ -9154,22 +11223,22 @@
                       "answerState": "correct",
                       "options": [
                         {
-                          "value": "Como imagem dos vetores-base e1 e e2.",
+                          "value": "Esses vetores formam as colunas da matriz de T.",
                           "answer": true,
                           "id": "matrizes-04-transformacoes-lineares-step-12-block-03-multiple-choice-option-01"
                         },
                         {
-                          "value": "Como números complexos fora do escopo atual.",
+                          "value": "Esses vetores sempre formam as linhas da matriz.",
                           "answer": false,
                           "id": "matrizes-04-transformacoes-lineares-step-12-block-03-multiple-choice-option-02"
                         },
                         {
-                          "value": "Como linhas da matriz por padrão.",
+                          "value": "Esses vetores representam números complexos fora do problema.",
                           "answer": false,
                           "id": "matrizes-04-transformacoes-lineares-step-12-block-03-multiple-choice-option-03"
                         },
                         {
-                          "value": "Como ângulos de rotação obrigatórios.",
+                          "value": "Esses vetores obrigam a transformação a ser uma rotação.",
                           "answer": false,
                           "id": "matrizes-04-transformacoes-lineares-step-12-block-03-multiple-choice-option-04"
                         }
@@ -9182,13 +11251,13 @@
                       "popupBlocks": [
                         {
                           "kind": "heading",
-                          "value": "Ponte materializada",
+                          "value": "Colunas identificadas",
                           "align": "left",
                           "id": "matrizes-04-transformacoes-lineares-step-12-block-04-button-popup-01-heading"
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Essa foi a adaptação mínima para manter fidelidade à lista sem ampliar o escopo.",
+                          "value": "T(e1) ocupa a primeira coluna e T(e2) ocupa a segunda, porque a transformação é determinada pelas imagens da base canônica.",
                           "align": "left",
                           "id": "matrizes-04-transformacoes-lineares-step-12-block-04-button-popup-02-paragraph"
                         }
@@ -9200,17 +11269,17 @@
                 {
                   "id": "matrizes-04-transformacoes-lineares-step-13",
                   "type": "content",
-                  "title": "Revisita final da lição",
+                  "title": "Ideia central",
                   "blocks": [
                     {
                       "kind": "heading",
-                      "value": "Revisita final da lição",
+                      "value": "Ideia central",
                       "align": "left",
                       "id": "matrizes-04-transformacoes-lineares-step-13-block-01-heading"
                     },
                     {
                       "kind": "paragraph",
-                      "value": "A ideia central desta lição é simples: imagens da base geram colunas, e essas colunas descrevem a ação da transformação.",
+                      "value": "A ideia central é simples: imagens da base geram colunas, e essas colunas descrevem a ação da transformação.",
                       "align": "left",
                       "id": "matrizes-04-transformacoes-lineares-step-13-block-02-paragraph"
                     },
@@ -9313,7 +11382,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Você já monta a matriz de uma transformação a partir da base e consegue aplicá-la a vetores simples sem sair do escopo operacional do curso.",
+                      "value": "Você já monta a matriz de uma transformação a partir da base e consegue aplicá-la a vetores simples.",
                       "align": "center",
                       "id": "matrizes-04-transformacoes-lineares-step-14-block-02-paragraph"
                     },
@@ -9568,7 +11637,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual afirmação o curso quer preservar?",
+                      "value": "Qual afirmação resume corretamente o papel da ordem na composição?",
                       "align": "left",
                       "id": "matrizes-05-composicao-inversa-step-04-block-02-paragraph"
                     },
@@ -9592,7 +11661,7 @@
                           "id": "matrizes-05-composicao-inversa-step-04-block-03-multiple-choice-option-03"
                         },
                         {
-                          "value": "Falar em ordem amplia o curso para álgebra matricial extensa.",
+                          "value": "Se AB e BA têm o mesmo tamanho, então são sempre iguais.",
                           "answer": false,
                           "id": "matrizes-05-composicao-inversa-step-04-block-03-multiple-choice-option-04"
                         }
@@ -9611,7 +11680,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "A lição só precisa fixar que a ordem pode mudar o efeito final.",
+                          "value": "A ideia central é que a ordem pode mudar o efeito final.",
                           "align": "left",
                           "id": "matrizes-05-composicao-inversa-step-04-block-04-button-popup-02-paragraph"
                         }
@@ -9676,7 +11745,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Esse é o tipo de exemplo mínimo que basta para a oferta real do curso.",
+                          "value": "Esse exemplo mínimo já mostra que AB e BA podem ser diferentes.",
                           "align": "left",
                           "id": "matrizes-05-composicao-inversa-step-05-block-04-button-popup-02-paragraph"
                         }
@@ -9704,9 +11773,9 @@
                     },
                     {
                       "kind": "table",
-                      "title": "Ponte com a lição anterior",
+                      "title": "Ligação com a transformação",
                       "titleStyle": {
-                        "value": "Ponte com a lição anterior",
+                        "value": "Ligação com a transformação",
                         "bold": true,
                         "italic": false,
                         "tone": "default",
@@ -9785,7 +11854,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Se A = [[2, 0], [0, 1]] e B = [[1, 0], [0, 3]], qual é B·A?",
+                      "value": "Se A = [[1, 1], [0, 1]] e B = [[2, 0], [0, 1]], qual é B·A?",
                       "align": "left",
                       "id": "matrizes-05-composicao-inversa-step-07-block-02-paragraph"
                     },
@@ -9794,22 +11863,22 @@
                       "answerState": "correct",
                       "options": [
                         {
-                          "value": "[[2, 0], [0, 3]]",
+                          "value": "[[2, 2], [0, 1]]",
                           "answer": true,
                           "id": "matrizes-05-composicao-inversa-step-07-block-03-multiple-choice-option-01"
                         },
                         {
-                          "value": "[[3, 0], [0, 2]]",
+                          "value": "[[2, 1], [0, 1]]",
                           "answer": false,
                           "id": "matrizes-05-composicao-inversa-step-07-block-03-multiple-choice-option-02"
                         },
                         {
-                          "value": "[[1, 0], [0, 1]]",
+                          "value": "[[1, 1], [0, 1]]",
                           "answer": false,
                           "id": "matrizes-05-composicao-inversa-step-07-block-03-multiple-choice-option-03"
                         },
                         {
-                          "value": "[[2, 3], [0, 0]]",
+                          "value": "[[2, 0], [0, 1]]",
                           "answer": false,
                           "id": "matrizes-05-composicao-inversa-step-07-block-03-multiple-choice-option-04"
                         }
@@ -9822,13 +11891,13 @@
                       "popupBlocks": [
                         {
                           "kind": "heading",
-                          "value": "Composição simples",
+                          "value": "Composição auditada",
                           "align": "left",
                           "id": "matrizes-05-composicao-inversa-step-07-block-04-button-popup-01-heading"
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Como os dois exemplos são diagonais, o resultado fica fácil de auditar sem abrir técnica além do necessário.",
+                          "value": "Aqui a ordem muda a matriz final: B·A e A·B não coincidem.",
                           "align": "left",
                           "id": "matrizes-05-composicao-inversa-step-07-block-04-button-popup-02-paragraph"
                         }
@@ -10067,7 +12136,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Complete a ideia central da validação.",
+                      "value": "Complete a checagem que confirma que a inversa desfaz a transformação.",
                       "align": "left",
                       "id": "matrizes-05-composicao-inversa-step-11-block-02-paragraph"
                     },
@@ -10134,7 +12203,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Marque os riscos que a lição quer evitar.",
+                      "value": "Quais opções realmente descrevem erros conceituais sobre composição e inversa?",
                       "align": "left",
                       "id": "matrizes-05-composicao-inversa-step-12-block-02-paragraph"
                     },
@@ -10171,13 +12240,13 @@
                       "popupBlocks": [
                         {
                           "kind": "heading",
-                          "value": "Riscos mapeados",
+                          "value": "Leitura correta",
                           "align": "left",
                           "id": "matrizes-05-composicao-inversa-step-12-block-04-button-popup-01-heading"
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Os dois riscos marcados aparecem com frequência quando a conta vira receita sem sentido.",
+                          "value": "Os itens marcados evitam aplicar uma receita sem verificar o significado da multiplicação.",
                           "align": "left",
                           "id": "matrizes-05-composicao-inversa-step-12-block-04-button-popup-02-paragraph"
                         }
@@ -10205,9 +12274,9 @@
                     },
                     {
                       "kind": "table",
-                      "title": "Mapa da lição",
+                      "title": "Síntese da lição",
                       "titleStyle": {
-                        "value": "Mapa da lição",
+                        "value": "Síntese da lição",
                         "bold": true,
                         "italic": false,
                         "tone": "default",
@@ -10302,7 +12371,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "O escopo deste curso ficou deliberadamente curto: montar a matriz da transformação, aplicar, compor em casos simples e checar inversa pela identidade.",
+                      "value": "Neste módulo, o foco ficou em montar a matriz da transformação, aplicar, compor em casos simples e checar a inversa pela identidade.",
                       "align": "left",
                       "id": "matrizes-05-composicao-inversa-step-14-block-02-paragraph"
                     },
@@ -10311,14 +12380,14 @@
                       "value": "Se uma matriz desfaz a outra e o produto vira [[]], a checagem principal está ok.",
                       "options": [
                         {
-                          "value": "I",
-                          "result": "Esse é o alvo esperado da validação.",
-                          "id": "matrizes-05-composicao-inversa-step-14-block-03-simulator-option-01"
-                        },
-                        {
                           "value": "A",
                           "result": "Se o produto volta para A, o efeito não foi desfeito.",
                           "id": "matrizes-05-composicao-inversa-step-14-block-03-simulator-option-02"
+                        },
+                        {
+                          "value": "I",
+                          "result": "A identidade confirma que uma matriz desfaz a outra nesse teste.",
+                          "id": "matrizes-05-composicao-inversa-step-14-block-03-simulator-option-01"
                         }
                       ],
                       "id": "matrizes-05-composicao-inversa-step-14-block-03-simulator"
@@ -10362,7 +12431,7 @@
         },
         {
           "id": "mod-3-grafos",
-          "title": "Teoria dos grafos introdutória com leitura estrutural e algoritmos básicos",
+          "title": "Teoria dos grafos",
           "lessons": [
             {
               "id": "grafos-01-modelagem-grau",
@@ -10588,7 +12657,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "No grafo G, quantos vértices e quantas arestas aparecem?",
+                      "value": "Considere G com arestas AB, AC, BC e CD. Quantos vértices e quantas arestas aparecem?",
                       "align": "left",
                       "id": "grafos-01-modelagem-grau-step-03-block-02-paragraph"
                     },
@@ -10740,7 +12809,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual par de vértices é adjacente no grafo G?",
+                      "value": "Considere G com arestas AB, AC, BC e CD. Qual par de vértices é adjacente?",
                       "align": "left",
                       "id": "grafos-01-modelagem-grau-step-05-block-02-paragraph"
                     },
@@ -10989,7 +13058,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual é o grau do vértice C no grafo G?",
+                      "value": "Considere G com arestas AB, AC, BC e CD. Qual é o grau do vértice C?",
                       "align": "left",
                       "id": "grafos-01-modelagem-grau-step-08-block-02-paragraph"
                     },
@@ -11141,7 +13210,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual conclusão está correta para o grafo G?",
+                      "value": "Em G, com arestas AB, AC, BC e CD, qual conclusão está correta?",
                       "align": "left",
                       "id": "grafos-01-modelagem-grau-step-10-block-02-paragraph"
                     },
@@ -11206,7 +13275,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Quantos vértices de grau ímpar aparecem em G?",
+                      "value": "Considere G com arestas AB, AC, BC e CD. Quantos vértices de grau ímpar aparecem?",
                       "align": "left",
                       "id": "grafos-01-modelagem-grau-step-11-block-02-paragraph"
                     },
@@ -11271,7 +13340,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Complete a leitura dos graus em G na ordem A, B, C e D.",
+                      "value": "Considere G com arestas AB, AC, BC e CD. Complete a leitura dos graus na ordem A, B, C e D.",
                       "align": "left",
                       "id": "grafos-01-modelagem-grau-step-12-block-02-paragraph"
                     },
@@ -11337,7 +13406,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "A sequência 2, 2, 3, 1 ajuda a estabilizar a contagem antes de seguir para os próximos tópicos.",
+                          "value": "A sequência 2, 2, 3, 1 resume corretamente os graus e prepara a aplicação da soma dos graus.",
                           "align": "left",
                           "id": "grafos-01-modelagem-grau-step-12-block-04-button-popup-02-paragraph"
                         }
@@ -11359,7 +13428,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Esta lição abriu o padrão do módulo: definir com cuidado, contar de forma confiável e aplicar um resultado curto como a soma dos graus.",
+                      "value": "Aqui começou o padrão do módulo: definir com cuidado, contar de forma confiável e aplicar um resultado curto como a soma dos graus.",
                       "align": "left",
                       "id": "grafos-01-modelagem-grau-step-13-block-02-paragraph"
                     },
@@ -11479,7 +13548,7 @@
             {
               "id": "grafos-02-isomorfismo-sequencias-completo-regular",
               "title": "Isomorfismo, sequências de graus, grafos completos e regulares",
-              "subtitle": "Comparar estruturas de grafos, ler sequências de graus e resolver tarefas básicas com grafos completos e regulares.",
+              "subtitle": "Estruturas de grafos podem ser comparadas por sequências de graus, completude e regularidade, sem confundir igualdade visual com isomorfismo.",
               "steps": [
                 {
                   "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-01",
@@ -11494,7 +13563,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Dois grafos podem ser isomorfos mesmo com desenho diferente. O foco é a estrutura das conexões.",
+                      "value": "Dois grafos podem ser isomorfos mesmo com desenho diferente. O que importa é a estrutura das conexões.",
                       "align": "left",
                       "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-01-block-02-paragraph"
                     },
@@ -11717,7 +13786,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual cuidado o curso quer manter quando as sequências de graus coincidem?",
+                      "value": "Quando duas sequências de graus coincidem, qual cuidado matemático ainda precisa ser mantido?",
                       "align": "left",
                       "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-04-block-02-paragraph"
                     },
@@ -12151,7 +14220,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual afirmação é a mais segura no formato mobile?",
+                      "value": "Qual afirmação é a mais segura ao comparar duas descrições do mesmo grafo?",
                       "align": "left",
                       "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-10-block-02-paragraph"
                     },
@@ -12206,11 +14275,11 @@
                 {
                   "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-11",
                   "type": "content",
-                  "title": "Diagnóstico de tropeço",
+                  "title": "Diagnóstico conceitual",
                   "blocks": [
                     {
                       "kind": "heading",
-                      "value": "Diagnóstico de tropeço",
+                      "value": "Diagnóstico conceitual",
                       "align": "left",
                       "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-11-block-01-heading"
                     },
@@ -12253,13 +14322,13 @@
                       "popupBlocks": [
                         {
                           "kind": "heading",
-                          "value": "Riscos mapeados",
+                          "value": "Leitura correta",
                           "align": "left",
                           "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-11-block-04-button-popup-01-heading"
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Os dois erros marcados são exatamente os mais recorrentes neste trecho.",
+                          "value": "Os erros marcados lembram que sequência de graus é filtro, não prova, e que regular não significa completo.",
                           "align": "left",
                           "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-11-block-04-button-popup-02-paragraph"
                         }
@@ -12281,7 +14350,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Nesta lição, você comparou grafos por estrutura, usou sequência de graus como filtro e revisitou completude e regularidade com contas curtas.",
+                      "value": "Você comparou grafos por estrutura, usou sequência de graus como filtro e revisitou completude e regularidade com contas curtas.",
                       "align": "left",
                       "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-12-block-02-paragraph"
                     },
@@ -12393,14 +14462,14 @@
                       "value": "Se dois grafos têm [[]] de graus diferentes, eles já não podem ser isomorfos.",
                       "options": [
                         {
-                          "value": "sequências",
-                          "result": "Esse é o filtro mais rápido desta lição.",
-                          "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-13-block-03-simulator-option-01"
-                        },
-                        {
                           "value": "nomes",
                           "result": "Trocar nomes de vértices não resolve a diferença estrutural.",
                           "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-13-block-03-simulator-option-02"
+                        },
+                        {
+                          "value": "sequências",
+                          "result": "Esse é o filtro mais rápido para descartar isomorfismo nesse caso.",
+                          "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-13-block-03-simulator-option-01"
                         }
                       ],
                       "id": "grafos-02-isomorfismo-sequencias-completo-regular-step-13-block-03-simulator"
@@ -12610,7 +14679,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Neste curso, o critério de ciclo ímpar entra só como apoio curto: triângulo já impede bipartição.",
+                      "value": "O critério do ciclo ímpar já basta em casos curtos: um triângulo impede bipartição.",
                       "align": "left",
                       "id": "grafos-03-bipartidos-matriz-adjacencia-step-03-block-02-paragraph"
                     },
@@ -13029,7 +15098,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Por que a diagonal principal aparece com zeros em M neste curso?",
+                      "value": "Por que a diagonal principal de M fica zerada neste grafo simples?",
                       "align": "left",
                       "id": "grafos-03-bipartidos-matriz-adjacencia-step-07-block-02-paragraph"
                     },
@@ -13094,7 +15163,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual par de vértices certamente aparece como adjacente em M?",
+                      "value": "Na matriz M do grafo simples com vértices A, B, C e D, qual par certamente aparece como adjacente?",
                       "align": "left",
                       "id": "grafos-03-bipartidos-matriz-adjacencia-step-08-block-02-paragraph"
                     },
@@ -13202,7 +15271,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Esse contraste foi mantido curto para não abrir outro tópico fora do recorte atual.",
+                          "value": "Adjacência cruza vértices com vértices; incidência relaciona vértices com arestas.",
                           "align": "left",
                           "id": "grafos-03-bipartidos-matriz-adjacencia-step-09-block-04-button-popup-02-paragraph"
                         }
@@ -13248,7 +15317,7 @@
                           "id": "grafos-03-bipartidos-matriz-adjacencia-step-10-block-03-multiple-choice-option-03"
                         },
                         {
-                          "value": "Todo vértice precisa ter grau 2.",
+                          "value": "Se o grau não for 2, o grafo deixa de ser bipartido.",
                           "answer": false,
                           "id": "grafos-03-bipartidos-matriz-adjacencia-step-10-block-03-multiple-choice-option-04"
                         }
@@ -13289,7 +15358,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Complete a linha de A na matriz de adjacência M.",
+                      "value": "No grafo simples em que A se liga a B e C, mas não a D, complete a linha de A na matriz de adjacência M.",
                       "align": "left",
                       "id": "grafos-03-bipartidos-matriz-adjacencia-step-11-block-02-paragraph"
                     },
@@ -13360,25 +15429,25 @@
                 {
                   "id": "grafos-03-bipartidos-matriz-adjacencia-step-12",
                   "type": "content",
-                  "title": "Reforço da adaptação computacional",
+                  "title": "Fechamento da representação",
                   "blocks": [
                     {
                       "kind": "heading",
-                      "value": "Reforço da adaptação computacional",
+                      "value": "Fechamento da representação",
                       "align": "left",
                       "id": "grafos-03-bipartidos-matriz-adjacencia-step-12-block-01-heading"
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Nesta lição, o desenho do grafo foi convertido em descrição estrutural e matriz de adjacência para caber bem no app sem perder justiça didática.",
+                      "value": "Partição textual e matriz de adjacência preservam a mesma estrutura do grafo: conjuntos independentes e ligações entre eles.",
                       "align": "left",
                       "id": "grafos-03-bipartidos-matriz-adjacencia-step-12-block-02-paragraph"
                     },
                     {
                       "kind": "table",
-                      "title": "Por que a adaptação funciona",
+                      "title": "O que cada representação preserva",
                       "titleStyle": {
-                        "value": "Por que a adaptação funciona",
+                        "value": "O que cada representação preserva",
                         "bold": true,
                         "italic": false,
                         "tone": "default",
@@ -13466,14 +15535,14 @@
                       "value": "Se a linha A e a coluna C têm [[]], então A e C estão ligados.",
                       "options": [
                         {
-                          "value": "1",
-                          "result": "Na matriz de adjacência, 1 marca presença de aresta.",
-                          "id": "grafos-03-bipartidos-matriz-adjacencia-step-13-block-03-simulator-option-01"
-                        },
-                        {
                           "value": "0",
                           "result": "Zero indicaria ausência de ligação direta.",
                           "id": "grafos-03-bipartidos-matriz-adjacencia-step-13-block-03-simulator-option-02"
+                        },
+                        {
+                          "value": "1",
+                          "result": "Na matriz de adjacência, 1 marca presença de aresta.",
+                          "id": "grafos-03-bipartidos-matriz-adjacencia-step-13-block-03-simulator-option-01"
                         }
                       ],
                       "id": "grafos-03-bipartidos-matriz-adjacencia-step-13-block-03-simulator"
@@ -13531,7 +15600,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Os três conceitos são próximos, por isso o curso fixa o contraste pelo uso ou repetição de arestas e vértices.",
+                      "value": "Os três conceitos são próximos, então vale fixar o contraste pelo uso ou repetição de arestas e vértices.",
                       "align": "left",
                       "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-01-block-02-paragraph"
                     },
@@ -13554,7 +15623,7 @@
                           "align": "left"
                         },
                         {
-                          "value": "O que evitar",
+                          "value": "Critério central",
                           "bold": true,
                           "italic": false,
                           "tone": "default",
@@ -13571,7 +15640,7 @@
                             "align": "left"
                           },
                           {
-                            "value": "repetir aresta",
+                            "value": "não repete arestas",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -13587,7 +15656,7 @@
                             "align": "left"
                           },
                           {
-                            "value": "repetir vértice",
+                            "value": "não repete vértices",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -13603,7 +15672,7 @@
                             "align": "left"
                           },
                           {
-                            "value": "voltar ao vértice inicial em percurso fechado",
+                            "value": "fecha no vértice inicial sem repetir vértices internos",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -13634,7 +15703,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Use o mesmo grafo-base para evitar leitura solta: considere H com arestas AB, BC, CD, DB e DA.",
+                      "value": "Considere H com arestas AB, BC, CD, DB e DA. Use o grafo H para comparar trilha, caminho e ciclo.",
                       "align": "left",
                       "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-02-block-02-paragraph"
                     },
@@ -13750,7 +15819,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Agora compare as sequências abaixo dentro de H.",
+                      "value": "No grafo H, compare as sequências abaixo.",
                       "align": "left",
                       "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-02-block-04-paragraph"
                     },
@@ -13909,7 +15978,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual sequência abaixo ainda pode ser lida como trilha?",
+                      "value": "No grafo H com arestas AB, BC, CD, DB e DA, qual sequência abaixo ainda pode ser lida como trilha?",
                       "align": "left",
                       "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-03-block-02-paragraph"
                     },
@@ -13974,7 +16043,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual sequência abaixo é caminho?",
+                      "value": "No grafo H com arestas AB, BC, CD, DB e DA, qual sequência abaixo é caminho?",
                       "align": "left",
                       "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-04-block-02-paragraph"
                     },
@@ -14039,7 +16108,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual sequência abaixo fecha um ciclo simples?",
+                      "value": "No grafo H com arestas AB, BC, CD, DB e DA, qual sequência abaixo fecha um ciclo simples?",
                       "align": "left",
                       "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-05-block-02-paragraph"
                     },
@@ -14408,7 +16477,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Marque as confusões que a lição quer evitar.",
+                      "value": "Quais opções descrevem confusões reais sobre trilha, caminho, ciclo, conectividade e distância?",
                       "align": "left",
                       "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-10-block-02-paragraph"
                     },
@@ -14422,8 +16491,8 @@
                           "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-10-block-03-multiple-choice-option-01"
                         },
                         {
-                          "value": "Confundir conectividade com existência de caminho.",
-                          "answer": false,
+                          "value": "Confundir conectividade com distância entre dois vértices.",
+                          "answer": true,
                           "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-10-block-03-multiple-choice-option-02"
                         },
                         {
@@ -14432,7 +16501,7 @@
                           "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-10-block-03-multiple-choice-option-03"
                         },
                         {
-                          "value": "Usar a ideia de ciclo para percurso fechado.",
+                          "value": "Separar ciclo de percurso fechado ajuda a leitura.",
                           "answer": false,
                           "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-10-block-03-multiple-choice-option-04"
                         }
@@ -14445,13 +16514,13 @@
                       "popupBlocks": [
                         {
                           "kind": "heading",
-                          "value": "Riscos mapeados",
+                          "value": "Leitura correta",
                           "align": "left",
                           "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-10-block-04-button-popup-01-heading"
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Os dois tropeços marcados são os que mais atrapalham a leitura operacional desta lição.",
+                          "value": "Os itens marcados evitam confundir trilha, caminho, distância e conectividade.",
                           "align": "left",
                           "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-10-block-04-button-popup-02-paragraph"
                         }
@@ -14473,7 +16542,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "A lição reaproveitou o mesmo estilo: uma diferença conceitual pequena precisa de contraste explícito e exemplos curtos.",
+                      "value": "Resumo útil: trilha pode repetir vértices, caminho não repete vértices e ciclo fecha um percurso simples.",
                       "align": "left",
                       "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-11-block-02-paragraph"
                     },
@@ -14592,7 +16661,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Use o grafo H e complete a melhor classificação principal de cada sequência.",
+                      "value": "No grafo H com arestas AB, BC, CD, DB e DA, complete a melhor classificação principal de cada sequência.",
                       "align": "left",
                       "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-12-block-02-paragraph"
                     },
@@ -14644,7 +16713,7 @@
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Esse fechamento força a produção curta da diferença entre repetir aresta, repetir vértice e fechar o percurso.",
+                          "value": "A-B-C-D é caminho porque não repete vértices; A-B-C-D-B é trilha porque repete B sem repetir arestas; A-B-C-D-A é ciclo porque fecha no vértice inicial.",
                           "align": "left",
                           "id": "grafos-04-trilha-caminho-ciclo-conectividade-step-12-block-04-button-popup-02-paragraph"
                         }
@@ -14698,7 +16767,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Nesta lição, o algoritmo aparece em caso pequeno e com pesos positivos, para que o procedimento seja rastreável no celular.",
+                      "value": "Aqui, o algoritmo aparece em um caso pequeno e com pesos positivos para que cada atualização de distância fique visível.",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-01-block-02-paragraph"
                     },
@@ -15033,7 +17102,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Depois de relaxar as arestas que saem de A, como ficam as distâncias conhecidas?",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, depois de fechar A as melhores distâncias são A=0, B=2, C=5, D=∞ e E=∞. Complete esse estado.",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-04-block-02-paragraph"
                     },
@@ -15121,7 +17190,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Depois da primeira atualização, qual vértice deve ser fechado a seguir?",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, depois de fechar A as melhores distâncias são A=0, B=2, C=5, D=∞ e E=∞. Qual vértice deve ser fechado a seguir?",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-05-block-02-paragraph"
                     },
@@ -15186,7 +17255,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Ao sair de B, qual passa a ser a melhor distância conhecida até C?",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, com B escolhido por menor custo 2, qual passa a ser a melhor distância conhecida até C?",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-06-block-02-paragraph"
                     },
@@ -15251,7 +17320,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual distância provisória para D aparece ao passar por B?",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, ainda após fechar B, qual distância provisória para D aparece?",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-07-block-02-paragraph"
                     },
@@ -15316,7 +17385,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Depois das atualizações via B, qual vértice deve ser fechado a seguir?",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, com distâncias A=0, B=2, C=3, D=6 e E=∞, qual vértice deve ser fechado a seguir?",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-08-block-02-paragraph"
                     },
@@ -15381,7 +17450,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Complete as melhores distâncias conhecidas depois de fechar C.",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, depois de fechar C e relaxar C-D=1, complete as melhores distâncias conhecidas.",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-09-block-02-paragraph"
                     },
@@ -15455,7 +17524,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Depois de C, qual vértice deve ser fechado?",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, com distâncias A=0, B=2, C=3, D=4 e E=∞, qual vértice deve ser fechado?",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-10-block-02-paragraph"
                     },
@@ -15520,7 +17589,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual melhor distância até E aparece quando você relaxa D-E?",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, depois de fechar D com custo 4 e relaxar D-E=3, qual melhor distância até E aparece?",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-11-block-02-paragraph"
                     },
@@ -15585,7 +17654,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Qual é o menor caminho de A até E neste caso?",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, e custos finais A=0, B=2, C=3, D=4 e E=7, qual é o menor caminho de A até E?",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-12-block-02-paragraph"
                     },
@@ -15650,7 +17719,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Digite o custo mínimo de A até E.",
+                      "value": "No grafo com pesos A-B=2, A-C=5, B-C=1, B-D=4, C-D=1 e D-E=3, digite o custo mínimo de A até E.",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-13-block-02-paragraph"
                     },
@@ -15705,7 +17774,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Marque os erros que a lição quer evitar.",
+                      "value": "Quais opções realmente descrevem erros conceituais em Dijkstra?",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-14-block-02-paragraph"
                     },
@@ -15742,7 +17811,7 @@
                       "popupBlocks": [
                         {
                           "kind": "heading",
-                          "value": "Riscos mapeados",
+                          "value": "Leitura correta",
                           "align": "left",
                           "id": "grafos-05-dijkstra-step-14-block-04-button-popup-01-heading"
                         },
@@ -15770,7 +17839,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "A adaptação desta lição usa tabela de distâncias e lista de arestas porque o foco é o procedimento, não o desenho detalhado do grafo.",
+                      "value": "A tabela de distâncias ajuda a acompanhar custo atual, relaxamento e reconstrução do caminho sem perder o procedimento do algoritmo.",
                       "align": "left",
                       "id": "grafos-05-dijkstra-step-15-block-02-paragraph"
                     },
@@ -16605,17 +18674,17 @@
                 {
                   "id": "grafos-06-euler-step-11",
                   "type": "content",
-                  "title": "Diagnóstico final de tropeço",
+                  "title": "Diagnóstico conceitual final",
                   "blocks": [
                     {
                       "kind": "heading",
-                      "value": "Diagnóstico final de tropeço",
+                      "value": "Diagnóstico conceitual final",
                       "align": "left",
                       "id": "grafos-06-euler-step-11-block-01-heading"
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Marque os tropeços que o curso quer evitar.",
+                      "value": "Quais opções realmente descrevem confusões conceituais sobre grafos eulerianos e semieulerianos?",
                       "align": "left",
                       "id": "grafos-06-euler-step-11-block-02-paragraph"
                     },
@@ -16652,13 +18721,13 @@
                       "popupBlocks": [
                         {
                           "kind": "heading",
-                          "value": "Riscos mapeados",
+                          "value": "Leitura correta",
                           "align": "left",
                           "id": "grafos-06-euler-step-11-block-04-button-popup-01-heading"
                         },
                         {
                           "kind": "paragraph",
-                          "value": "Os dois erros marcados são justamente os que mais desalinham a decisão final.",
+                          "value": "Os erros marcados confundem o critério sobre arestas com a exigência de conectividade.",
                           "align": "left",
                           "id": "grafos-06-euler-step-11-block-04-button-popup-02-paragraph"
                         }
@@ -16670,25 +18739,25 @@
                 {
                   "id": "grafos-06-euler-step-12",
                   "type": "content",
-                  "title": "Fechamento do curso",
+                  "title": "Síntese do critério euleriano",
                   "blocks": [
                     {
                       "kind": "heading",
-                      "value": "Fechamento do curso",
+                      "value": "Síntese do critério euleriano",
                       "align": "left",
                       "id": "grafos-06-euler-step-12-block-01-heading"
                     },
                     {
                       "kind": "paragraph",
-                      "value": "O curso termina voltando ao estilo observado no semestre: critério claro, justificativa curta e ligação com leitura estrutural útil para ADS.",
+                      "value": "Para classificar rapidamente, combine conectividade com a paridade dos graus do grafo.",
                       "align": "left",
                       "id": "grafos-06-euler-step-12-block-02-paragraph"
                     },
                     {
                       "kind": "table",
-                      "title": "Último mapa",
+                      "title": "Critério resumido",
                       "titleStyle": {
-                        "value": "Último mapa",
+                        "value": "Critério resumido",
                         "bold": true,
                         "italic": false,
                         "tone": "default",
@@ -16696,14 +18765,14 @@
                       },
                       "headers": [
                         {
-                          "value": "Tema",
+                          "value": "Caso",
                           "bold": true,
                           "italic": false,
                           "tone": "default",
                           "align": "left"
                         },
                         {
-                          "value": "Ferramenta central",
+                          "value": "Critério",
                           "bold": true,
                           "italic": false,
                           "tone": "default",
@@ -16713,14 +18782,14 @@
                       "rows": [
                         [
                           {
-                            "value": "lógica",
+                            "value": "circuito euleriano",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
                             "align": "left"
                           },
                           {
-                            "value": "tabela-verdade e leitura formal",
+                            "value": "grafo conectado com todos os graus pares",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -16729,14 +18798,14 @@
                         ],
                         [
                           {
-                            "value": "vetores/matrizes",
+                            "value": "trilha euleriana aberta",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
                             "align": "left"
                           },
                           {
-                            "value": "procedimento operacional",
+                            "value": "grafo conectado com exatamente dois graus ímpares",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -16745,14 +18814,14 @@
                         ],
                         [
                           {
-                            "value": "grafos",
+                            "value": "não euleriano",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
                             "align": "left"
                           },
                           {
-                            "value": "estrutura, contagem e classificação",
+                            "value": "grafo desconectado ou com mais de dois graus ímpares",
                             "bold": false,
                             "italic": false,
                             "tone": "default",
@@ -16783,7 +18852,7 @@
                     },
                     {
                       "kind": "paragraph",
-                      "value": "Euler fecha o módulo reutilizando grau, conectividade e percurso. É um bom exemplo de repetição distribuída sem abrir conteúdo novo.",
+                      "value": "Se o grafo é conectado e tem [[]] graus ímpares, o caso é semieuleriano.",
                       "align": "left",
                       "id": "grafos-06-euler-step-13-block-02-paragraph"
                     },
@@ -16792,14 +18861,14 @@
                       "value": "Se o grafo é conectado e tem [[]] graus ímpares, o caso é semieuleriano.",
                       "options": [
                         {
-                          "value": "2",
-                          "result": "Esse é o padrão do percurso aberto.",
-                          "id": "grafos-06-euler-step-13-block-03-simulator-option-01"
-                        },
-                        {
                           "value": "0",
                           "result": "Esse seria o caso euleriano fechado.",
                           "id": "grafos-06-euler-step-13-block-03-simulator-option-02"
+                        },
+                        {
+                          "value": "2",
+                          "result": "Esse é o padrão do percurso aberto.",
+                          "id": "grafos-06-euler-step-13-block-03-simulator-option-01"
                         }
                       ],
                       "id": "grafos-06-euler-step-13-block-03-simulator"

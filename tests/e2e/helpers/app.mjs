@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { unzipSync } from "fflate";
+import { strToU8, unzipSync, zipSync } from "fflate";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -8,6 +8,7 @@ import { loadBrowserModule } from "../../helpers/load-browser-module.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fileHelpersModulePath = path.resolve(__dirname, "../../../modules/file-helpers.js");
+const fileHelpersVendorPath = path.resolve(__dirname, "../../../modules/vendor/fflate.js");
 let fileHelpersPromise = null;
 const SAMPLE_IMAGE_PATH = "assets/images/sample-intro.svg";
 const SAMPLE_IMAGE_DATA_URL =
@@ -21,7 +22,7 @@ const SAMPLE_IMAGE_DATA_URL =
 
 async function getFileHelpers() {
   if (!fileHelpersPromise) {
-    fileHelpersPromise = loadBrowserModule(fileHelpersModulePath).then((browserModule) =>
+    fileHelpersPromise = loadBrowserModule(fileHelpersModulePath, [fileHelpersVendorPath]).then((browserModule) =>
       browserModule.AraLearnFileHelpers.createFileHelpers()
     );
   }
@@ -64,7 +65,15 @@ export async function seedProject(page, snapshot = createSampleProjectSnapshot()
 }
 
 export async function openFirstCourse(page) {
-  await page.locator('[data-action="open-course"]').first().click();
+  const sampleCourseButton = page
+    .locator('.course-card', { hasText: "Curso de teste" })
+    .locator('[data-action="open-course"]')
+    .first();
+  if (await sampleCourseButton.count()) {
+    await sampleCourseButton.click();
+  } else {
+    await page.locator('[data-action="open-course"]').first().click();
+  }
   await expect(page.locator(".module-card").first()).toBeVisible();
 }
 
@@ -172,15 +181,45 @@ export async function readDownloadedPackage(download) {
   return JSON.parse(Buffer.from(jsonEntry).toString("utf8"));
 }
 
-export async function createPackageFixture(payload, fileName = "fixture.zip") {
+function toUint8Array(value) {
+  if (value instanceof Uint8Array) return value;
+  if (Array.isArray(value)) return new Uint8Array(value);
+  if (ArrayBuffer.isView(value)) {
+    return new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+  }
+  return strToU8(String(value || ""));
+}
+
+export async function createPackageFixture(payload, fileName = "fixture.zip", options = {}) {
   const filePath = path.join(os.tmpdir(), `aralearn-${Date.now()}-${Math.random().toString(36).slice(2)}-${fileName}`);
-  const fileHelpers = await getFileHelpers();
-  const zipBytes = fileHelpers.createZip([
+  const compression = options && options.compression === "deflate" ? "deflate" : "store";
+  const assetEntries = options && options.assets && typeof options.assets === "object" ? options.assets : {};
+  const entries = [
     {
       path: "project.json",
-      bytes: fileHelpers.utf8Encode(JSON.stringify(payload, null, 2))
+      bytes: strToU8(JSON.stringify(payload, null, 2))
     }
-  ]);
+  ];
+
+  Object.keys(assetEntries).forEach((assetPath) => {
+    entries.push({
+      path: assetPath,
+      bytes: toUint8Array(assetEntries[assetPath])
+    });
+  });
+
+  let zipBytes = null;
+  if (compression === "deflate") {
+    const zipInput = {};
+    entries.forEach((entry) => {
+      zipInput[entry.path] = entry.bytes;
+    });
+    zipBytes = zipSync(zipInput, { level: 6 });
+  } else {
+    const fileHelpers = await getFileHelpers();
+    zipBytes = fileHelpers.createZip(entries);
+  }
+
   fs.writeFileSync(filePath, Buffer.from(zipBytes));
   return filePath;
 }

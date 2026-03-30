@@ -18,6 +18,9 @@ val syncWebAssets by tasks.registering(Sync::class) {
     from(File(webProjectDir, "assets")) {
         into("assets")
     }
+    from(File(webProjectDir, "content")) {
+        into("content")
+    }
     into(generatedWebAssetsRoot.resolve("www"))
 }
 
@@ -29,8 +32,8 @@ android {
         applicationId = "com.aralearn.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 4
+        versionName = "0.4.0"
     }
 
     buildTypes {

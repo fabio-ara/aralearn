@@ -1,12 +1,14 @@
 import { test, expect } from "@playwright/test";
 import {
   advanceStep,
+  createSampleProjectSnapshot,
   insertStepAfter,
   openEditorForCurrentStep,
   openFirstCourse,
   openFirstLesson,
   openQuickPanel,
   resetApp,
+  seedProject,
   saveEditor
 } from "./helpers/app.mjs";
 
@@ -31,6 +33,29 @@ test("cards de curso e módulo mantêm altura natural fora da tela de lição", 
   const moduleBox = await moduleCard.boundingBox();
   expect(moduleBox).toBeTruthy();
   expect(moduleBox.height).toBeLessThan((viewport?.height || 0) * 0.9);
+});
+
+test("card final mantém o resumo centralizado mesmo quando o parágrafo vem alinhado à esquerda no JSON", async ({ page }) => {
+  const snapshot = createSampleProjectSnapshot();
+  const completeStep = snapshot.content.courses[0].modules[0].lessons[0].steps.find((step) => step.id === "step-complete");
+  completeStep.blocks.splice(1, 0, {
+    id: "block-complete-paragraph",
+    kind: "paragraph",
+    value: "Resumo final centralizado.",
+    align: "left"
+  });
+
+  await seedProject(page, snapshot);
+  await openFirstCourse(page);
+  await openFirstLesson(page);
+  await advanceStep(page);
+  await page.locator('[data-action="step-button-click"]').click();
+  await expect(page.locator(".inline-popup")).toBeVisible();
+  await page.locator('[data-action="popup-continue"]').click();
+
+  const summary = page.locator(".lesson-card.complete .rich-text").filter({ hasText: "Resumo final centralizado." });
+  await expect(summary).toContainText("Resumo final centralizado.");
+  expect(await summary.evaluate((node) => getComputedStyle(node).textAlign)).toBe("center");
 });
 
 test("a barra lateral usa a mesma espessura compacta da barra inferior e centraliza os botões", async ({ page }) => {
@@ -104,7 +129,7 @@ test("popup estruturado do botão reabre no editor dedicado com os blocos salvos
   await openEditorForCurrentStep(page);
   await saveEditor(page);
 
-  await page.evaluate(() => {
+  const updatedSnapshot = await page.evaluate(() => {
     const snapshot = JSON.parse(localStorage.getItem("aralearn_project_v1") || "null");
     const step = snapshot.content.courses[0].modules[0].lessons[0].steps[0];
     const button = Array.isArray(step.blocks)
@@ -117,8 +142,11 @@ test("popup estruturado do botão reabre no editor dedicado com os blocos salvos
         { id: "popup-paragraph", kind: "paragraph", value: "Comentário atual do popup" }
       ];
     }
-    localStorage.setItem("aralearn_project_v1", JSON.stringify(snapshot));
+    return snapshot;
   });
+  await page.addInitScript((snapshot) => {
+    window.localStorage.setItem("aralearn_project_v1", JSON.stringify(snapshot));
+  }, updatedSnapshot);
   await page.reload();
 
   await openFirstCourse(page);
@@ -349,6 +377,11 @@ test("opções com resultado persistem no JSON e trocam o painel inferior pela o
   await advanceStep(page);
 
   const runtimeBlock = page.locator(".lesson-card .simulator-exercise").first();
+  await expect(runtimeBlock.locator(".token-option.active")).toHaveCount(0);
+  await expect(runtimeBlock.locator(".simulator-template")).not.toContainText("+");
+  await expect(runtimeBlock.locator(".simulator-output")).toContainText("Sem resultado.");
+
+  await runtimeBlock.locator('.token-option:has-text("+")').click();
   await expect(runtimeBlock.locator(".token-option.active")).toHaveText("+");
   await expect(runtimeBlock.locator(".simulator-template")).toContainText("+");
   await expect(runtimeBlock.locator(".simulator-output")).toContainText("48");

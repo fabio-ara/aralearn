@@ -5,7 +5,7 @@ AraLearn é um motor local de aprendizagem em cards, com autoria visual, persist
 O projeto agora combina três frentes:
 
 - motor do app em `app.js`, `styles.css`, `index.html` e `modules/`;
-- curso hardcoded separado em `content/`;
+- catálogo hardcoded separado em `content/`;
 - importação/exportação por pacotes `.zip` com mesclagem incremental.
 
 ## Estrutura principal
@@ -13,26 +13,32 @@ O projeto agora combina três frentes:
 - `index.html`: entrada da versão web
 - `app.js`: estado, renderização, autoria, importação/exportação e persistência
 - `modules/`: utilitários de conteúdo, progresso, arquivos e fluxograma
-- `content/matematica-para-informatica.json`: fonte do curso hardcoded atual
+- `content/*.json`: fontes dos cursos embarcados
 - `content/hardcoded-content.js`: arquivo runtime gerado para o boot local
 - `examples/python-getting-started.zip`: pacote de exemplo para importação manual
+- `examples/html-css-javascript-node-do-zero.json`: curso extenso de fundamentos web em JSON
+- `examples/html-css-javascript-node-do-zero.zip`: pacote importável do mesmo curso
+- `scripts/build-web-course-example.mjs`: gerador do exemplo grande de fundamentos web
 - `manual.md`: documentação oficial do produto
 
-## Curso hardcoded
+## Cursos embarcados
 
-O app sobe com um curso-padrão embarcado, mas esse hardcoded fica separado do motor.
+O app sobe com um catálogo de cursos embarcados separado do motor.
 
 Regras práticas:
 
-- o JSON-fonte fica em `content/`;
+- cada JSON em `content/` pode contribuir com um ou mais cursos;
 - o app consome `content/hardcoded-content.js` para continuar funcionando ao abrir `index.html` diretamente;
-- o armazenamento local do usuário continua soberano: se ele editar esse curso no app, a versão local prevalece;
+- o armazenamento local do usuário continua soberano: se ele editar um desses cursos no app, a versão local prevalece;
 - em novos boots, o hardcoded só complementa o que ainda não existir.
 
-Para trocar o hardcoded:
+Catálogo embarcado atual:
 
-1. deixe apenas um `.json` dentro de `content/`;
-2. rode:
+- `content/matematica-para-informatica.json`
+- `content/logica-de-programacao-i.json`
+- `content/praticas-e-ferramentas-de-desenvolvimento-de-software.json`
+
+Depois de editar os JSONs-fonte, rode:
 
 ```powershell
 npm run build:hardcoded-content
@@ -61,6 +67,16 @@ Na mesclagem, o app preserva o que já existe e adiciona apenas cursos, módulos
 ### Web
 
 Abra `index.html` no Chrome ou rode um servidor estático local.
+
+### GitHub Pages
+
+O repositório já inclui workflow para publicar a versão web a partir da branch `main`.
+
+Se o Pages estiver habilitado no repositório `fabio-ara/aralearn`, a URL esperada é:
+
+```text
+https://fabio-ara.github.io/aralearn/
+```
 
 ### Instalação e testes
 

@@ -1842,23 +1842,140 @@
     return '<pre class="terminal-box">' + renderTerminalRichText(text) + "</pre>";
   }
 
-  // Sanitiza um fragmento inline preservando quebras nas bordas, usadas antes/depois de lacunas.
-  function renderInlineRichTextFragment(text) {
+  // Decodifica uma unica camada de entidades HTML usadas em sintaxe literal.
+  function decodeTerminalLiteralEntities(text) {
+    return String(text || "")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;|&#x27;/gi, "'")
+      .replace(/&#96;/gi, "`")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&");
+  }
+
+  // Lê entidades HTML no texto do terminal sem tratar tags reais como markup estrutural.
+  function consumeTerminalEntity(source, index) {
+    const rest = source.slice(index);
+    const entities = [
+      ["&lt;", "<"],
+      ["&gt;", ">"],
+      ["&quot;", '"'],
+      ["&#39;", "'"],
+      ["&#x27;", "'"],
+      ["&#96;", "`"],
+      ["&nbsp;", " "],
+      ["&amp;", "&"]
+    ];
+
+    for (const entry of entities) {
+      const token = entry[0];
+      if (rest.slice(0, token.length).toLowerCase() === token.toLowerCase()) {
+        return { length: token.length, value: entry[1] };
+      }
+    }
+
+    return null;
+  }
+
+  // Preserva apenas markup inline aprovado; o resto aparece como codigo literal visivel.
+  function consumeAllowedTerminalInlineTag(source, index, tagState) {
+    const rest = source.slice(index);
+
+    let match = rest.match(/^<br\s*\/?>/i);
+    if (match) return { length: match[0].length, html: "<br>" };
+
+    match = rest.match(/^<(strong|b)>/i);
+    if (match) {
+      tagState.strong += 1;
+      return { length: match[0].length, html: "<strong>" };
+    }
+
+    match = rest.match(/^<\/(strong|b)>/i);
+    if (match && tagState.strong > 0) {
+      tagState.strong -= 1;
+      return { length: match[0].length, html: "</strong>" };
+    }
+
+    match = rest.match(/^<(em|i)>/i);
+    if (match) {
+      tagState.em += 1;
+      return { length: match[0].length, html: "<em>" };
+    }
+
+    match = rest.match(/^<\/(em|i)>/i);
+    if (match && tagState.em > 0) {
+      tagState.em -= 1;
+      return { length: match[0].length, html: "</em>" };
+    }
+
+    match = rest.match(/^<span class="(inline-tone-gold|inline-tone-mint|inline-tone-coral|inline-tone-blue|inline-tone-red)">/i);
+    if (match) {
+      const toneClass = String(match[1] || "").toLowerCase();
+      tagState.spans += 1;
+      return { length: match[0].length, html: '<span class="' + toneClass + '">' };
+    }
+
+    match = rest.match(/^<\/span>/i);
+    if (match && tagState.spans > 0) {
+      tagState.spans -= 1;
+      return { length: match[0].length, html: "</span>" };
+    }
+
+    return null;
+  }
+
+  // Renderiza terminal/editor exibindo sintaxe literal e preservando so o inline aprovado.
+  function renderTerminalLiteralRichText(text) {
     const source = String(text || "").replace(/\r/g, "");
-    const leadingBreaks = (source.match(/^\n+/) || [""])[0].length;
-    const trailingBreaks = (source.match(/\n+$/) || [""])[0].length;
-    const safe = sanitizeInlineRichText(source.replace(/\n/g, "<br>"));
-    return "<br>".repeat(leadingBreaks) + safe + "<br>".repeat(trailingBreaks);
+    const tagState = { strong: 0, em: 0, spans: 0 };
+    let html = "";
+    let index = 0;
+
+    while (index < source.length) {
+      const allowedTag = consumeAllowedTerminalInlineTag(source, index, tagState);
+      if (allowedTag) {
+        html += allowedTag.html;
+        index += allowedTag.length;
+        continue;
+      }
+
+      const entity = consumeTerminalEntity(source, index);
+      if (entity) {
+        html += esc(entity.value);
+        index += entity.length;
+        continue;
+      }
+
+      const char = source[index];
+      if (char === "\n") {
+        html += "<br>";
+      } else {
+        html += esc(char);
+      }
+      index += 1;
+    }
+
+    let previous = "";
+    while (previous !== html) {
+      previous = html;
+      html = html
+        .replace(/<strong><\/strong>/g, "")
+        .replace(/<em><\/em>/g, "")
+        .replace(/<span class="(?:inline-tone-gold|inline-tone-mint|inline-tone-coral|inline-tone-blue|inline-tone-red)"><\/span>/g, "");
+    }
+
+    return html;
   }
 
   // Sanitiza texto do Editor/terminal preservando apenas formatação inline aprovada e quebras.
   function renderTerminalRichText(text) {
-    return renderInlineRichTextFragment(text);
+    return renderTerminalLiteralRichText(text);
   }
 
-  // Sanitiza um segmento textual do template rico preservando apenas markup inline permitido.
+  // Projeta cada trecho do template autoral com o mesmo renderer literal do runtime.
   function renderTemplateSegmentRichText(text) {
-    return renderInlineRichTextFragment(text);
+    return renderTerminalRichText(text);
   }
 
   // Define como a lacuna aparece para o autor conforme o tipo de bloco e o modo de interação.
@@ -1914,6 +2031,38 @@
   }
 
   // Serializa o HTML do template autoral de volta para o formato salvo com [[...]].
+  const LITERAL_HTML_VOID_TAGS = {
+    area: true,
+    base: true,
+    col: true,
+    embed: true,
+    hr: true,
+    img: true,
+    input: true,
+    link: true,
+    meta: true,
+    param: true,
+    source: true,
+    track: true,
+    wbr: true
+  };
+
+  function serializeAuthorLiteralElement(node, inner) {
+    const tag = String((node && node.tagName) || "").toLowerCase();
+    if (!tag) return inner;
+    const attrs = Array.from((node && node.attributes) || [])
+      .filter(function (attr) {
+        const name = String((attr && attr.name) || "").toLowerCase();
+        return name && name !== "data-template-placeholder" && name !== "contenteditable";
+      })
+      .map(function (attr) {
+        return " " + String(attr.name || "").toLowerCase() + '="' + escAttr(String(attr.value || "")) + '"';
+      })
+      .join("");
+    if (LITERAL_HTML_VOID_TAGS[tag]) return "<" + tag + attrs + ">";
+    return "<" + tag + attrs + ">" + inner + "</" + tag + ">";
+  }
+
   function serializeAuthorTemplateNode(node) {
     if (!node) return "";
     if (node.nodeType === 3) return String(node.textContent || "");
@@ -1932,10 +2081,11 @@
       const toneClass = Array.from(node.classList || []).find(function (className) {
         return INLINE_TONE_CLASSES.indexOf(className) > -1;
       });
-      return toneClass ? '<span class="' + toneClass + '">' + inner + "</span>" : inner;
+      if (toneClass) return '<span class="' + toneClass + '">' + inner + "</span>";
+      return serializeAuthorLiteralElement(node, inner);
     }
     if (tag === "p" || tag === "div" || tag === "li") return inner + "\n";
-    return inner;
+    return serializeAuthorLiteralElement(node, inner);
   }
 
   // Serializa o contêiner rico de template autoral.
@@ -1944,8 +2094,7 @@
       .map(serializeAuthorTemplateNode)
       .join("")
       .replace(/\r/g, "")
-      .replace(/\u00a0/g, " ")
-      .replace(/\n{3,}/g, "\n\n");
+      .replace(/\u00a0/g, " ");
   }
 
   // Regras visuais do campo rico de template por tipo de bloco.
@@ -2637,16 +2786,13 @@
       return !!String(option.value || "").trim();
     });
     if (!state.tokenByStepId[key]) {
-      state.tokenByStepId[key] = { selected: options[0] ? options[0].id : null };
+      state.tokenByStepId[key] = { selected: null };
     }
 
     const current = state.tokenByStepId[key];
     const validIds = options.map(function (option) { return option.id; });
     if (current.selected && validIds.indexOf(current.selected) === -1) {
-      current.selected = options[0] ? options[0].id : null;
-    }
-    if (!current.selected && options[0]) {
-      current.selected = options[0].id;
+      current.selected = null;
     }
     return current;
   }
@@ -2688,7 +2834,7 @@
     const exercise = getSimulatorState(step, normalized);
     const selectedOption = normalized.options.find(function (option) {
       return option.id === exercise.selected;
-    }) || normalized.options[0] || null;
+    }) || null;
 
     const templateHtml = parseTerminalTemplate(normalized.value || "").parts
       .map(function (part) {
@@ -3274,7 +3420,7 @@
       const before = source.slice(last, match.index);
       if (before) parts.push({ type: "text", value: before });
 
-      const answer = inlineRichTextToPlainText(String(match[1] || "")).trim();
+      const answer = decodeTerminalLiteralEntities(String(match[1] || ""));
       answers.push(answer);
       parts.push({ type: "slot", index: answers.length - 1 });
 
@@ -3303,7 +3449,8 @@
     const requiredCountByValue = Object.create(null);
 
     orderedList.forEach(function (item) {
-      const value = typeof item === "string" ? item : String(item && item.value ? item.value : "");
+      const rawValue = typeof item === "string" ? item : String(item && item.value ? item.value : "");
+      const value = decodeTerminalLiteralEntities(rawValue);
       if (!value) return;
       merged.push(value);
       availableCountByValue[value] = (availableCountByValue[value] || 0) + 1;
@@ -3419,7 +3566,7 @@
     let markers = parseOptionMarkers(block.value);
 
     markers.forEach(function (marker, markerIndex) {
-      const plainMarkerValue = inlineRichTextToPlainText(String(marker.value || ""));
+      const plainMarkerValue = decodeTerminalLiteralEntities(String(marker.value || ""));
       if (plainMarkerValue !== String(marker.value || "")) {
         block.value = replaceMarkerAtIndex(block.value, markerIndex, plainMarkerValue);
       }
@@ -3765,7 +3912,8 @@
   function mergeFlowchartNodeShapeOptions(node) {
     const merged = normalizeFlowchartNodeShapeOptions(node && node.shapeOptions, node && node.shape);
     const current = normalizeFlowchartShapeKey(node && node.shape);
-    if (merged.indexOf(current) === -1) merged.unshift(current);
+    // Mantém a opção correta disponível sem entregá-la automaticamente na primeira posição.
+    if (merged.indexOf(current) === -1) merged.push(current);
     return merged;
   }
 
@@ -3775,7 +3923,7 @@
       .map(function (option) { return option.value; })
       .filter(Boolean);
     const current = String(node && node.text ? node.text : "").trim();
-    if (current && merged.indexOf(current) === -1) merged.unshift(current);
+    if (current && merged.indexOf(current) === -1) merged.push(current);
     return merged;
   }
 
@@ -4782,7 +4930,7 @@
             .map(function (option, index) {
               const serialized = {
                 id: option.id || uid("opt"),
-                value: String(option.value || "").trim(),
+                value: String(option.value || ""),
                 enabled: option.enabled !== false,
                 displayOrder: Number.isFinite(Number(option.displayOrder)) ? Number(option.displayOrder) : 0,
                 slotOrder: Number.isFinite(Number(option.slotOrder)) ? Number(option.slotOrder) : index
@@ -4791,7 +4939,7 @@
                 .map(function (variant) {
                   return {
                     id: variant.id || uid("variant"),
-                    value: String(variant.value || "").trim(),
+                    value: String(variant.value || ""),
                     regex: !!variant.regex
                   };
                 })
@@ -8308,8 +8456,11 @@
   function getTerminalExerciseState(step, block, slotCount) {
     const key = terminalExerciseKey(step.id, block.id);
     if (!state.tokenByStepId[key]) {
-      state.tokenByStepId[key] = { slots: Array(slotCount).fill(null), feedback: null, activeSlot: null };
-      return state.tokenByStepId[key];
+      state.tokenByStepId[key] = {
+        slots: Array(slotCount).fill(null),
+        feedback: null,
+        activeSlot: slotCount > 0 ? 0 : null
+      };
     }
 
     const current = state.tokenByStepId[key];
@@ -8321,8 +8472,18 @@
       });
       current.slots = next;
     }
-    if (!Number.isInteger(current.activeSlot) || current.activeSlot < 0 || current.activeSlot >= slotCount) {
+    const firstEmptySlot = getFirstEmptyTerminalSlotIndex(current.slots);
+    if (firstEmptySlot === -1) {
       current.activeSlot = null;
+      return current;
+    }
+    if (
+      !Number.isInteger(current.activeSlot) ||
+      current.activeSlot < 0 ||
+      current.activeSlot >= slotCount ||
+      !isTerminalSlotEmpty(current.slots[current.activeSlot])
+    ) {
+      current.activeSlot = firstEmptySlot;
     }
     return current;
   }
@@ -8350,7 +8511,7 @@
       })
       .map(function (option) {
         return [{
-          value: String(option.value || ""),
+          value: decodeTerminalLiteralEntities(String(option.value || "")),
           regex: !!option.regex
         }].concat(
           normalizeEditorInputVariantsForAuthor(option.variants)
@@ -8359,7 +8520,7 @@
             })
             .map(function (variant) {
               return {
-                value: String(variant.value || ""),
+                value: decodeTerminalLiteralEntities(String(variant.value || "")),
                 regex: !!variant.regex
               };
             })
@@ -8370,9 +8531,20 @@
   // Lista lacunas vazias, preservando a ordem visual do template.
   function getEmptyTerminalSlotIndexes(slots) {
     return (Array.isArray(slots) ? slots : []).reduce(function (acc, value, index) {
-      if (value === null || value === undefined || String(value) === "") acc.push(index);
+      if (isTerminalSlotEmpty(value)) acc.push(index);
       return acc;
     }, []);
+  }
+
+  // Indica se a lacuna do terminal ainda está vazia.
+  function isTerminalSlotEmpty(value) {
+    return value === null || value === undefined || String(value) === "";
+  }
+
+  // Retorna a primeira lacuna vazia na ordem visual do template.
+  function getFirstEmptyTerminalSlotIndex(slots) {
+    const emptyIndexes = getEmptyTerminalSlotIndexes(slots);
+    return emptyIndexes.length ? emptyIndexes[0] : -1;
   }
 
   // Resolve qual lacuna do modo choice deve receber a opção clicada.
@@ -8384,20 +8556,12 @@
       Number.isInteger(activeSlot) &&
       activeSlot >= 0 &&
       activeSlot < slots.length &&
-      (slots[activeSlot] === null || slots[activeSlot] === undefined || String(slots[activeSlot]) === "")
+      isTerminalSlotEmpty(slots[activeSlot])
     ) {
       return activeSlot;
     }
 
-    const emptyIndexes = getEmptyTerminalSlotIndexes(slots);
-    if (!emptyIndexes.length) return -1;
-
-    const exactMatches = emptyIndexes.filter(function (index) {
-      return String(entry.parsed.answers[index] || "") === String(value || "");
-    });
-    if (exactMatches.length) return exactMatches[0];
-
-    return emptyIndexes[0];
+    return getFirstEmptyTerminalSlotIndex(slots);
   }
 
   // Seleciona opção no exercicio de terminal.
@@ -8410,7 +8574,7 @@
 
     entry.exercise.slots[targetIndex] = value;
     entry.exercise.feedback = null;
-    entry.exercise.activeSlot = null;
+    entry.exercise.activeSlot = getFirstEmptyTerminalSlotIndex(entry.exercise.slots);
     renderApp();
   }
 
@@ -8430,8 +8594,8 @@
     if (!entry) return;
     if (!Number.isInteger(index) || index < 0 || index >= entry.exercise.slots.length) return;
     const currentValue = entry.exercise.slots[index];
-    if (currentValue === null || currentValue === undefined || String(currentValue) === "") {
-      entry.exercise.activeSlot = entry.exercise.activeSlot === index ? null : index;
+    if (isTerminalSlotEmpty(currentValue)) {
+      entry.exercise.activeSlot = index;
       entry.exercise.feedback = null;
       renderApp();
       return;
@@ -8450,7 +8614,7 @@
 
     entry.exercise.slots = Array(entry.parsed.answers.length).fill(null);
     entry.exercise.feedback = null;
-    entry.exercise.activeSlot = null;
+    entry.exercise.activeSlot = getFirstEmptyTerminalSlotIndex(entry.exercise.slots);
     renderApp();
   }
 
@@ -9366,13 +9530,22 @@
     });
   }
 
+  function parseJsonBytes(bytes, sourceLabel) {
+    try {
+      return JSON.parse(utf8Decode(bytes));
+    } catch (_error) {
+      const label = String(sourceLabel || "o arquivo importado");
+      throw new Error("JSON inválido em " + label + ".");
+    }
+  }
+
   function parsePackageBytes(bytes, fileName) {
     const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
     const lowerName = String(fileName || "").toLowerCase();
     const looksLikeZip = lowerName.endsWith(".zip") || isZipBytes(source);
     return looksLikeZip
       ? parseProjectZip(source)
-      : normalizeImportedPackagePayload(JSON.parse(utf8Decode(source)), {});
+      : normalizeImportedPackagePayload(parseJsonBytes(source, fileName || "o arquivo importado"), {});
   }
 
   async function parsePackageFile(file) {
@@ -9473,57 +9646,84 @@
     return picked;
   }
 
+  function collectImportedPackageAssetPaths(imported) {
+    if (!imported) return [];
+    if (imported.scope === "app") return collectContentAssetPaths(imported.content, null);
+    if (imported.scope === "course") return collectCourseAssetPaths(imported.course, null);
+    if (imported.scope === "module") return collectModuleAssetPaths(imported.module, null);
+    if (imported.scope === "lesson") return collectLessonAssetPaths(imported.lesson, null);
+    return [];
+  }
+
+  function validateImportedPackageAssets(imported) {
+    const assetStore = normalizeAssetStore(imported && imported.assets);
+    const missing = collectImportedPackageAssetPaths(imported).filter(function (path) {
+      return !assetStore[path];
+    });
+    if (!missing.length) return;
+    throw new Error('Pacote inválido. Asset ausente: "' + missing[0] + '".');
+  }
+
   // Converte o JSON importado em um pacote interno normalizado, independente do escopo.
   function normalizeImportedPackagePayload(parsed, extractedAssets) {
     const scope = detectPackageScope(parsed);
-    if (!scope) throw new Error("Arquivo inválido. O pacote não informa se é app, curso, módulo ou lição.");
+    if (!scope) throw new Error("Estrutura do pacote inválida. O arquivo não informa se é app, curso, módulo ou lição.");
 
     const progress = normalizeImportedProgress(parsed && parsed.progress);
     const assets = normalizeImportedPackageAssets(parsed && parsed.assets, extractedAssets);
+    let imported = null;
 
     if (scope === "app") {
-      return {
+      imported = {
         scope: "app",
         content: normalizeContent(parsed),
         progress: progress,
         assets: assets,
         packageMeta: parsed && parsed.packageMeta ? parsed.packageMeta : {}
       };
+      validateImportedPackageAssets(imported);
+      return imported;
     }
 
     if (scope === "course") {
       const course = normalizeCourse(parsed && parsed.course);
-      if (!course) throw new Error("Pacote de curso inválido.");
-      return {
+      if (!course) throw new Error('Estrutura do pacote inválida: campo "course" ausente ou inválido.');
+      imported = {
         scope: "course",
         course: course,
         progress: progress,
         assets: assets,
         packageMeta: parsed && parsed.packageMeta ? parsed.packageMeta : {}
       };
+      validateImportedPackageAssets(imported);
+      return imported;
     }
 
     if (scope === "module") {
       const moduleItem = normalizeModule(parsed && parsed.module);
-      if (!moduleItem) throw new Error("Pacote de módulo inválido.");
-      return {
+      if (!moduleItem) throw new Error('Estrutura do pacote inválida: campo "module" ausente ou inválido.');
+      imported = {
         scope: "module",
         module: moduleItem,
         progress: progress,
         assets: assets,
         packageMeta: parsed && parsed.packageMeta ? parsed.packageMeta : {}
       };
+      validateImportedPackageAssets(imported);
+      return imported;
     }
 
     const lesson = normalizeLesson(parsed && parsed.lesson);
-    if (!lesson) throw new Error("Pacote de lição inválido.");
-    return {
+    if (!lesson) throw new Error('Estrutura do pacote inválida: campo "lesson" ausente ou inválido.');
+    imported = {
       scope: "lesson",
       lesson: lesson,
       progress: progress,
       assets: assets,
       packageMeta: parsed && parsed.packageMeta ? parsed.packageMeta : {}
     };
+    validateImportedPackageAssets(imported);
+    return imported;
   }
 
   function createImportMergeSummary() {
@@ -10571,11 +10771,11 @@
     const jsonEntry =
       byPath[PROJECT_PACKAGE_JSON_FILE_NAME] ||
       entries.find(function (entry) {
-        return entry.path.toLowerCase().endsWith(".json");
+        return entry.path.toLowerCase() === PROJECT_PACKAGE_JSON_FILE_NAME;
       });
-    if (!jsonEntry) throw new Error("JSON principal não encontrado no ZIP.");
+    if (!jsonEntry) throw new Error("ZIP válido, mas faltou o arquivo project.json.");
 
-    const parsed = JSON.parse(utf8Decode(jsonEntry.bytes));
+    const parsed = parseJsonBytes(jsonEntry.bytes, jsonEntry.path || PROJECT_PACKAGE_JSON_FILE_NAME);
     const assets = {};
     entries.forEach(function (entry) {
       if (!/^assets\/images\//i.test(entry.path)) return;

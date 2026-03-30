@@ -4,6 +4,17 @@
   function createFileHelpers() {
     let crc32Table = null;
 
+    function buildZipError(code, message, extras) {
+      const error = new Error(message);
+      error.code = code;
+      if (extras && typeof extras === "object") {
+        Object.keys(extras).forEach(function (key) {
+          error[key] = extras[key];
+        });
+      }
+      return error;
+    }
+
     // Codifica texto UTF-8 em bytes.
     function utf8Encode(text) {
       if (typeof TextEncoder !== "undefined") {
@@ -62,12 +73,18 @@
     // Converte Data URL em bytes + MIME.
     function dataUrlToBytes(dataUrl) {
       const text = String(dataUrl || "");
-      const match = text.match(/^data:([^;,]+)?((?:;[^;,=]+=[^;,=]+)*)(;base64)?,(.*)$/i);
-      if (!match) return null;
+      if (!/^data:/i.test(text)) return null;
 
-      const mime = (match[1] || "application/octet-stream").toLowerCase();
-      const isBase64 = !!match[3];
-      const payload = match[4] || "";
+      const commaIndex = text.indexOf(",");
+      if (commaIndex < 0) return null;
+
+      const header = text.slice(5, commaIndex);
+      const payload = text.slice(commaIndex + 1);
+      const headerParts = header.split(";");
+      const mime = String(headerParts.shift() || "application/octet-stream").toLowerCase();
+      const isBase64 = headerParts.some(function (part) {
+        return String(part || "").toLowerCase() === "base64";
+      });
 
       if (isBase64) {
         const binary = global.atob(payload);
@@ -354,10 +371,29 @@
       return concatBytes(localParts.concat(centralParts, [endHeader]), totalLength);
     }
 
-    // Faz parse de ZIP simples (store, sem compressao).
-    function parseZip(zipBytes) {
+    function getZipRuntime() {
+      const runtime = global && global.fflate;
+      return runtime && typeof runtime.unzipSync === "function" ? runtime : null;
+    }
+
+    function mapZipRuntimeError(error) {
+      const message = String((error && error.message) || "");
+      const unsupportedMatch = message.match(/unknown compression type\s+(\d+)/i);
+      if ((error && error.code === 14) || unsupportedMatch) {
+        const suffix = unsupportedMatch ? " (método " + unsupportedMatch[1] + ")." : ".";
+        return buildZipError(
+          "zip_unsupported_compression",
+          "ZIP usa um método de compressão não suportado pelo importador" + suffix,
+          { cause: error }
+        );
+      }
+      return buildZipError("zip_invalid", "ZIP inválido ou corrompido.", { cause: error });
+    }
+
+    // Faz parse do ZIP com fallback store-only quando nenhum runtime robusto estiver carregado.
+    function parseZipStoredOnly(zipBytes) {
       const bytes = zipBytes instanceof Uint8Array ? zipBytes : new Uint8Array(zipBytes || []);
-      if (bytes.length < 22) throw new Error("ZIP inválido (arquivo muito pequeno).");
+      if (bytes.length < 22) throw buildZipError("zip_invalid", "ZIP inválido ou corrompido.");
 
       const minOffset = Math.max(0, bytes.length - 65557);
       let eocdOffset = -1;
@@ -372,19 +408,19 @@
           break;
         }
       }
-      if (eocdOffset < 0) throw new Error("ZIP inválido (EOCD não encontrado).");
+      if (eocdOffset < 0) throw buildZipError("zip_invalid", "ZIP inválido ou corrompido.");
 
       const totalEntries = readUInt16(bytes, eocdOffset + 10);
       const centralOffset = readUInt32(bytes, eocdOffset + 16);
-      if (centralOffset >= bytes.length) throw new Error("ZIP inválido (offset de diretório central).");
+      if (centralOffset >= bytes.length) throw buildZipError("zip_invalid", "ZIP inválido ou corrompido.");
 
       let cursor = centralOffset;
       const entries = [];
 
       for (let index = 0; index < totalEntries; index += 1) {
-        if (cursor + 46 > bytes.length) throw new Error("ZIP inválido (cabeçalho central truncado).");
+        if (cursor + 46 > bytes.length) throw buildZipError("zip_invalid", "ZIP inválido ou corrompido.");
         const signature = readUInt32(bytes, cursor);
-        if (signature !== 0x02014b50) throw new Error("ZIP inválido (assinatura central inesperada).");
+        if (signature !== 0x02014b50) throw buildZipError("zip_invalid", "ZIP inválido ou corrompido.");
 
         const compression = readUInt16(bytes, cursor + 10);
         const compressedSize = readUInt32(bytes, cursor + 20);
@@ -395,25 +431,31 @@
 
         const nameStart = cursor + 46;
         const nameEnd = nameStart + fileNameLen;
-        if (nameEnd > bytes.length) throw new Error("ZIP inválido (nome de arquivo truncado).");
+        if (nameEnd > bytes.length) throw buildZipError("zip_invalid", "ZIP inválido ou corrompido.");
         const path = normalizeZipPath(utf8Decode(bytes.subarray(nameStart, nameEnd)));
 
         cursor = nameEnd + extraLen + commentLen;
 
-        if (localOffset + 30 > bytes.length) throw new Error("ZIP inválido (cabeçalho local truncado).");
+        if (localOffset + 30 > bytes.length) throw buildZipError("zip_invalid", "ZIP inválido ou corrompido.");
         if (readUInt32(bytes, localOffset) !== 0x04034b50) {
-          throw new Error("ZIP inválido (assinatura local inesperada).");
+          throw buildZipError("zip_invalid", "ZIP inválido ou corrompido.");
         }
 
         const localNameLen = readUInt16(bytes, localOffset + 26);
         const localExtraLen = readUInt16(bytes, localOffset + 28);
         const dataStart = localOffset + 30 + localNameLen + localExtraLen;
         const dataEnd = dataStart + compressedSize;
-        if (dataEnd > bytes.length) throw new Error("ZIP inválido (dados de arquivo truncados).");
+        if (dataEnd > bytes.length) throw buildZipError("zip_invalid", "ZIP inválido ou corrompido.");
 
         if (compression !== 0) {
-          throw new Error("ZIP com compressão não suportada. Use o ZIP exportado pelo app.");
+          throw buildZipError(
+            "zip_unsupported_compression",
+            "ZIP usa um método de compressão não suportado pelo importador (método " + compression + ").",
+            { compressionMethod: compression }
+          );
         }
+
+        if (!path || /\/$/.test(path)) continue;
 
         entries.push({
           path: path,
@@ -422,6 +464,35 @@
       }
 
       return entries;
+    }
+
+    function parseZipWithRuntime(zipBytes) {
+      const runtime = getZipRuntime();
+      if (!runtime) return parseZipStoredOnly(zipBytes);
+
+      try {
+        const source = zipBytes instanceof Uint8Array ? zipBytes : new Uint8Array(zipBytes || []);
+        const files = runtime.unzipSync(source);
+        const entries = [];
+        Object.keys(files || {}).forEach(function (rawPath) {
+          const path = normalizeZipPath(rawPath);
+          if (!path || /\/$/.test(path)) return;
+          const fileBytes = files[rawPath] instanceof Uint8Array
+            ? files[rawPath]
+            : new Uint8Array(files[rawPath] || []);
+          entries.push({
+            path: path,
+            bytes: new Uint8Array(fileBytes)
+          });
+        });
+        return entries;
+      } catch (error) {
+        throw mapZipRuntimeError(error);
+      }
+    }
+
+    function parseZip(zipBytes) {
+      return parseZipWithRuntime(zipBytes);
     }
 
     return {
