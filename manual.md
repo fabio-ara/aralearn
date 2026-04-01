@@ -207,6 +207,9 @@ Consequências:
 Regras mínimas para o hardcoded oficial:
 
 - card de prática precisa ser autossuficiente no próprio step, sem depender do card anterior para contexto essencial;
+- em prática com `table`, o próprio step precisa mostrar os casos, símbolos e valores de apoio necessários para resolver a grade; evite depender de rótulos como `Linha`, `linha 2` ou de uma tabela mostrada só em card anterior;
+- em conteúdo de lógica com tabela-verdade, prefira nomear `casos`, `combinações` e leituras como `VV`, `VF`, `FV` e `FF`, em vez de apoiar a explicação em numeração de linhas;
+- em exercícios de `table`, prefira lacunas atômicas por célula quando o objetivo didático for treinar um passo de raciocínio de cada vez;
 - texto visível ao estudante não deve expor bastidor editorial como "o curso quer", "a lição quer", "blueprint", "formato mobile" ou comentários sobre adaptação ao app;
 - texto visível ao estudante também não deve depender de frases genéricas de sequenciamento autoral, como "nos próximos cards", "use este checklist" ou "objetivo deste card";
 - texto visível ao estudante também não deve falar sobre a própria mecânica didática com expressões como "no próprio card", "esta lição", "neste curso", "o app como motor" ou equivalentes, exceto quando o termo fizer parte do conteúdo técnico real, como `app.js`;
@@ -267,6 +270,13 @@ Bloco:
   popupEnabled opcional
   popupBlocks[] opcional
 ```
+
+Em `table`, cada célula de `headers[]` e `rows[][]` também pode trazer:
+
+- `blank` opcional;
+- `interactionMode` opcional (`choice` ou `input`);
+- `placeholder` opcional;
+- `options[]` opcional para lacunas por escolha.
 
 Regras complementares:
 
@@ -434,8 +444,10 @@ Critério visual explícito:
 - aceita título opcional, cabeçalhos e linhas;
 - o bloco nasce vazio, mas sempre preserva uma tabela mínima intuitiva com um cabeçalho e uma célula;
 - a autoria da tabela acontece em uma grade direta, com digitação dentro das próprias células;
+- cada célula pode alternar entre `Texto` e `Lacuna` sem deixar de usar a mesma grade de edição;
 - o campo de título não usa label auxiliar;
 - quando o foco está no título da tabela, a mesma barra de formatação da grade passa a agir sobre ele;
+- quando o foco está numa célula, a configuração de lacuna aparece logo abaixo da grade e segue o mesmo idioma visual dos demais contêineres com `Opções` e `Digitação`;
 - adicionar coluna e linha acontece na própria grade: a extrema direita expõe `+` para nova coluna e a última linha expõe `+` para nova linha;
 - remover coluna e linha continua embutido na grade por `×`;
 - o título da tabela usa o mesmo JSON de apresentação das células e também persiste alinhamento;
@@ -443,6 +455,8 @@ Critério visual explícito:
 - cabeçalhos nascem em negrito por padrão, mas cada célula pode ajustar negrito, itálico, cor e alinhamento de forma individual;
 - os controles de alinhamento da tabela devem refletir a célula ativa em tempo real, com ícones visuais de alinhamento em vez de letras;
 - o alinhamento padrão das células e do título da tabela é à esquerda;
+- uma mesma tabela pode misturar lacunas por `Opções` e por `Digitação` em células diferentes;
+- quando a tabela tiver ao menos uma lacuna, o runtime deve mostrar um guia curto indicando se o preenchimento usa `Opções`, `Digitação` ou ambos;
 - a grade do editor preserva colunas e células vazias durante a autoria, mas o JSON salvo continua limpo, sem sobra estrutural vazia no resultado final;
 - a coluna lateral de remover linha deve ocupar só a largura do próprio botão;
 - a largura de cada coluna editável deve seguir o maior texto presente nela, sem largura mínima inflada artificialmente;
@@ -553,7 +567,7 @@ Contrato por contêiner:
 - `heading`: `value` e `align` são a fonte de verdade; o runtime pode reaproveitar o primeiro `heading` preenchido como `step.title`, mas não inventa formatação inline nem subtítulo.
 - `paragraph`: `value` é o texto canônico; `richText` é a visualização rica equivalente. O motor pode derivar um a partir do outro quando não houver ambiguidade, mas não deve preservar `richText` que contradiga o texto canônico. Em `lesson_complete`, `paragraph.align` e `heading.align` devem vir como `center`.
 - `image`: `value` é o caminho lógico ou data URL resolvida; o runtime apenas carrega esse recurso e não deduz legenda, recorte ou contexto.
-- `table`: a ordem de `headers[]` e `rows[][]` é a ordem de renderização; não há ordenação automática. Estilo é por célula inteira, não por trecho interno, e a tabela não participa de validação de resposta.
+- `table`: a ordem de `headers[]` e `rows[][]` é a ordem de renderização; não há ordenação automática. Estilo é por célula inteira, não por trecho interno. Quando a célula traz `blank: true`, `value` continua sendo a resposta canônica daquela posição, `interactionMode: "choice"` usa `options[]` visíveis só para aquela célula e `interactionMode: "input"` libera digitação direta. Se não houver lacunas, a tabela continua apenas expositiva; se houver, ela participa da validação do card.
 - `simulator`: o template e a ordem de `options[]` definem a experiência. Existe exatamente uma lacuna estrutural e cada opção injeta seu `value` nela, mostrando `result` abaixo. O motor não "corrige" opções nem infere avaliação semântica, porque o bloco é de exploração, não de prova. O runtime não deve pré-selecionar automaticamente a primeira opção.
 - `editor`: o template em `value` e as opções habilitadas são a fonte de verdade. `value` persiste com quebras `\n`, preserva linhas vazias intermediárias e espaços iniciais de cada linha, e continua legível no JSON mesmo quando o preview usa chips para `[[...]]`. `slotOrder` define a ordem estrutural das lacunas corretas; `displayOrder` define apenas a ordem visual das fichas. Duplicatas são válidas e precisam continuar distintas. Em `choice`, o runtime preenche a lacuna atualmente selecionada e, por padrão, mantém selecionada a primeira lacuna vazia na ordem do template. Em `input`, variantes aceitas precisam estar declaradas; o runtime não inventa equivalências de código, fórmula ou comando. Exportação e importação precisam devolver exatamente o mesmo `value`, salvo a canonicalização de quebra para `\n`.
 - `multiple_choice`: a ordem do array é a ordem visível no runtime, porque o bloco não tem `displayOrder`. `answerState` define só o idioma visual do selecionado; quem define o conjunto esperado é `option.answer`. O motor não usa cor para "descobrir" resposta.
@@ -574,7 +588,8 @@ O que o motor não deve adivinhar:
 - alternativas corretas de `multiple_choice` a partir de aparência;
 - ordem canônica de lacunas a partir de `displayOrder`;
 - novos blocos didáticos, novos pré-requisitos ou novos conceitos não expressos no JSON;
-- comportamento de avaliação para `table`, `image`, `paragraph` ou `simulator`.
+- comportamento de avaliação para `image`, `paragraph` ou `simulator`;
+- respostas aceitas de lacunas de `table` além do `value` e das `options[]` explicitadas.
 
 ---
 
@@ -795,6 +810,12 @@ Validações obrigatórias:
 - `npm run test:e2e`
 - `pwsh -NoProfile -File ./scripts/validate.ps1`
 - build Android de debug dentro do fluxo completo
+
+Regras operacionais do E2E web:
+
+- o Playwright usa `http://127.0.0.1:4273` por padrão para não colidir com outros previews locais;
+- a porta pode ser sobrescrita com `ARALEARN_TEST_PORT`;
+- o reaproveitamento de servidor só é aceito quando `GET /healthz` devolver a assinatura do servidor de teste do app.
 
 Cobertura mínima esperada:
 

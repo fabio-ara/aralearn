@@ -9,8 +9,8 @@ const tutorialDir = path.join(rootDir, "trabalho", "tutorial");
 const projectInputPath = path.join(tutorialDir, "project_completo_auditado.json");
 const manifestInputPath = path.join(tutorialDir, "image_manifest_completo_auditado.json");
 const reportPath = path.join(tutorialDir, "CODEX_REPORT.md");
-const contentJsonPath = path.join(rootDir, "content", "programacao-web-basica.json");
-const contentZipPath = path.join(rootDir, "content", "programacao-web-basica.zip");
+const exampleJsonPath = path.join(rootDir, "examples", "programacao-web-basica.json");
+const exampleZipPath = path.join(rootDir, "examples", "programacao-web-basica.zip");
 
 const COLORS = {
   bg0: "#120f0c",
@@ -1201,8 +1201,8 @@ async function main() {
 
   await writeFile(projectInputPath, JSON.stringify(project, null, 2), "utf8");
   await writeFile(manifestInputPath, JSON.stringify(manifest, null, 2), "utf8");
-  await writeFile(contentJsonPath, JSON.stringify(contentJson, null, 2), "utf8");
-  await writeFile(contentZipPath, Buffer.from(zipBytes));
+  await writeFile(exampleJsonPath, JSON.stringify(contentJson, null, 2), "utf8");
+  await writeFile(exampleZipPath, Buffer.from(zipBytes));
 
   const report = [
     "# Relatório técnico",
@@ -1231,8 +1231,8 @@ async function main() {
     "",
     "## Saídas produzidas",
     "",
-    `- JSON embarcável: \`${path.relative(rootDir, contentJsonPath).replace(/\\/g, "/")}\`.`,
-    `- Pacote ZIP: \`${path.relative(rootDir, contentZipPath).replace(/\\/g, "/")}\`.`,
+    `- JSON de exemplo: \`${path.relative(rootDir, exampleJsonPath).replace(/\\/g, "/")}\`.`,
+    `- Pacote ZIP: \`${path.relative(rootDir, exampleZipPath).replace(/\\/g, "/")}\`.`,
     `- Fontes auditadas atualizadas: \`trabalho/tutorial/project_completo_auditado.json\` e \`trabalho/tutorial/image_manifest_completo_auditado.json\`.`,
     "",
     "## Totais do curso",
@@ -1250,8 +1250,8 @@ async function main() {
   console.log(`Manifesto atualizado em ${manifestInputPath}`);
   console.log(`Assets SVG gerados: ${manifest.length}`);
   console.log(`Assets usados no pacote: ${usedAssetPaths.size}`);
-  console.log(`JSON gravado em ${contentJsonPath}`);
-  console.log(`ZIP gravado em ${contentZipPath}`);
+  console.log(`JSON gravado em ${exampleJsonPath}`);
+  console.log(`ZIP gravado em ${exampleZipPath}`);
   console.log(`Relatório gravado em ${reportPath}`);
 }
 

@@ -219,6 +219,42 @@ test("salvar dentro do editor do popup mantém apenas o rascunho até o salvar d
   await expect(reopenedButtonBlock.locator("text=0 blocos")).toBeVisible();
 });
 
+test("editor da tabela mantém o foco na célula clicada e abre a configuração de lacuna abaixo da grade", async ({ page }) => {
+  await resetApp(page);
+  await openFirstCourse(page);
+  await openFirstLesson(page);
+  await insertStepAfter(page);
+
+  await page.locator('[data-action="palette-add"][data-block-type="table"]').click();
+  const tableBlock = page.locator('.builder-block[data-block-kind="table"]').first();
+  const titleInput = tableBlock.locator("[data-table-title]");
+  const headerInput = tableBlock.locator("[data-table-header-cell]").first();
+  const bodyInput = tableBlock.locator("[data-table-cell]").first();
+  const gridScroll = tableBlock.locator(".table-editor-scroll");
+
+  await titleInput.click();
+  await expect(titleInput).toBeFocused();
+
+  await headerInput.click();
+  await expect(headerInput).toBeFocused();
+  await expect(titleInput).not.toBeFocused();
+  await expect(tableBlock.locator(".table-cell-exercise-tools")).toBeVisible();
+  await expect(tableBlock.locator(".table-cell-exercise-tools")).toContainText("cabeçalho da coluna 1");
+
+  const headerMetrics = await Promise.all([
+    gridScroll.boundingBox(),
+    tableBlock.locator(".table-cell-exercise-tools").boundingBox()
+  ]);
+  expect(headerMetrics[0]).toBeTruthy();
+  expect(headerMetrics[1]).toBeTruthy();
+  expect((headerMetrics[1]?.y || 0)).toBeGreaterThanOrEqual((headerMetrics[0]?.y || 0) + (headerMetrics[0]?.height || 0) - 1);
+
+  await bodyInput.click();
+  await expect(bodyInput).toBeFocused();
+  await expect(titleInput).not.toBeFocused();
+  await expect(tableBlock.locator(".table-cell-exercise-tools")).toContainText("linha 1, coluna 1");
+});
+
 test("tabela, múltipla escolha e popup com blocos persistem e funcionam no fluxo da lição", async ({ page }) => {
   await resetApp(page);
   await openFirstCourse(page);
@@ -410,4 +446,84 @@ test("opções com resultado persistem no JSON e trocam o painel inferior pela o
   expect(block.options[1].value).toBe("-");
   expect(block.options[1].result).toBe("40");
   expect(block.value).not.toContain("quote");
+});
+
+test("tabela autoral pode virar exercício com lacunas por opção e digitação", async ({ page }) => {
+  await resetApp(page);
+  await openFirstCourse(page);
+  await openFirstLesson(page);
+  await insertStepAfter(page);
+
+  await page.locator('[data-action="palette-add"][data-block-type="table"]').click();
+  const tableBlock = page.locator('.builder-block[data-block-kind="table"]').first();
+
+  await tableBlock.locator("[data-table-title]").fill("Tabela verdade");
+  await tableBlock.locator("[data-table-header-cell]").nth(0).fill("Proposição");
+  await tableBlock.locator('[data-action="table-add-column"]').click();
+  await tableBlock.locator("[data-table-header-cell]").nth(1).fill("Valor");
+
+  const firstRow = tableBlock.locator("[data-table-body-row]").nth(0);
+  await firstRow.locator("[data-table-cell]").nth(0).fill("p");
+  await firstRow.locator("[data-table-cell]").nth(1).fill("V");
+  await firstRow.locator("[data-table-cell]").nth(1).click();
+  await tableBlock.locator('[data-table-cell-blank-mode][value="blank"]').check();
+  await expect(tableBlock.locator("[data-table-choice-option-input]")).toHaveCount(1);
+  await expect(tableBlock.locator("[data-table-choice-option-input]").nth(0)).toHaveValue("V");
+  await tableBlock.locator('[data-action="table-choice-add-option"]').click();
+  await tableBlock.locator("[data-table-choice-option-input]").nth(1).fill("F");
+
+  await tableBlock.locator('[data-action="table-add-row"]').click();
+  const secondRow = tableBlock.locator("[data-table-body-row]").nth(1);
+  await secondRow.locator("[data-table-cell]").nth(0).fill("q");
+  await secondRow.locator("[data-table-cell]").nth(1).fill("F");
+  await secondRow.locator("[data-table-cell]").nth(1).click();
+  await tableBlock.locator('[data-table-cell-blank-mode][value="blank"]').check();
+  await tableBlock.locator('[data-table-cell-interaction][value="input"]').check();
+  await tableBlock.locator("[data-table-cell-placeholder-input]").fill("Digite V ou F");
+
+  await saveEditor(page);
+
+  const snapshot = await page.evaluate(() => JSON.parse(localStorage.getItem("aralearn_project_v1") || "null"));
+  const customStep = snapshot.content.courses
+    .flatMap((course) => course.modules)
+    .flatMap((moduleItem) => moduleItem.lessons)
+    .flatMap((lesson) => lesson.steps)
+    .find((step) =>
+      Array.isArray(step.blocks) &&
+      step.blocks.some((block) => block.kind === "table" && block.title === "Tabela verdade")
+    );
+
+  expect(customStep).toBeTruthy();
+  const tableBlockJson = customStep.blocks.find((block) => block.kind === "table" && block.title === "Tabela verdade");
+  expect(tableBlockJson.rows[0][1].blank).toBe(true);
+  expect(tableBlockJson.rows[0][1].options.map((option) => option.value)).toEqual(["V", "F"]);
+  expect(tableBlockJson.rows[1][1].blank).toBe(true);
+  expect(tableBlockJson.rows[1][1].interactionMode).toBe("input");
+  expect(tableBlockJson.rows[1][1].placeholder).toBe("Digite V ou F");
+
+  await advanceStep(page);
+
+  const runtimeTable = page.locator(".lesson-card .table-block").filter({ hasText: "Tabela verdade" }).first();
+  await expect(runtimeTable).toBeVisible();
+  await expect(runtimeTable.locator(".table-exercise-guide")).toContainText("Opções");
+  await expect(runtimeTable.locator(".table-exercise-guide")).toContainText("Digitação");
+  await expect(runtimeTable.locator(".table-choice-slot")).toHaveCount(1);
+  await expect(runtimeTable.locator("[data-table-inline-input]")).toHaveCount(1);
+  await expect(runtimeTable.locator("[data-table-inline-input]")).toHaveAttribute("placeholder", "Digite V ou F");
+  await expect(runtimeTable.locator(".table-choice-panel .token-option")).toHaveCount(2);
+
+  await page.locator('[data-action="step-button-click"]').click();
+  await expect(runtimeTable.locator(".inline-feedback.err")).toContainText("Preencha todas as lacunas da tabela.");
+
+  await runtimeTable.locator('.table-choice-panel .token-option', { hasText: "F" }).click();
+  await runtimeTable.locator("[data-table-inline-input]").fill("V");
+  await page.locator('[data-action="step-button-click"]').click();
+  await expect(runtimeTable.locator(".inline-feedback.err")).toContainText("Algumas células não correspondem ao esperado.");
+
+  await runtimeTable.locator('[data-action="table-view-answer"]').click();
+  await expect(runtimeTable.locator(".table-choice-slot")).toContainText("V");
+  await expect(runtimeTable.locator("[data-table-inline-input]")).toHaveValue("F");
+
+  await page.locator('[data-action="step-button-click"]').click();
+  await expect(page.locator(".lesson-card .lesson-title")).toContainText("FILL IN THE BLANKS");
 });

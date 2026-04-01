@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1180" role="img" aria-labelledby="title desc">
+  <title id="title">Diagrama de Venn para conjunção e disjunções</title>
+  <desc id="desc">Mostra os conjuntos P e Q, a região comum P e Q, a união P ou Q e as partes exclusivas do ou exclusivo.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#18130f"/>
+      <stop offset="100%" stop-color="#0f0c09"/>
+    </linearGradient>
+    <linearGradient id="goldPanel" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#2d2318"/>
+      <stop offset="100%" stop-color="#17120e"/>
+    </linearGradient>
+    <linearGradient id="overlapFill" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#e4ba68"/>
+      <stop offset="100%" stop-color="#8fb3d6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="1180" fill="url(#bg)"/>
+
+  <g font-family="Segoe UI, Trebuchet MS, sans-serif" text-anchor="middle">
+    <text x="480" y="84" font-size="44" font-weight="700" fill="#f4eee6">Diagrama de Venn</text>
+    <text x="480" y="128" font-size="24" fill="#d4c6b3">Use a imagem para enxergar a região comum e as partes exclusivas.</text>
+  </g>
+
+  <g opacity="0.18">
+    <circle cx="382" cy="430" r="208" fill="#e4ba68"/>
+    <circle cx="578" cy="430" r="208" fill="#8fb3d6"/>
+  </g>
+  <ellipse cx="480" cy="430" rx="110" ry="170" fill="url(#overlapFill)" opacity="0.4"/>
+
+  <g fill="none" stroke-width="6">
+    <circle cx="382" cy="430" r="208" stroke="#e4ba68"/>
+    <circle cx="578" cy="430" r="208" stroke="#8fb3d6"/>
+  </g>
+
+  <g font-family="Segoe UI, Trebuchet MS, sans-serif" font-weight="700">
+    <text x="300" y="238" font-size="40" fill="#f2d79d">P</text>
+    <text x="660" y="238" font-size="40" fill="#c1d8ee">Q</text>
+    <text x="260" y="446" font-size="34" text-anchor="middle" fill="#f4eee6">Só P</text>
+    <text x="480" y="446" font-size="34" text-anchor="middle" fill="url(#overlapFill)">P ∧ Q</text>
+    <text x="700" y="446" font-size="34" text-anchor="middle" fill="#f4eee6">Só Q</text>
+  </g>
+
+  <g font-family="Segoe UI, Trebuchet MS, sans-serif">
+    <rect x="84" y="706" width="792" height="116" rx="28" fill="url(#goldPanel)" stroke="#e4ba68" stroke-opacity="0.28" stroke-width="2"/>
+    <text x="124" y="756" font-size="28" font-weight="700" fill="#f2d79d">P ∧ Q</text>
+    <text x="238" y="756" font-size="28" fill="#f4eee6">corresponde à região comum.</text>
+
+    <rect x="84" y="852" width="792" height="116" rx="28" fill="url(#goldPanel)" stroke="#e4ba68" stroke-opacity="0.28" stroke-width="2"/>
+    <text x="124" y="902" font-size="28" font-weight="700" fill="#f2d79d">P ∨ Q</text>
+    <text x="238" y="902" font-size="28" fill="#f4eee6">corresponde à união dos dois conjuntos.</text>
+
+    <rect x="84" y="998" width="792" height="116" rx="28" fill="url(#goldPanel)" stroke="#e4ba68" stroke-opacity="0.28" stroke-width="2"/>
+    <text x="124" y="1048" font-size="28" font-weight="700" fill="#f2d79d">P ⊕ Q</text>
+    <text x="238" y="1048" font-size="28" fill="#f4eee6">fica nas partes exclusivas, sem a interseção.</text>
+  </g>
+</svg>

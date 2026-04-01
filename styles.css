@@ -2054,6 +2054,8 @@ textarea {
   color: #e7dcc8;
   cursor: pointer;
   vertical-align: middle;
+  font: inherit;
+  line-height: inherit;
 }
 
 .terminal-slot.empty {
@@ -2066,6 +2068,14 @@ textarea {
   border-style: solid;
   border-color: rgba(235, 200, 119, 0.72);
   background: rgba(58, 45, 27, 0.94);
+  display: inline;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  white-space: break-spaces;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .terminal-slot.is-active {
@@ -2272,6 +2282,44 @@ textarea {
   padding-bottom: 2px;
 }
 
+.table-cell-exercise-tools {
+  display: grid;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.table-cell-exercise-label {
+  letter-spacing: 0.01em;
+}
+
+.table-cell-exercise-state,
+.table-cell-exercise-modes {
+  margin-top: -1px;
+}
+
+.table-choice-config {
+  gap: 6px;
+}
+
+.table-choice-row {
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: start;
+}
+
+.table-editor-input.is-table-blank {
+  border-style: dashed;
+}
+
+.table-editor-input.is-table-blank-choice {
+  border-color: rgba(95, 179, 226, 0.68);
+  background: rgba(18, 28, 38, 0.92);
+}
+
+.table-editor-input.is-table-blank-input {
+  border-color: rgba(228, 186, 104, 0.68);
+  background: rgba(44, 34, 21, 0.92);
+}
+
 .table-editor-input.table-align-left {
   text-align: left;
 }
@@ -2334,6 +2382,10 @@ textarea {
   background:
     linear-gradient(180deg, rgba(22, 18, 16, 0.84), rgba(14, 12, 12, 0.92)),
     radial-gradient(circle at top, rgba(255, 176, 119, 0.08), transparent 60%);
+}
+
+.table-block-exercise {
+  gap: 10px;
 }
 
 .table-block-title {
@@ -2400,6 +2452,143 @@ textarea {
 
 .lesson-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.lesson-table th.table-cell-exercise,
+.lesson-table td.table-cell-exercise {
+  padding: 6px 8px;
+}
+
+.table-exercise-footer {
+  display: grid;
+  gap: 10px;
+}
+
+.table-exercise-guide {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(108, 84, 61, 0.42);
+  background:
+    linear-gradient(180deg, rgba(32, 24, 18, 0.94), rgba(18, 14, 11, 0.97)),
+    radial-gradient(circle at top, rgba(255, 176, 119, 0.08), transparent 62%);
+}
+
+.exercise-mode-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.exercise-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(150, 120, 83, 0.72);
+  background: rgba(27, 21, 16, 0.9);
+  color: #f6e7cf;
+  font-size: var(--type-2xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+}
+
+.table-choice-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.table-choice-slot {
+  display: block;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px dashed rgba(172, 144, 102, 0.62);
+  background: rgba(24, 20, 16, 0.92);
+  color: #e7dcc8;
+  text-align: inherit;
+  white-space: pre-wrap;
+  cursor: pointer;
+}
+
+.table-choice-slot.empty {
+  color: #aa957b;
+}
+
+.table-choice-slot.filled {
+  border-style: solid;
+  border-color: rgba(235, 200, 119, 0.72);
+  background: rgba(58, 45, 27, 0.94);
+}
+
+.table-choice-slot.is-active {
+  border-style: solid;
+  border-color: rgba(98, 190, 237, 0.92);
+  box-shadow: 0 0 0 2px rgba(86, 179, 226, 0.2);
+}
+
+.table-inline-input-wrap {
+  display: block;
+  width: 100%;
+  min-height: 32px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px dashed rgba(172, 144, 102, 0.62);
+  background: rgba(24, 20, 16, 0.92);
+  box-sizing: border-box;
+}
+
+.table-inline-input-wrap.filled {
+  border-style: solid;
+  border-color: rgba(235, 200, 119, 0.72);
+  background: rgba(58, 45, 27, 0.94);
+}
+
+.table-inline-input {
+  display: block;
+  width: 100%;
+  min-height: 1.35em;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+}
+
+.table-inline-input.table-align-center {
+  text-align: center;
+}
+
+.table-inline-input.table-align-right {
+  text-align: right;
+}
+
+.table-inline-input.is-bold {
+  font-weight: 800;
+}
+
+.table-inline-input.is-italic {
+  font-style: italic;
+}
+
+.table-inline-input.tone-gold {
+  color: #f0c565;
+}
+
+.table-inline-input.tone-mint {
+  color: #9ce1c4;
+}
+
+.table-inline-input.tone-coral {
+  color: #ffb4a4;
 }
 
 .multiple-choice-exercise {
@@ -2509,16 +2698,20 @@ textarea {
 }
 
 .simulator-slot {
-  display: inline-flex;
-  align-items: center;
+  display: inline;
   min-height: 30px;
   margin: 0 1px;
-  padding: 0 8px;
+  padding: 1px 8px;
   border-radius: 7px;
   border: 1px solid rgba(214, 174, 107, 0.64);
   background: rgba(35, 28, 20, 0.96);
   color: #f0d89f;
   vertical-align: middle;
+  white-space: break-spaces;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 .simulator-output {

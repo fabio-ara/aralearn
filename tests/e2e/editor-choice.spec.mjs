@@ -139,3 +139,48 @@ test("editor em modo opções preserva HTML literal visível e aceita fechamento
   await expect(page.locator(".inline-popup")).toBeVisible();
   await expect(page.locator(".inline-popup .terminal-box")).toContainText("<p>Olá, mundo</p>");
 });
+
+test("editor em modo opções permite quebrar respostas longas dentro da própria lacuna", async ({ page }) => {
+  const snapshot = createSampleProjectSnapshot();
+  const longValue = "proposicao_muito_grande_sem_quebra_visual_".repeat(10);
+  snapshot.content.courses[0].modules[0].lessons[0].steps = [
+    {
+      id: "long-wrap-step",
+      type: "content",
+      title: "Quebra de lacuna",
+      blocks: [
+        { id: "long-wrap-heading", kind: "heading", value: "Quebra de lacuna" },
+        {
+          id: "long-wrap-editor",
+          kind: "editor",
+          interactionMode: "choice",
+          value: "Resultado: [[" + longValue + "]]",
+          options: [
+            { id: "opt-long", value: longValue, enabled: true, displayOrder: 0, slotOrder: 0 }
+          ]
+        },
+        {
+          id: "long-wrap-button",
+          kind: "button",
+          popupEnabled: false,
+          popupBlocks: []
+        }
+      ]
+    }
+  ];
+
+  await seedProject(page, snapshot);
+  await openFirstCourse(page);
+  await openFirstLesson(page);
+
+  await page.locator(".token-option", { hasText: "proposicao_muito_grande_sem_quebra_visual_" }).click();
+
+  const slot = page.locator('[data-action="terminal-slot"][data-slot-index="0"]');
+  await expect(slot).toContainText("proposicao_muito_grande_sem_quebra_visual_");
+
+  const metrics = await slot.evaluate((node) => ({
+    height: node.getBoundingClientRect().height
+  }));
+
+  expect(metrics.height).toBeGreaterThan(44);
+});

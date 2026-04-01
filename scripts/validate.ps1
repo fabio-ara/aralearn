@@ -13,15 +13,17 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
+$testPort = if ($env:ARALEARN_TEST_PORT) { [int]$env:ARALEARN_TEST_PORT } else { 4273 }
+$expectedHealthBody = "aralearn-test-server"
 
 function Test-ServerHealth {
   param(
-    [int]$Port = 4173
+    [int]$Port = $testPort
   )
 
   try {
     $response = Invoke-WebRequest -Uri "http://127.0.0.1:$Port/healthz" -UseBasicParsing -TimeoutSec 2
-    return $response.StatusCode -eq 200
+    return $response.StatusCode -eq 200 -and $response.Content.Trim() -eq $expectedHealthBody
   } catch {
     return $false
   }
@@ -29,7 +31,7 @@ function Test-ServerHealth {
 
 function Wait-ServerHealth {
   param(
-    [int]$Port = 4173,
+    [int]$Port = $testPort,
     [int]$TimeoutSeconds = 20
   )
 
@@ -93,6 +95,7 @@ try {
   if (Test-ServerHealth) {
     $reusedServer = $true
   } else {
+    $env:ARALEARN_TEST_PORT = "$testPort"
     $managedServer = Start-Process node -ArgumentList "scripts/test-server.mjs" -WorkingDirectory $projectRoot -PassThru -WindowStyle Hidden
     Wait-ServerHealth
   }

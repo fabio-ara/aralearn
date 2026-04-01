@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize, resolve } from "node:path";
 
 const rootDir = resolve(process.cwd());
-const port = Number(process.env.PORT || 4173);
+const port = Number(process.env.ARALEARN_TEST_PORT || process.env.PORT || 4273);
+const healthzBody = "aralearn-test-server";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -28,7 +29,8 @@ function resolveRequestPath(urlPath) {
 async function canReuseExistingServer() {
   try {
     const response = await fetch(`http://127.0.0.1:${port}/healthz`, { method: "GET" });
-    return response.ok;
+    const body = await response.text();
+    return response.ok && body.trim() === healthzBody;
   } catch (_error) {
     return false;
   }
@@ -39,7 +41,7 @@ const server = createServer(async (request, response) => {
     const urlPath = request.url || "/";
     if (urlPath === "/healthz") {
       response.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
-      response.end("ok");
+      response.end(healthzBody);
       return;
     }
 

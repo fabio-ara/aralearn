@@ -304,11 +304,24 @@ Formato de célula:
 
 ```json
 {
-  "value": "Texto",
+  "value": "V",
   "bold": false,
   "italic": false,
   "tone": "default",
-  "align": "left"
+  "align": "left",
+  "blank": true,
+  "interactionMode": "choice",
+  "placeholder": "□",
+  "options": [
+    {
+      "id": "opt-v",
+      "value": "V"
+    },
+    {
+      "id": "opt-f",
+      "value": "F"
+    }
+  ]
 }
 ```
 
@@ -316,12 +329,22 @@ Valores aceitos:
 
 - `tone`: `default`, `gold`, `mint`, `coral`
 - `align`: `left`, `center`, `right`
+- `interactionMode`: `choice`, `input`
 
 Regras:
 
 - o runtime sempre garante ao menos uma coluna e uma linha;
 - o título da tabela é opcional;
-- a tabela serve para consulta, não para validação de resposta.
+- sem `blank`, a tabela continua servindo só para consulta;
+- com `blank: true`, `value` continua sendo a resposta canônica da célula;
+- em `choice`, `options[]` pertence apenas àquela célula e abastece o seletor visível abaixo da tabela;
+- em `input`, o estudante digita diretamente dentro da célula;
+- a mesma tabela pode misturar células `choice` e `input`;
+- quando existir ao menos uma lacuna, o runtime mostra um guia curto com `Opções`, `Digitação` ou ambos;
+- em tabela de exercício, prefira lacunas atômicas por célula quando o objetivo for treinar leitura de coluna, subexpressão, conectivo ou caso;
+- em tabela-verdade, o próprio step deve trazer os casos ou combinações necessários para a resolução; evite depender de rótulos como `Linha 2` ou de uma tabela mostrada apenas em card anterior;
+- em texto visível ao estudante sobre tabela-verdade, prefira `caso` ou `combinação` quando a numeração de linhas não for o próprio conceito ensinado;
+- quando existir ao menos uma lacuna, a tabela participa da validação do card antes do avanço.
 
 ## 5.5 Editor
 
@@ -684,7 +707,7 @@ Tabela de leitura rápida:
 | `heading` | `value`, `align` | estilo tipográfico | `step.title` a partir do primeiro `heading` | subtítulo, destaques inline ou hierarquia extra |
 | `paragraph` | `value` | `richText` equivalente | derivar `value` de `richText` equivalente ou regenerar `richText` a partir de `value` | preservar `richText` que contradiga o texto canônico |
 | `image` | `value` | apresentação responsiva | resolver `assets/images/...` para data URL local | legenda, contexto ou crop inteligente |
-| `table` | `title`, `headers[]`, `rows[][]` | estilo por célula | completar grade mínima segura | reordenar colunas, avaliar resposta ou interpretar destaque inline dentro da célula |
+| `table` | `title`, `headers[]`, `rows[][]` e, por célula, `blank`, `interactionMode`, `placeholder`, `options[]` | estilo por célula | completar grade mínima segura | reordenar colunas, aceitar resposta não declarada ou interpretar destaque inline dentro da célula |
 | `simulator` | `value` com uma lacuna e `options[]` | destaque inline do template e do resultado | garantir exatamente uma lacuna | julgar certo/errado, inventar opções ou trocar a ordem do experimento |
 | `editor` | template em `value`, `interactionMode`, opções habilitadas | `displayOrder` | alinhar marcadores e opções, preservar `slotOrder`, aceitar variantes declaradas e manter `\n`/indentação do template | equivalência semântica não declarada, ordem estrutural a partir de `displayOrder` |
 | `multiple_choice` | `answerState`, `options[].answer`, ordem do array | cor do selecionado | nenhuma além da normalização estrutural | usar cor para revelar resposta ou embaralhar sozinho |
@@ -696,7 +719,7 @@ Leitura operacional por bloco:
 - `heading`: use quando o card precisa de um rótulo visual forte; não use para texto explicativo longo.
 - `paragraph`: use para teoria curta, instrução explícita, tradução de termo técnico e feedback breve. Gere sempre um `value` legível e, quando houver destaque, um `richText` semanticamente espelhado.
 - `image`: use apenas quando a imagem realmente acrescentar leitura, referência ou contexto. O bloco não carrega legenda implícita; se precisar explicar a imagem, faça isso em `paragraph`.
-- `table`: use para contraste, consulta, checklist, mapeamento ou resumo comparativo. A ordem das linhas e colunas é a ordem em que o estudante vai ler.
+- `table`: use para contraste, consulta, checklist, mapeamento, resumo comparativo ou exercício em grade. A ordem das linhas e colunas é a ordem em que o estudante vai ler, e cada célula com `blank: true` continua guardando em `value` a resposta esperada daquela posição.
 - `simulator`: use quando uma única escolha precisa mostrar um efeito ou resultado logo abaixo, sem transformar o card em checagem de acerto.
 - `editor`: use quando o estudante precisa completar, montar ou digitar código, fórmula, comando, texto técnico ou fragmentos de sintaxe. O template em `value` é a estrutura principal do card, persiste com `\n`, preserva linhas vazias e espaços iniciais por linha, e o preview autoral precisa refletir a mesma renderização literal usada pelo runtime fora das lacunas.
 - `multiple_choice`: use quando a tarefa é discriminar ou classificar alternativas. Como o bloco não tem `displayOrder`, a ordem renderizada é exatamente a ordem do array; embaralhe antes de serializar.

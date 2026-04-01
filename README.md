@@ -13,11 +13,10 @@ O projeto agora combina três frentes:
 - `index.html`: entrada da versão web
 - `app.js`: estado, renderização, autoria, importação/exportação e persistência
 - `modules/`: utilitários de conteúdo, progresso, arquivos e fluxograma
-- `content/*.json`: fontes dos cursos embarcados
+- `content/*.json`: fontes dos cursos embarcados ativos
 - `content/hardcoded-content.js`: arquivo runtime gerado para o boot local
-- `examples/python-getting-started.zip`: pacote de exemplo para importação manual
-- `examples/html-css-javascript-node-do-zero.json`: curso extenso de fundamentos web em JSON
-- `examples/html-css-javascript-node-do-zero.zip`: pacote importável do mesmo curso
+- `content/aralearn-course-matematica-para-informatica.zip`: pacote ZIP do curso hoje embarcado por padrão
+- `examples/`: pacotes ZIP e fontes JSON mantidos fora do hardcoded atual
 - `scripts/build-web-course-example.mjs`: gerador do exemplo grande de fundamentos web
 - `manual.md`: documentação oficial do produto
 
@@ -35,8 +34,8 @@ Regras práticas:
 Catálogo embarcado atual:
 
 - `content/matematica-para-informatica.json`
-- `content/logica-de-programacao-i.json`
-- `content/praticas-e-ferramentas-de-desenvolvimento-de-software.json`
+
+Pacotes e fontes fora do hardcoded atual ficam em `examples/`, inclusive os cursos desembarcados desta versão.
 
 Depois de editar os JSONs-fonte, rode:
 
@@ -86,6 +85,9 @@ npm run build:hardcoded-content
 npm run test:unit
 npm run test:e2e
 ```
+
+O E2E sobe um servidor local próprio em `http://127.0.0.1:4273` por padrão.
+Se precisar trocar a porta, defina `ARALEARN_TEST_PORT` antes de rodar o Playwright.
 
 Validação completa:
 

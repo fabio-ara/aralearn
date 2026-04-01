@@ -253,10 +253,9 @@
   };
   const bundledSeedChanged = applyBundledProjectSeed();
   pruneProgressStore();
-  if (bundledSeedChanged) {
-    saveProgressStore();
-    persistProjectSnapshot();
-  }
+  // Regrava logo no boot o snapshot canônico para estabilizar round-trip de importação/exportação.
+  saveProgressStore();
+  persistProjectSnapshot();
 
 
   // ============================================================================
@@ -956,6 +955,30 @@
     setActive('[data-action="table-align-right"]', align === "right");
   }
 
+  // Mantém o painel de lacunas da tabela sincronizado com a célula ativa sem rerender completo.
+  function syncTableExerciseTools(blockId) {
+    if (!state.editor.open || !blockId) return;
+    const blockNode = getEditorDomScope().querySelector('.builder-block[data-block-id="' + cssEsc(blockId) + '"]');
+    if (!blockNode) return;
+
+    const existing = blockNode.querySelector(".table-cell-exercise-tools");
+    const anchor = blockNode.querySelector(".table-editor-scroll") || blockNode.querySelector(".table-format-tools");
+    if (!anchor) return;
+
+    const html = renderTableExerciseTools({ id: blockId }, collectTableDraftFromBlockNode(blockNode));
+    if (!html) {
+      if (existing) existing.remove();
+      return;
+    }
+
+    if (existing) {
+      existing.outerHTML = html;
+      return;
+    }
+
+    anchor.insertAdjacentHTML("afterend", html);
+  }
+
   // Renderiza a barra de formatação por célula da tabela.
   function renderTableFormatTools(block, table) {
     const activeCell = getActiveTableCellRef(block.id, table);
@@ -1002,6 +1025,129 @@
     );
   }
 
+  // Monta classes extras da célula de tabela no editor quando ela vira lacuna.
+  function getTableBuilderCellClassNames(cell) {
+    const classes = [getTableCellClassNames(cell)];
+    if (tableCellUsesChoiceBlank(cell)) classes.push("is-table-blank", "is-table-blank-choice");
+    if (tableCellUsesInputBlank(cell)) classes.push("is-table-blank", "is-table-blank-input");
+    return classes.filter(Boolean).join(" ");
+  }
+
+  // Serializa metadados de exercício da célula em atributos HTML do editor.
+  function renderTableCellExerciseAttrs(cell) {
+    const normalized = normalizeTableCell(cell, "body");
+    return (
+      ' data-table-blank="' +
+      (normalized.blank ? "1" : "0") +
+      '" data-table-interaction-mode="' +
+      escAttr(normalized.interactionMode) +
+      '" data-table-placeholder="' +
+      escAttr(normalized.placeholder || "") +
+      '" data-table-options="' +
+      escAttr(JSON.stringify(normalized.options || [])) +
+      '"'
+    );
+  }
+
+  // Renderiza painel da célula ativa para transformar a tabela em exercício.
+  function renderTableExerciseTools(block, table) {
+    const activeCell = getActiveTableCellRef(block.id, table);
+    if (!activeCell || activeCell.role === "title") return "";
+
+    const cell = getTableCellFromDraft(table, activeCell);
+    const optionRows = normalizeTableChoiceOptions(cell.options).map(function (option) {
+      return (
+        '<div class="choice-row choice-row-simulator table-choice-row" data-table-choice-option-row="true" data-option-id="' +
+        escAttr(option.id) +
+        '">' +
+        '<input class="block-input" type="text" data-table-choice-option-input="true" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id) +
+        '" value="' +
+        escAttr(option.value || "") +
+        '" placeholder="Opção da célula">' +
+        '<button class="icon-ghost tiny-icon" data-action="table-choice-remove-option" data-block-id="' +
+        escAttr(block.id) +
+        '" data-option-id="' +
+        escAttr(option.id) +
+        '" title="Remover opção">&times;</button>' +
+        "</div>"
+      );
+    }).join("");
+
+    return (
+      '<section class="editor-mode-config table-cell-exercise-tools">' +
+      '<p class="tiny muted table-cell-exercise-label">' +
+      esc(getTableCellLabel(activeCell)) +
+      "</p>" +
+      '<div class="editor-mode-choice-options table-cell-exercise-state" role="radiogroup" aria-label="Tipo da célula">' +
+      '<label class="editor-mode-option">' +
+      '<input type="radio" name="table-cell-blank-mode-' +
+      escAttr(block.id) +
+      '" data-table-cell-blank-mode="true" data-block-id="' +
+      escAttr(block.id) +
+      '" value="static"' +
+      (cell.blank ? "" : " checked") +
+      '>' +
+      "<span>Texto</span>" +
+      "</label>" +
+      '<label class="editor-mode-option">' +
+      '<input type="radio" name="table-cell-blank-mode-' +
+      escAttr(block.id) +
+      '" data-table-cell-blank-mode="true" data-block-id="' +
+      escAttr(block.id) +
+      '" value="blank"' +
+      (cell.blank ? " checked" : "") +
+      '>' +
+      "<span>Lacuna</span>" +
+      "</label>" +
+      "</div>" +
+      (cell.blank
+        ? '<div class="editor-mode-choice-options table-cell-exercise-modes" role="radiogroup" aria-label="Modo da lacuna">' +
+          '<label class="editor-mode-option">' +
+          '<input type="radio" name="table-cell-interaction-' +
+          escAttr(block.id) +
+          '" data-table-cell-interaction="true" data-block-id="' +
+          escAttr(block.id) +
+          '" value="choice"' +
+          (cell.interactionMode === "input" ? "" : " checked") +
+          '>' +
+          "<span>Opções</span>" +
+          "</label>" +
+          '<label class="editor-mode-option">' +
+          '<input type="radio" name="table-cell-interaction-' +
+          escAttr(block.id) +
+          '" data-table-cell-interaction="true" data-block-id="' +
+          escAttr(block.id) +
+          '" value="input"' +
+          (cell.interactionMode === "input" ? " checked" : "") +
+          '>' +
+          "<span>Digitação</span>" +
+          "</label>" +
+          "</div>" +
+          '<input class="block-input" type="text" data-table-cell-placeholder-input="true" data-block-id="' +
+          escAttr(block.id) +
+          '" value="' +
+          escAttr(cell.placeholder || "") +
+          '" placeholder="Placeholder opcional da lacuna">' +
+          (cell.interactionMode === "choice"
+            ? '<section class="terminal-config table-choice-config">' +
+              '<div class="config-actions">' +
+              '<button class="icon-ghost tiny-icon" data-action="table-choice-add-option" data-block-id="' +
+              escAttr(block.id) +
+              '" title="Adicionar opção">+</button>' +
+              "</div>" +
+              '<div class="choice-list">' +
+              optionRows +
+              "</div>" +
+              "</section>"
+            : '<p class="tiny muted table-cell-exercise-tip">A resposta esperada continua sendo o texto da própria célula.</p>')
+        : '<p class="tiny muted table-cell-exercise-tip">Sem lacuna, a célula continua só expositiva no runtime.</p>') +
+      "</section>"
+    );
+  }
+
   // Renderiza UI de edição do bloco de tabela como grade direta.
   function renderTableBuilder(block) {
     const table = normalizeTableDraft(block);
@@ -1032,7 +1178,7 @@
         "<th>" +
         '<div class="table-editor-cell-shell table-editor-header-shell">' +
         '<input class="block-input table-editor-input ' +
-        getTableCellClassNames(header) +
+        getTableBuilderCellClassNames(header) +
         activeClass +
         '" type="text" data-table-header-cell="true" data-column-index="' +
         String(columnIndex) +
@@ -1044,7 +1190,9 @@
         (header.italic ? "1" : "0") +
         '" data-table-tone="' +
         escAttr(header.tone) +
-        '" value="' +
+        '"' +
+        renderTableCellExerciseAttrs(header) +
+        ' value="' +
         escAttr(header.value || "") +
         '" placeholder="Coluna">' +
         '<button class="icon-ghost tiny-icon table-editor-remove table-editor-remove-column" data-action="table-remove-column" data-block-id="' +
@@ -1070,7 +1218,7 @@
           "<td>" +
           '<div class="table-editor-cell-shell">' +
           '<input class="block-input table-editor-input ' +
-          getTableCellClassNames(cell) +
+          getTableBuilderCellClassNames(cell) +
           activeClass +
           '" type="text" data-table-cell="true" data-row-index="' +
           String(rowIndex) +
@@ -1084,7 +1232,9 @@
           (cell.italic ? "1" : "0") +
           '" data-table-tone="' +
           escAttr(cell.tone) +
-          '" value="' +
+          '"' +
+          renderTableCellExerciseAttrs(cell) +
+          ' value="' +
           escAttr(cell.value || "") +
           '" placeholder="Valor">' +
           "</div>" +
@@ -1159,6 +1309,7 @@
       "</tbody>" +
       "</table>" +
       "</div>" +
+      renderTableExerciseTools(block, table) +
       "</section>"
     );
   }
@@ -2161,6 +2312,31 @@
     return "default";
   }
 
+  // Normaliza o modo de interação de lacunas de tabela.
+  function normalizeTableCellInteractionMode(value) {
+    return String(value || "").trim().toLowerCase() === "input" ? "input" : "choice";
+  }
+
+  // Normaliza opção individual usada em células com lacuna por escolha.
+  function normalizeTableChoiceOption(raw) {
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      return {
+        id: String(raw.id || uid("opt")),
+        value: String(raw.value || raw.text || raw.label || "").trim()
+      };
+    }
+
+    return {
+      id: uid("opt"),
+      value: String(raw || "").trim()
+    };
+  }
+
+  // Normaliza lista de opções de uma lacuna da tabela.
+  function normalizeTableChoiceOptions(options) {
+    return (Array.isArray(options) ? options : []).map(normalizeTableChoiceOption);
+  }
+
   // Cria célula vazia no formato canônico da tabela.
   function createBlankTableCell(role) {
     return {
@@ -2168,7 +2344,11 @@
       bold: role === "header",
       italic: false,
       tone: "default",
-      align: "left"
+      align: "left",
+      blank: false,
+      interactionMode: "choice",
+      placeholder: "",
+      options: []
     };
   }
 
@@ -2183,7 +2363,11 @@
         bold: raw.bold === undefined ? fallback.bold : !!raw.bold,
         italic: !!raw.italic,
         tone: normalizeTableCellTone(raw.tone),
-        align: normalizeTableCellAlign(raw.align)
+        align: normalizeTableCellAlign(raw.align),
+        blank: !!(raw.blank || raw.exercise === true),
+        interactionMode: normalizeTableCellInteractionMode(raw.interactionMode || raw.responseMode || raw.inputMode),
+        placeholder: String(raw.placeholder || "").trim(),
+        options: normalizeTableChoiceOptions(raw.options)
       };
     }
 
@@ -2192,13 +2376,76 @@
       bold: fallback.bold,
       italic: false,
       tone: "default",
-      align: "left"
+      align: "left",
+      blank: false,
+      interactionMode: "choice",
+      placeholder: "",
+      options: []
     };
+  }
+
+  // Indica se a célula funciona como lacuna interativa.
+  function tableCellUsesBlank(cell) {
+    return !!normalizeTableCell(cell, "body").blank;
+  }
+
+  // Indica se a célula usa lacuna com opções.
+  function tableCellUsesChoiceBlank(cell) {
+    const normalized = normalizeTableCell(cell, "body");
+    return normalized.blank && normalized.interactionMode === "choice";
+  }
+
+  // Indica se a célula usa lacuna digitável.
+  function tableCellUsesInputBlank(cell) {
+    const normalized = normalizeTableCell(cell, "body");
+    return normalized.blank && normalized.interactionMode === "input";
   }
 
   // Verifica se a célula realmente contém texto útil.
   function tableCellHasContent(cell) {
-    return !!String((cell && cell.value) || "").trim();
+    const normalized = normalizeTableCell(cell, "body");
+    if (normalized.value) return true;
+    return normalized.blank;
+  }
+
+  // Compacta opção da tabela no formato salvo em JSON.
+  function serializeTableChoiceOption(raw) {
+    const normalized = normalizeTableChoiceOption(raw);
+    return {
+      id: normalized.id,
+      value: normalized.value
+    };
+  }
+
+  // Compacta célula de tabela preservando apenas os metadados relevantes.
+  function serializeTableCell(raw, role) {
+    const normalized = normalizeTableCell(raw, role);
+    const cell = {
+      value: normalized.value,
+      bold: normalized.bold,
+      italic: normalized.italic,
+      tone: normalized.tone,
+      align: normalized.align
+    };
+    const filledOptions = normalized.options.filter(function (option) {
+      return !!String(option.value || "").trim();
+    });
+
+    if (normalized.blank) cell.blank = true;
+    if (normalized.interactionMode !== "choice") cell.interactionMode = normalized.interactionMode;
+    if (normalized.placeholder) cell.placeholder = normalized.placeholder;
+    if (filledOptions.length) {
+      cell.options = filledOptions.map(serializeTableChoiceOption);
+    }
+
+    return cell;
+  }
+
+  // Produz um rótulo humano para a posição de uma célula da tabela.
+  function getTableCellLabel(cellRef) {
+    if (!cellRef) return "célula";
+    if (cellRef.role === "header") return "cabeçalho da coluna " + String(Number(cellRef.columnIndex) + 1);
+    return "linha " + String(Number(cellRef.rowIndex) + 1) + ", coluna " + String(Number(cellRef.columnIndex) + 1);
   }
 
   // Gera HTML inline seguro para a célula já com os estilos globais da própria célula.
@@ -2329,8 +2576,14 @@
       kind: "table",
       title: String(source.title || source.value || "").trim(),
       titleStyle: normalizeTableCell(source.titleStyle, "header"),
-      headers: alignedHeaders,
-      rows: alignedRows
+      headers: alignedHeaders.map(function (cell) {
+        return serializeTableCell(cell, "header");
+      }),
+      rows: alignedRows.map(function (row) {
+        return row.map(function (cell) {
+          return serializeTableCell(cell, "body");
+        });
+      })
     };
   }
 
@@ -2689,7 +2942,7 @@
       }
 
       if (isTableKind(block.kind)) {
-        html += renderTableBlock(block);
+        html += renderTableBlock(step, block);
         return;
       }
 
@@ -2721,42 +2974,425 @@
     return html;
   }
 
-  // Renderiza tabela responsiva com título opcional.
-  function renderTableBlock(block) {
+  // Gera chave única do exercício de tabela.
+  function tableExerciseKey(stepId, blockId) {
+    return "table::" + stepId + "::" + blockId;
+  }
+
+  // Serializa uma referência de célula em uma chave estável.
+  function getTableExerciseCellKey(cellRef) {
+    if (!cellRef) return "";
+    return cellRef.role === "header"
+      ? "h:" + String(Number(cellRef.columnIndex) || 0)
+      : "b:" + String(Number(cellRef.rowIndex) || 0) + ":" + String(Number(cellRef.columnIndex) || 0);
+  }
+
+  // Lista as células de tabela que realmente exigem resposta do estudante.
+  function getTableExerciseCellEntries(table) {
+    const normalizedTable = normalizeTableBlock(table);
+    const entries = [];
+
+    normalizedTable.headers.forEach(function (header, columnIndex) {
+      const normalizedHeader = normalizeTableCell(header, "header");
+      if (!tableCellUsesBlank(normalizedHeader)) return;
+      entries.push({
+        ref: { role: "header", rowIndex: -1, columnIndex: columnIndex },
+        cell: normalizedHeader
+      });
+    });
+
+    normalizedTable.rows.forEach(function (row, rowIndex) {
+      row.forEach(function (cell, columnIndex) {
+        const normalizedCell = normalizeTableCell(cell, "body");
+        if (!tableCellUsesBlank(normalizedCell)) return;
+        entries.push({
+          ref: { role: "body", rowIndex: rowIndex, columnIndex: columnIndex },
+          cell: normalizedCell
+        });
+      });
+    });
+
+    return entries;
+  }
+
+  // Indica se o valor digitado/selecionado na tabela ainda está vazio.
+  function isTableExerciseValueEmpty(value) {
+    return value === null || value === undefined || String(value) === "";
+  }
+
+  // Normaliza resposta digitada/selecionada na tabela antes da validação.
+  function normalizeTableExerciseAttemptValue(value) {
+    return String(value || "").replace(/\r/g, "").trim();
+  }
+
+  // Retorna a próxima célula de escolha ainda vazia.
+  function getFirstEmptyTableChoiceCellKey(table, exercise) {
+    const entries = getTableExerciseCellEntries(table).filter(function (entry) {
+      return tableCellUsesChoiceBlank(entry.cell);
+    });
+
+    const found = entries.find(function (entry) {
+      return isTableExerciseValueEmpty(exercise.values[getTableExerciseCellKey(entry.ref)]);
+    });
+    return found ? getTableExerciseCellKey(found.ref) : null;
+  }
+
+  // Obtém ou cria o estado da tabela interativa.
+  function getTableExerciseState(step, block) {
+    const table = normalizeTableBlock(block);
+    const key = tableExerciseKey(step.id, block.id);
+
+    if (!state.tokenByStepId[key]) {
+      state.tokenByStepId[key] = { values: {}, feedback: null, activeCellKey: null };
+    }
+
+    const current = state.tokenByStepId[key];
+    if (!current.values || typeof current.values !== "object") current.values = {};
+
+    const activeEntries = getTableExerciseCellEntries(table);
+    const activeKeys = {};
+    activeEntries.forEach(function (entry) {
+      const cellKey = getTableExerciseCellKey(entry.ref);
+      activeKeys[cellKey] = true;
+      if (!Object.prototype.hasOwnProperty.call(current.values, cellKey)) current.values[cellKey] = "";
+    });
+
+    Object.keys(current.values).forEach(function (cellKey) {
+      if (!activeKeys[cellKey]) delete current.values[cellKey];
+    });
+
+    const choiceKey = getFirstEmptyTableChoiceCellKey(table, current);
+    if (!current.activeCellKey || !activeKeys[current.activeCellKey]) {
+      current.activeCellKey = choiceKey;
+    } else if (!choiceKey && current.activeCellKey !== null) {
+      const stillChoice = activeEntries.some(function (entry) {
+        return tableCellUsesChoiceBlank(entry.cell) && getTableExerciseCellKey(entry.ref) === current.activeCellKey;
+      });
+      if (!stillChoice) current.activeCellKey = null;
+    }
+
+    return current;
+  }
+
+  // Monta o contexto da tabela interativa do step atual.
+  function getCurrentTableExercise(blockId) {
+    const entry = findCurrentStepBlockById(blockId, function (item) {
+      return isTableKind(item.kind);
+    });
+    if (!entry) return null;
+
+    const table = normalizeTableBlock(entry.block);
+    const exerciseEntries = getTableExerciseCellEntries(table);
+    if (!exerciseEntries.length) return null;
+
+    return {
+      step: entry.step,
+      block: entry.block,
+      table: table,
+      entries: exerciseEntries,
+      exercise: getTableExerciseState(entry.step, entry.block)
+    };
+  }
+
+  // Procura a entrada de célula ativa na tabela interativa.
+  function getActiveTableChoiceEntry(table, exercise) {
+    if (!exercise || !exercise.activeCellKey) return null;
+    return getTableExerciseCellEntries(table).find(function (entry) {
+      return tableCellUsesChoiceBlank(entry.cell) && getTableExerciseCellKey(entry.ref) === exercise.activeCellKey;
+    }) || null;
+  }
+
+  // Resume quais modos de preenchimento aparecem nas lacunas da tabela atual.
+  function getTableExerciseModeSummary(table) {
+    const summary = { hasChoice: false, hasInput: false };
+    getTableExerciseCellEntries(table).forEach(function (entry) {
+      if (tableCellUsesChoiceBlank(entry.cell)) summary.hasChoice = true;
+      if (tableCellUsesInputBlank(entry.cell)) summary.hasInput = true;
+    });
+    return summary;
+  }
+
+  // Mostra um guia curto para o estudante reconhecer como a tabela deve ser preenchida.
+  function renderTableExerciseGuide(table) {
+    const summary = getTableExerciseModeSummary(table);
+    if (!summary.hasChoice && !summary.hasInput) return "";
+
+    const badges = [];
+    if (summary.hasChoice) badges.push('<span class="exercise-mode-badge">Opções</span>');
+    if (summary.hasInput) badges.push('<span class="exercise-mode-badge">Digitação</span>');
+
+    let description = "";
+    if (summary.hasChoice && summary.hasInput) {
+      description = "Algumas lacunas usam opções. Outras são preenchidas por digitação direta na própria célula.";
+    } else if (summary.hasChoice) {
+      description = "Toque numa lacuna destacada e escolha a resposta nas opções abaixo.";
+    } else {
+      description = "Digite diretamente nas lacunas destacadas da tabela.";
+    }
+
+    return (
+      '<div class="table-exercise-guide">' +
+      '<div class="exercise-mode-badges">' +
+      badges.join("") +
+      "</div>" +
+      '<p class="tiny muted">' + esc(description) + "</p>" +
+      "</div>"
+    );
+  }
+
+  // Renderiza célula individual da tabela no runtime, com lacuna quando necessário.
+  function renderTableRuntimeCell(step, block, exercise, cellRef, cell, tagName) {
+    const normalized = normalizeTableCell(cell, cellRef.role === "header" ? "header" : "body");
+    const baseClass = getTableCellClassNames(normalized);
+    const cellKey = getTableExerciseCellKey(cellRef);
+    const currentValue =
+      exercise && Object.prototype.hasOwnProperty.call(exercise.values, cellKey)
+        ? (exercise.values[cellKey] === null || exercise.values[cellKey] === undefined
+          ? ""
+          : String(exercise.values[cellKey]))
+        : "";
+
+    if (!exercise || !tableCellUsesBlank(normalized)) {
+      return (
+        "<" + tagName + ' class="' + escAttr(baseClass) + '">' +
+        '<div class="table-cell-content">' +
+        renderTableCellStyledValue(normalized) +
+        "</div>" +
+        "</" + tagName + ">"
+      );
+    }
+
+    if (tableCellUsesInputBlank(normalized)) {
+      return (
+        "<" + tagName + ' class="' + escAttr(baseClass + " table-cell-exercise table-cell-exercise-input") + '">' +
+        '<div class="table-cell-content">' +
+        '<span class="table-inline-input-wrap ' + (currentValue ? "filled" : "empty") + '">' +
+        '<input class="table-inline-input ' +
+        escAttr(getTableCellClassNames(normalized)) +
+        '" type="text" data-table-inline-input="true" data-block-id="' +
+        escAttr(block.id) +
+        '" data-cell-key="' +
+        escAttr(cellKey) +
+        '" value="' +
+        escAttr(currentValue) +
+        '" placeholder="' +
+        escAttr(normalized.placeholder || "") +
+        '" autocomplete="off" autocapitalize="off" spellcheck="false">' +
+        "</span>" +
+        "</div>" +
+        "</" + tagName + ">"
+      );
+    }
+
+    return (
+      "<" + tagName + ' class="' + escAttr(baseClass + " table-cell-exercise table-cell-exercise-choice") + '">' +
+      '<div class="table-cell-content">' +
+      '<button class="table-choice-slot ' +
+      (currentValue ? "filled" : "empty") +
+      (exercise.activeCellKey === cellKey ? " is-active" : "") +
+      '" type="button" data-action="table-choice-cell" data-block-id="' +
+      escAttr(block.id) +
+      '" data-cell-key="' +
+      escAttr(cellKey) +
+      '">' +
+      (currentValue
+        ? renderTableCellStyledValue(Object.assign({}, normalized, { value: currentValue }))
+        : normalized.placeholder
+          ? esc(normalized.placeholder)
+          : '<span class="slot-placeholder">&#9633;</span>') +
+      "</button>" +
+      "</div>" +
+      "</" + tagName + ">"
+    );
+  }
+
+  // Renderiza a faixa de opções da célula de escolha ativa da tabela.
+  function renderTableChoiceOptions(block, table, exercise) {
+    const activeEntry = getActiveTableChoiceEntry(table, exercise);
+    if (!activeEntry) return "";
+
+    const optionHtml = normalizeTableChoiceOptions(activeEntry.cell.options)
+      .filter(function (option) {
+        return !!String(option.value || "").trim();
+      })
+      .map(function (option) {
+        return (
+          '<button class="token-option" data-action="table-choice-option" data-block-id="' +
+          escAttr(block.id) +
+          '" data-option-id="' +
+          escAttr(option.id) +
+          '" data-option-value="' +
+          encodeURIComponent(option.value || "") +
+          '">' +
+          esc(option.value || "") +
+          "</button>"
+        );
+      }).join("");
+
+    return (
+      '<div class="table-choice-panel">' +
+      '<p class="tiny muted">Complete a ' +
+      esc(getTableCellLabel(activeEntry.ref)) +
+      ".</p>" +
+      '<div class="token-options">' +
+      (optionHtml || '<p class="muted tiny">Sem opções disponíveis.</p>') +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  // Renderiza feedback inline da tabela interativa.
+  function renderTableExerciseFeedback(block, exercise) {
+    if (!exercise || !exercise.feedback) return "";
+
+    if (exercise.feedback === "correct") {
+      return '<div class="inline-feedback ok"><p class="tiny">Correto.</p></div>';
+    }
+
+    if (exercise.feedback === "incomplete") {
+      return '<div class="inline-feedback err"><p class="tiny">Preencha todas as lacunas da tabela.</p></div>';
+    }
+
+    return (
+      '<div class="inline-feedback err">' +
+      '<p class="tiny">Algumas células não correspondem ao esperado.</p>' +
+      '<div class="feedback-icons">' +
+      '<button class="icon-pill" data-action="table-view-answer" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Ver resposta">&#128065;</button>' +
+      '<button class="icon-pill primary" data-action="table-try-again" data-block-id="' +
+      escAttr(block.id) +
+      '" title="Tentar de novo">&#8635;</button>' +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  // Seleciona a célula de escolha da tabela ou limpa o valor atual para trocá-lo.
+  function tableChoiceCellClick(blockId, cellKey) {
+    const entry = getCurrentTableExercise(blockId);
+    if (!entry || !cellKey) return;
+
+    const target = entry.entries.find(function (item) {
+      return getTableExerciseCellKey(item.ref) === cellKey && tableCellUsesChoiceBlank(item.cell);
+    });
+    if (!target) return;
+
+    if (!isTableExerciseValueEmpty(entry.exercise.values[cellKey])) {
+      entry.exercise.values[cellKey] = "";
+    }
+    entry.exercise.activeCellKey = cellKey;
+    entry.exercise.feedback = null;
+    renderApp();
+  }
+
+  // Aplica uma opção visível à célula de escolha atualmente ativa.
+  function tableChoiceOptionClick(blockId, value) {
+    const entry = getCurrentTableExercise(blockId);
+    if (!entry) return;
+
+    const activeEntry = getActiveTableChoiceEntry(entry.table, entry.exercise);
+    if (!activeEntry) return;
+
+    entry.exercise.values[getTableExerciseCellKey(activeEntry.ref)] = String(value || "");
+    entry.exercise.feedback = null;
+    entry.exercise.activeCellKey = getFirstEmptyTableChoiceCellKey(entry.table, entry.exercise);
+    renderApp();
+  }
+
+  // Atualiza em tempo real a resposta digitada em uma célula da tabela.
+  function setTableInputDraft(blockId, cellKey, value) {
+    const entry = getCurrentTableExercise(blockId);
+    if (!entry || !cellKey) return;
+
+    const target = entry.entries.find(function (item) {
+      return getTableExerciseCellKey(item.ref) === cellKey && tableCellUsesInputBlank(item.cell);
+    });
+    if (!target) return;
+
+    entry.exercise.values[cellKey] = String(value || "");
+    entry.exercise.feedback = null;
+  }
+
+  // Valida uma tabela interativa comparando cada lacuna com a resposta esperada da célula.
+  function validateTableExerciseBlock(step, block) {
+    const table = normalizeTableBlock(block);
+    const entries = getTableExerciseCellEntries(table);
+    if (!entries.length) return "none";
+
+    const exercise = getTableExerciseState(step, block);
+    const hasEmpty = entries.some(function (entry) {
+      return isTableExerciseValueEmpty(exercise.values[getTableExerciseCellKey(entry.ref)]);
+    });
+    if (hasEmpty) {
+      exercise.feedback = "incomplete";
+      return "incomplete";
+    }
+
+    const ok = entries.every(function (entry) {
+      const cellKey = getTableExerciseCellKey(entry.ref);
+      return normalizeTableExerciseAttemptValue(exercise.values[cellKey]) === normalizeTableExerciseAttemptValue(entry.cell.value);
+    });
+    exercise.feedback = ok ? "correct" : "incorrect";
+    return exercise.feedback;
+  }
+
+  // Mostra todas as respostas corretas da tabela interativa.
+  function tableViewAnswer(blockId) {
+    const entry = getCurrentTableExercise(blockId);
+    if (!entry) return;
+
+    entry.entries.forEach(function (item) {
+      entry.exercise.values[getTableExerciseCellKey(item.ref)] = item.cell.value;
+    });
+    entry.exercise.feedback = "correct";
+    entry.exercise.activeCellKey = null;
+    renderApp();
+  }
+
+  // Fecha o feedback de erro da tabela interativa.
+  function tableTryAgain(blockId) {
+    const entry = getCurrentTableExercise(blockId);
+    if (!entry) return;
+    entry.exercise.feedback = null;
+    renderApp();
+  }
+
+  // Renderiza tabela responsiva com título opcional e lacunas por célula quando configuradas.
+  function renderTableBlock(stepOrBlock, maybeBlock) {
+    const step = maybeBlock ? stepOrBlock : null;
+    const block = maybeBlock || stepOrBlock;
     const table = normalizeTableBlock(block);
     const headers = table.headers.length ? table.headers : [createBlankTableCell("header")];
     const rows = table.rows.length ? table.rows : [[createBlankTableCell("body")]];
+    const hasExercise = !!step && getTableExerciseCellEntries(table).length > 0;
+    const exercise = hasExercise ? getTableExerciseState(step, block) : null;
 
-    const headHtml = headers.map(function (header) {
-      return (
-        '<th class="' +
-        escAttr(getTableCellClassNames(header)) +
-        '">' +
-        '<div class="table-cell-content">' +
-        renderTableCellStyledValue(header) +
-        "</div>" +
-        "</th>"
-      );
+    const headHtml = headers.map(function (header, columnIndex) {
+      return renderTableRuntimeCell(step, block, exercise, {
+        role: "header",
+        rowIndex: -1,
+        columnIndex: columnIndex
+      }, header, "th");
     }).join("");
 
-    const rowHtml = rows.map(function (row) {
-      const cells = headers.map(function (_header, index) {
-        const cell = normalizeTableCell(row[index], "body");
-        return (
-          '<td class="' +
-          escAttr(getTableCellClassNames(cell)) +
-          '">' +
-          '<div class="table-cell-content">' +
-          renderTableCellStyledValue(cell) +
-          "</div>" +
-          "</td>"
-        );
+    const rowHtml = rows.map(function (row, rowIndex) {
+      const cells = headers.map(function (_header, columnIndex) {
+        return renderTableRuntimeCell(step, block, exercise, {
+          role: "body",
+          rowIndex: rowIndex,
+          columnIndex: columnIndex
+        }, row[columnIndex], "td");
       }).join("");
       return "<tr>" + cells + "</tr>";
     }).join("");
 
+    const exerciseFooter = hasExercise
+      ? renderTableExerciseGuide(table) + renderTableChoiceOptions(block, table, exercise) + renderTableExerciseFeedback(block, exercise)
+      : "";
+
     return (
-      '<section class="table-block">' +
+      '<section class="table-block' + (hasExercise ? " table-block-exercise" : "") + '">' +
       (table.title
         ? '<p class="table-block-title ' +
           escAttr(getTableCellClassNames(table.titleStyle)) +
@@ -2770,6 +3406,7 @@
       "<tbody>" + rowHtml + "</tbody>" +
       "</table>" +
       "</div>" +
+      (exerciseFooter ? '<div class="table-exercise-footer">' + exerciseFooter + "</div>" : "") +
       "</section>"
     );
   }
@@ -3072,7 +3709,7 @@
         return renderImage(block.value);
       }
       if (isTableKind(block.kind)) {
-        return renderTableBlock(block);
+        return renderTableBlock(step, block);
       }
       if (isEditorKind(block.kind)) {
         return renderTerminalBlock(step, block);
@@ -3210,6 +3847,9 @@
   // Filtra apenas os blocos interativos que realmente exigem resposta do estudante.
   function collectInteractiveExerciseBlocks(blocks) {
     return (Array.isArray(blocks) ? blocks : []).filter(function (block) {
+      if (isTableKind(block.kind)) {
+        return getTableExerciseCellEntries(block).length > 0;
+      }
       if (isEditorKind(block.kind)) {
         return parseTerminalTemplate(block.value || "").answers.length > 0;
       }
@@ -3248,6 +3888,10 @@
     if (!exerciseBlocks.length) return { requiresSolve: false, solved: true };
 
     const solved = exerciseBlocks.every(function (block) {
+      if (isTableKind(block.kind)) {
+        const exercise = getTableExerciseState(step, block);
+        return exercise.feedback === "correct";
+      }
       if (isEditorKind(block.kind)) {
         const parsed = parseTerminalTemplate(block.value || "");
         const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
@@ -5095,7 +5739,44 @@
 
     for (let i = 0; i < blocks.length; i += 1) {
       if (!isTableKind(blocks[i].kind)) continue;
-      blocks[i] = normalizeTableBlock(blocks[i]);
+
+      const table = normalizeTableBlock(blocks[i]);
+      const exerciseEntries = getTableExerciseCellEntries(table);
+
+      for (let j = 0; j < exerciseEntries.length; j += 1) {
+        const entry = exerciseEntries[j];
+        const label = getTableCellLabel(entry.ref);
+        const answer = String(entry.cell.value || "").trim();
+        const targetCell =
+          entry.ref.role === "header"
+            ? table.headers[entry.ref.columnIndex]
+            : table.rows[entry.ref.rowIndex] && table.rows[entry.ref.rowIndex][entry.ref.columnIndex];
+
+        if (!answer) {
+          window.alert("Preencha a resposta esperada da " + label + " da tabela.");
+          return null;
+        }
+
+        if (tableCellUsesChoiceBlank(entry.cell)) {
+          const filledOptions = normalizeTableChoiceOptions(entry.cell.options).filter(function (option) {
+            return !!String(option.value || "").trim();
+          });
+
+          if (!filledOptions.length) {
+            window.alert("Adicione pelo menos uma opção para a " + label + " da tabela.");
+            return null;
+          }
+
+          if (!filledOptions.some(function (option) { return option.value === answer; })) {
+            window.alert("Inclua a resposta esperada entre as opções da " + label + " da tabela.");
+            return null;
+          }
+
+          if (targetCell) targetCell.options = filledOptions.map(serializeTableChoiceOption);
+        }
+      }
+
+      blocks[i] = table;
     }
 
     for (let i = 0; i < blocks.length; i += 1) {
@@ -5445,6 +6126,19 @@
     return null;
   }
 
+  // Resolve o campo real da tabela mais próximo do clique dentro do bloco.
+  function getNearestTableEditorField(target, blockNode) {
+    if (!target || !blockNode || blockNode.getAttribute("data-block-kind") !== "table") return null;
+
+    const directField = target.closest("[data-table-title], [data-table-header-cell], [data-table-cell]");
+    if (directField && blockNode.contains(directField)) return directField;
+
+    const tableArea = target.closest("th, td, .table-editor-cell-shell, .table-editor-header-shell, .table-editor-row-head-shell");
+    if (!tableArea || !blockNode.contains(tableArea)) return null;
+
+    return tableArea.querySelector("[data-table-title], [data-table-header-cell], [data-table-cell]");
+  }
+
   // Ativa o contêiner clicado e, se o clique caiu na superfície, foca o primeiro campo dele.
   function handleEditorBlockSurfaceClick(event) {
     if (!state.editor.open) return;
@@ -5453,8 +6147,23 @@
 
     const blockNode = target.closest(".builder-block");
     if (!blockNode) return;
+    const isTableBlock = blockNode.getAttribute("data-block-kind") === "table";
 
     setActiveEditorBlock(blockNode.getAttribute("data-block-id"));
+
+    const tableField = getNearestTableEditorField(target, blockNode);
+    if (tableField) {
+      focusFieldNoScroll(tableField);
+      if (target !== tableField) {
+        moveCaretToFieldEnd(tableField);
+      }
+      setActiveTableCell(getTableCellRefFromField(tableField));
+      return;
+    }
+
+    if (isTableBlock && target.closest(".table-config")) {
+      return;
+    }
 
     if (target.closest("[data-action], input, textarea, select, button, label, [contenteditable='true']")) {
       return;
@@ -5699,6 +6408,31 @@
   }
 
   // Lê a grade da tabela diretamente do DOM do editor sem colapsar colunas vazias.
+  function parseTableChoiceOptionsAttr(value) {
+    if (!value) return [];
+    try {
+      return normalizeTableChoiceOptions(JSON.parse(String(value)));
+    } catch (_error) {
+      return [];
+    }
+  }
+
+  // Coleta uma célula de tabela do DOM do editor, incluindo metadados de lacuna.
+  function collectTableCellDraftFromField(field, role) {
+    return normalizeTableCell({
+      value: field ? String(field.value || "") : "",
+      bold: field ? field.getAttribute("data-table-bold") === "1" : role === "header",
+      italic: field ? field.getAttribute("data-table-italic") === "1" : false,
+      tone: field ? field.getAttribute("data-table-tone") || "default" : "default",
+      align: field ? field.getAttribute("data-table-align") || "left" : "left",
+      blank: field ? field.getAttribute("data-table-blank") === "1" : false,
+      interactionMode: field ? field.getAttribute("data-table-interaction-mode") || "choice" : "choice",
+      placeholder: field ? field.getAttribute("data-table-placeholder") || "" : "",
+      options: field ? parseTableChoiceOptionsAttr(field.getAttribute("data-table-options")) : []
+    }, role);
+  }
+
+  // Lê a grade da tabela diretamente do DOM do editor sem colapsar colunas vazias.
   function collectTableDraftFromBlockNode(blockNode) {
     if (!blockNode) return normalizeTableDraft({});
 
@@ -5718,23 +6452,11 @@
           }
         : undefined,
       headers: headerFields.map(function (field) {
-        return {
-          value: String(field.value || ""),
-          bold: field.getAttribute("data-table-bold") === "1",
-          italic: field.getAttribute("data-table-italic") === "1",
-          tone: field.getAttribute("data-table-tone") || "default",
-          align: field.getAttribute("data-table-align") || "left"
-        };
+        return collectTableCellDraftFromField(field, "header");
       }),
       rows: rowNodes.map(function (rowNode) {
         return Array.from(rowNode.querySelectorAll("[data-table-cell]")).map(function (field) {
-          return {
-            value: String(field.value || ""),
-            bold: field.getAttribute("data-table-bold") === "1",
-            italic: field.getAttribute("data-table-italic") === "1",
-            tone: field.getAttribute("data-table-tone") || "default",
-            align: field.getAttribute("data-table-align") || "left"
-          };
+          return collectTableCellDraftFromField(field, "body");
         });
       })
     });
@@ -6709,6 +7431,7 @@
       columnIndex: Math.max(0, Number(cellRef.columnIndex) || 0)
     };
     syncTableFormatTools(state.editor.activeTableCell.blockId);
+    syncTableExerciseTools(state.editor.activeTableCell.blockId);
   }
 
   // Lê a referência de célula a partir de um campo do editor da tabela.
@@ -6784,6 +7507,107 @@
     setActiveTableCell(cellRef);
     state.editor.pendingTableFocus = clone(cellRef);
     renderApp();
+  }
+
+  // Sincroniza no DOM os metadados de lacuna da célula atualmente editada.
+  function syncTableCellExerciseAttrsOnField(field, cell) {
+    if (!field) return;
+    const normalized = normalizeTableCell(cell, field.getAttribute("data-table-cell-role") === "header" ? "header" : "body");
+    field.setAttribute("data-table-blank", normalized.blank ? "1" : "0");
+    field.setAttribute("data-table-interaction-mode", normalized.interactionMode);
+    field.setAttribute("data-table-placeholder", normalized.placeholder || "");
+    field.setAttribute("data-table-options", JSON.stringify(normalized.options || []));
+    field.classList.toggle("is-table-blank", normalized.blank);
+    field.classList.toggle("is-table-blank-choice", tableCellUsesChoiceBlank(normalized));
+    field.classList.toggle("is-table-blank-input", tableCellUsesInputBlank(normalized));
+  }
+
+  // Atualiza a configuração de exercício da célula ativa da tabela no editor.
+  function mutateActiveTableCellExerciseConfig(blockId, updater, shouldRender) {
+    const block = getEditorTableBlock(blockId);
+    if (!block || typeof updater !== "function") return null;
+
+    const cellRef = getActiveTableCellRef(blockId, block);
+    if (!cellRef || cellRef.role === "title") return null;
+
+    const updated = updateTableCellDraft(blockId, cellRef, function (cell) {
+      const draft = normalizeTableCell(cell, cellRef.role === "header" ? "header" : "body");
+      updater(draft);
+      cell.blank = !!draft.blank;
+      cell.interactionMode = normalizeTableCellInteractionMode(draft.interactionMode);
+      cell.placeholder = String(draft.placeholder || "").trim();
+      cell.options = normalizeTableChoiceOptions(draft.options);
+    });
+
+    syncTableCellExerciseAttrsOnField(getTableEditorCellField(cellRef), updated);
+    if (shouldRender !== false) {
+      setActiveTableCell(cellRef);
+      state.editor.pendingTableFocus = clone(cellRef);
+      renderApp();
+    }
+    return updated;
+  }
+
+  // Define explicitamente se a célula ativa fica expositiva ou vira lacuna.
+  function setActiveTableCellBlankState(blockId, blank) {
+    snapshotEditorFromDom();
+    mutateActiveTableCellExerciseConfig(blockId, function (cell) {
+      cell.blank = !!blank;
+      if (cell.blank && normalizeTableCellInteractionMode(cell.interactionMode) === "choice" && !cell.options.length) {
+        cell.options = [{ id: uid("opt"), value: String(cell.value || "") }];
+      }
+    });
+  }
+
+  // Define o modo de interação da lacuna ativa da tabela.
+  function setActiveTableCellInteractionMode(blockId, mode) {
+    snapshotEditorFromDom();
+    mutateActiveTableCellExerciseConfig(blockId, function (cell) {
+      cell.blank = true;
+      cell.interactionMode = normalizeTableCellInteractionMode(mode);
+      if (cell.interactionMode === "choice" && !cell.options.length) {
+        cell.options = [{ id: uid("opt"), value: String(cell.value || "") }];
+      }
+    });
+  }
+
+  // Atualiza o placeholder da célula ativa sem exigir rerender imediato.
+  function syncActiveTableCellPlaceholderValue(blockId, value) {
+    mutateActiveTableCellExerciseConfig(blockId, function (cell) {
+      cell.placeholder = String(value || "");
+    }, false);
+  }
+
+  // Adiciona opção visível à célula ativa em modo escolha.
+  function addActiveTableCellOption(blockId) {
+    snapshotEditorFromDom();
+    mutateActiveTableCellExerciseConfig(blockId, function (cell) {
+      cell.blank = true;
+      cell.interactionMode = "choice";
+      cell.options = normalizeTableChoiceOptions(cell.options);
+      cell.options.push({ id: uid("opt"), value: "" });
+    });
+  }
+
+  // Remove opção da célula ativa em modo escolha.
+  function removeActiveTableCellOption(blockId, optionId) {
+    snapshotEditorFromDom();
+    mutateActiveTableCellExerciseConfig(blockId, function (cell) {
+      cell.options = normalizeTableChoiceOptions(cell.options).filter(function (option) {
+        return option.id !== optionId;
+      });
+    });
+  }
+
+  // Atualiza o texto de uma opção da célula ativa sem rerender completo.
+  function syncActiveTableCellOptionValue(blockId, optionId, value) {
+    mutateActiveTableCellExerciseConfig(blockId, function (cell) {
+      cell.options = normalizeTableChoiceOptions(cell.options).map(function (option) {
+        return option.id === optionId
+          ? { id: option.id, value: String(value || "") }
+          : option;
+      });
+    }, false);
   }
 
   // Adiciona uma nova coluna vazia ao fim da grade da tabela.
@@ -8674,7 +9498,9 @@
     exerciseBlocks.forEach(function (block) {
       let status = "none";
 
-      if (isEditorKind(block.kind)) {
+      if (isTableKind(block.kind)) {
+        status = validateTableExerciseBlock(step, block);
+      } else if (isEditorKind(block.kind)) {
         status = validateTerminalExerciseBlock(step, block);
       } else if (isMultipleChoiceKind(block.kind)) {
         status = validateMultipleChoiceExerciseBlock(step, block);
@@ -8694,6 +9520,17 @@
   // Limpa respostas e feedbacks de uma coleção de blocos interativos.
   function resetInteractiveBlocks(step, blocks) {
     collectInteractiveExerciseBlocks(blocks).forEach(function (block) {
+      if (isTableKind(block.kind)) {
+        const table = normalizeTableBlock(block);
+        const exercise = getTableExerciseState(step, block);
+        getTableExerciseCellEntries(table).forEach(function (entry) {
+          exercise.values[getTableExerciseCellKey(entry.ref)] = "";
+        });
+        exercise.feedback = null;
+        exercise.activeCellKey = getFirstEmptyTableChoiceCellKey(table, exercise);
+        return;
+      }
+
       if (isEditorKind(block.kind)) {
         const parsed = parseTerminalTemplate(block.value || "");
         const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
@@ -10892,6 +11729,24 @@
         renderApp();
         return;
       }
+      case "table-choice-cell":
+        tableChoiceCellClick(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-cell-key")
+        );
+        return;
+      case "table-choice-option":
+        tableChoiceOptionClick(
+          trigger.getAttribute("data-block-id"),
+          decodeURIComponent(trigger.getAttribute("data-option-value") || "")
+        );
+        return;
+      case "table-view-answer":
+        tableViewAnswer(trigger.getAttribute("data-block-id"));
+        return;
+      case "table-try-again":
+        tableTryAgain(trigger.getAttribute("data-block-id"));
+        return;
       case "terminal-option":
         terminalOptionClick(trigger.getAttribute("data-block-id"), decodeURIComponent(trigger.getAttribute("data-option") || ""));
         return;
@@ -11091,6 +11946,15 @@
       case "table-style-italic":
         toggleActiveTableCellFlag(trigger.getAttribute("data-block-id"), "italic");
         return;
+      case "table-choice-add-option":
+        addActiveTableCellOption(trigger.getAttribute("data-block-id"));
+        return;
+      case "table-choice-remove-option":
+        removeActiveTableCellOption(
+          trigger.getAttribute("data-block-id"),
+          trigger.getAttribute("data-option-id")
+        );
+        return;
       case "table-open-tone-picker":
         openTableTonePicker(trigger.getAttribute("data-block-id"));
         return;
@@ -11280,6 +12144,18 @@
       return;
     }
 
+    if (state.editor.open && target.matches("[data-table-cell-blank-mode]")) {
+      setActiveEditorBlock(target.getAttribute("data-block-id"));
+      setActiveTableCellBlankState(target.getAttribute("data-block-id"), target.value === "blank");
+      return;
+    }
+
+    if (state.editor.open && target.matches("[data-table-cell-interaction]")) {
+      setActiveEditorBlock(target.getAttribute("data-block-id"));
+      setActiveTableCellInteractionMode(target.getAttribute("data-block-id"), target.value);
+      return;
+    }
+
     if (
       state.editor.open &&
       target.matches("[data-editor-interaction]")
@@ -11315,6 +12191,15 @@
   function onRootInput(event) {
     const target = event.target;
     if (!target) return;
+
+    if (target.matches("[data-table-inline-input]")) {
+      setTableInputDraft(
+        target.getAttribute("data-block-id"),
+        target.getAttribute("data-cell-key"),
+        target.value
+      );
+      return;
+    }
 
     if (target.matches("[data-terminal-inline-input]")) {
       setTerminalInputDraft(
@@ -11382,6 +12267,22 @@
 
     if (target.matches("[data-choice-option], [data-simulator-label], [data-simulator-output]")) {
       setActiveEditorBlock(target.getAttribute("data-block-id"));
+      return;
+    }
+
+    if (target.matches("[data-table-cell-placeholder-input]")) {
+      setActiveEditorBlock(target.getAttribute("data-block-id"));
+      syncActiveTableCellPlaceholderValue(target.getAttribute("data-block-id"), target.value);
+      return;
+    }
+
+    if (target.matches("[data-table-choice-option-input]")) {
+      setActiveEditorBlock(target.getAttribute("data-block-id"));
+      syncActiveTableCellOptionValue(
+        target.getAttribute("data-block-id"),
+        target.getAttribute("data-option-id"),
+        target.value
+      );
       return;
     }
 
@@ -11613,6 +12514,18 @@
 
   // Inicia arraste por ponteiro (mouse/toque) no botao de arrastar.
   function onRootPointerDown(event) {
+    if (state.editor.open) {
+      const blockNode = event.target.closest ? event.target.closest(".builder-block") : null;
+      const tableField = getNearestTableEditorField(event.target, blockNode);
+      if (tableField) {
+        setActiveEditorBlock(blockNode ? blockNode.getAttribute("data-block-id") : "");
+        focusFieldNoScroll(tableField);
+        if (event.target !== tableField) moveCaretToFieldEnd(tableField);
+        setActiveTableCell(getTableCellRefFromField(tableField));
+        return;
+      }
+    }
+
     const textTool = event.target.closest(
       "[data-action='block-style-bold'], [data-action='block-style-italic'], [data-action='block-style-indent'], [data-action='open-tone-picker']"
     );
