@@ -119,10 +119,17 @@
       return ensureEditorButtonBlock(blocks);
     }
 
+    // Normaliza comentário opcional do card preservando quebras, mas removendo vazio estrutural.
+    function normalizeStepComment(value) {
+      const comment = String(value || "").replace(/\r/g, "");
+      return comment.trim() ? comment : "";
+    }
+
     // Normaliza step conforme o modelo atual em blocos.
     function normalizeStep(raw) {
       if (!raw || typeof raw !== "object") return null;
       const type = STEP_TYPES.indexOf(raw.type) > -1 ? raw.type : "content";
+      const comment = normalizeStepComment(raw.comment);
       const normalizedBlocks = Array.isArray(raw.blocks) && raw.blocks.length
         ? raw.blocks.map(normalizeStepBlock).filter(Boolean)
         : createDefaultBlocksForStep(raw, type);
@@ -133,6 +140,7 @@
         title: clean(raw.title, type === "lesson_complete" ? "Lição concluída" : "Novo card"),
         blocks: ensureEditorButtonBlock(normalizedBlocks)
       };
+      if (comment) step.comment = comment;
 
       const firstHeading = step.blocks.find(function (block) {
         return isHeadingKind(block.kind) && String(block.value || "").trim();
@@ -432,6 +440,7 @@
       defaultLesson: defaultLesson,
       defaultContentStep: defaultContentStep,
       defaultCompleteStep: defaultCompleteStep,
+      normalizeStepComment: normalizeStepComment,
       textToInlineRichTextHtml: textToInlineRichTextHtml,
       sanitizeInlineRichText: sanitizeInlineRichText,
       inlineRichTextToPlainText: inlineRichTextToPlainText,

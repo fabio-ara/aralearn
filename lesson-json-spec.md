@@ -28,8 +28,10 @@ No AraLearn, uma lição é uma sequência de cards.
 
 - cada `step` gera exatamente um card;
 - o corpo visual do card vem de `blocks[]`;
+- comentário pessoal opcional do card vive no próprio `step`;
 - o bloco `button` não aparece dentro do corpo do card;
 - o `button` controla o CTA fixo no rodapé da tela e, opcionalmente, um popup inline;
+- o comentário usa popover fixo próprio no rodapé e não pertence ao popup do `button`;
 - o progresso é salvo por `step`, não por bloco.
 
 Consequência importante para a autoria:
@@ -118,6 +120,7 @@ Campos:
   "id": "step-id",
   "type": "content",
   "title": "Título técnico do step",
+  "comment": "Comentário pessoal opcional",
   "blocks": []
 }
 ```
@@ -127,11 +130,13 @@ Campos:
 - `id`: identificador do card;
 - `type`: `content` ou `lesson_complete`;
 - `title`: metadado do step;
+- `comment`: comentário pessoal opcional persistido no próprio card;
 - `blocks[]`: blocos que compõem o card.
 
 Regras:
 
 - cada `step` deve terminar com exatamente um bloco `button`;
+- `comment` pertence ao `step`, não ao `button` nem a `popupBlocks[]`;
 - `popupBlocks` pertencem ao `button`, nunca ao `step`;
 - o primeiro `heading` preenchido tende a virar o `title` efetivo do step após normalização;
 - no tipo `lesson_complete`, o card final mostra marca de conclusão e o CTA volta ao menu do curso ao continuar.

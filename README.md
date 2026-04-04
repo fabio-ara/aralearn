@@ -15,7 +15,7 @@ O projeto agora combina três frentes:
 - `modules/`: utilitários de conteúdo, progresso, arquivos e fluxograma
 - `content/*.json`: fontes dos cursos embarcados ativos
 - `content/hardcoded-content.js`: arquivo runtime gerado para o boot local
-- `content/aralearn-course-matematica-para-informatica.zip`: pacote ZIP do curso hoje embarcado por padrão
+- `content/aralearn-course-curso-matematica-informatica-ifsp-2026.zip`: pacote ZIP do curso hoje embarcado por padrão
 - `examples/`: pacotes ZIP e fontes JSON mantidos fora do hardcoded atual
 - `scripts/build-web-course-example.mjs`: gerador do exemplo grande de fundamentos web
 - `manual.md`: documentação oficial do produto
@@ -33,7 +33,7 @@ Regras práticas:
 
 Catálogo embarcado atual:
 
-- `content/matematica-para-informatica.json`
+- `content/curso-matematica-informatica-ifsp-2026.json`
 
 Pacotes e fontes fora do hardcoded atual ficam em `examples/`, inclusive os cursos desembarcados desta versão.
 

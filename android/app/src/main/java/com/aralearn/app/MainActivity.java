@@ -5,9 +5,12 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.graphics.Insets;
+import android.os.Build;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Base64;
+import android.view.WindowInsets;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -39,6 +42,7 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> filePathCallback;
     private PendingDocumentWrite pendingExport;
     private WebViewAssetLoader assetLoader;
+    private String latestInsetsScript;
 
     private static final class PendingDocumentWrite {
         final byte[] bytes;
@@ -62,6 +66,7 @@ public class MainActivity extends Activity {
             .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
             .build();
 
+        configureSystemInsets();
         configureWebView();
         WebView.setWebContentsDebuggingEnabled(isDebuggableApp());
 
@@ -144,6 +149,77 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new AndroidHostBridge(), "AndroidHost");
         webView.setWebViewClient(new AraLearnWebViewClient());
         webView.setWebChromeClient(new AraLearnWebChromeClient());
+    }
+
+    private void configureSystemInsets() {
+        if (webView == null) return;
+
+        final int baseLeft = webView.getPaddingLeft();
+        final int baseTop = webView.getPaddingTop();
+        final int baseRight = webView.getPaddingRight();
+        final int baseBottom = webView.getPaddingBottom();
+
+        webView.setOnApplyWindowInsetsListener((view, insets) -> {
+            int left = Math.max(insets.getSystemWindowInsetLeft(), insets.getStableInsetLeft());
+            int top = Math.max(insets.getSystemWindowInsetTop(), insets.getStableInsetTop());
+            int right = Math.max(insets.getSystemWindowInsetRight(), insets.getStableInsetRight());
+            int bottom = Math.max(insets.getSystemWindowInsetBottom(), insets.getStableInsetBottom());
+            int extraGestureBottom = 0;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Insets gestureInsets = insets.getMandatorySystemGestureInsets();
+                extraGestureBottom = Math.max(0, gestureInsets.bottom - bottom);
+            }
+
+            view.setPadding(
+                baseLeft + left,
+                baseTop + top,
+                baseRight + right,
+                baseBottom + bottom
+            );
+            publishInsetsToWebView(left, top, right, bottom, extraGestureBottom);
+            return insets;
+        });
+
+        webView.requestApplyInsets();
+    }
+
+    private void publishInsetsToWebView(
+        int left,
+        int top,
+        int right,
+        int bottom,
+        int extraGestureBottom
+    ) {
+        latestInsetsScript = buildInsetsScript(left, top, right, bottom, extraGestureBottom);
+        if (webView == null) return;
+        webView.post(() -> webView.evaluateJavascript(latestInsetsScript, null));
+    }
+
+    private String buildInsetsScript(
+        int left,
+        int top,
+        int right,
+        int bottom,
+        int extraGestureBottom
+    ) {
+        return "(function(){var payload={" +
+            "left:" + left + "," +
+            "top:" + top + "," +
+            "right:" + right + "," +
+            "bottom:" + bottom + "," +
+            "extraGestureBottom:" + extraGestureBottom +
+            "};" +
+            "window.__AraLearnAndroidInsets__=payload;" +
+            "if(window.AraLearnAndroid&&typeof window.AraLearnAndroid.applyInsets==='function'){" +
+            "window.AraLearnAndroid.applyInsets(payload);" +
+            "return true;" +
+            "}" +
+            "try{" +
+            "window.dispatchEvent(new CustomEvent('aralearn:android-insets',{detail:payload}));" +
+            "}catch(_error){}" +
+            "return true;" +
+            "})();";
     }
 
     private void clearFilePathCallback() {
@@ -248,6 +324,13 @@ public class MainActivity extends Activity {
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             return assetLoader.shouldInterceptRequest(request.getUrl());
+        }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            super.onPageFinished(view, url);
+            if (latestInsetsScript == null || view == null) return;
+            view.post(() -> view.evaluateJavascript(latestInsetsScript, null));
         }
     }
 

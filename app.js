@@ -183,6 +183,7 @@
   const sanitizeInlineRichText = contentModelTools.sanitizeInlineRichText;
   const inlineRichTextToPlainText = contentModelTools.inlineRichTextToPlainText;
   const normalizeParagraphBlockData = contentModelTools.normalizeParagraphBlockData;
+  const normalizeStepComment = contentModelTools.normalizeStepComment;
   const firstValue = contentModelTools.firstValue;
   const emptyContent = contentModelTools.emptyContent;
   const hasProgressEntries = progressHelpers.hasProgressEntries;
@@ -217,6 +218,7 @@
       sideOpen: false,
       contextMenu: null,
       lessonQuickOpen: false,
+      stepComment: null,
       pendingImport: null,
       flowchartLayoutCacheByBlockId: {},
       flowchartViewportByKey: {},
@@ -251,6 +253,49 @@
       dragOverPosition: null
     }
   };
+
+  // Normaliza valores de inset vindos do wrapper Android antes de expor ao CSS.
+  function normalizeAndroidInsetValue(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 0;
+    return Math.max(0, Math.round(numeric));
+  }
+
+  // Espelha insets do host nativo em variáveis CSS para o layout web reagir sem re-render.
+  function applyAndroidHostInsets(payload) {
+    if (typeof document === "undefined" || !document.documentElement || !document.documentElement.style) {
+      return null;
+    }
+
+    const safePayload = payload && typeof payload === "object" ? payload : {};
+    const normalized = {
+      left: normalizeAndroidInsetValue(safePayload.left),
+      top: normalizeAndroidInsetValue(safePayload.top),
+      right: normalizeAndroidInsetValue(safePayload.right),
+      bottom: normalizeAndroidInsetValue(safePayload.bottom),
+      extraGestureBottom: normalizeAndroidInsetValue(safePayload.extraGestureBottom)
+    };
+
+    const style = document.documentElement.style;
+    style.setProperty("--android-safe-left", normalized.left + "px");
+    style.setProperty("--android-safe-top", normalized.top + "px");
+    style.setProperty("--android-safe-right", normalized.right + "px");
+    style.setProperty("--android-safe-bottom", normalized.bottom + "px");
+    style.setProperty("--android-extra-gesture-bottom", normalized.extraGestureBottom + "px");
+
+    if (typeof window !== "undefined") {
+      window.__AraLearnAndroidInsets__ = normalized;
+    }
+
+    return normalized;
+  }
+
+  // Reage a atualizações de insets emitidas pelo wrapper Android em tempo real.
+  function onAndroidInsetsEvent(event) {
+    const detail = event && event.detail ? event.detail : null;
+    applyAndroidHostInsets(detail);
+  }
+
   const bundledSeedChanged = applyBundledProjectSeed();
   pruneProgressStore();
   // Regrava logo no boot o snapshot canônico para estabilizar round-trip de importação/exportação.
@@ -276,6 +321,7 @@
       '<input id="editor-image-file" class="hidden-input" type="file" accept="image/*">' +
       '<div class="app-shell">' +
       body +
+      renderStepCommentPopup() +
       renderSideMenu() +
       renderContextMenu() +
       renderLessonQuickPanel() +
@@ -294,6 +340,7 @@
     }
 
     if (state.currentView === "lesson_step") updateProgressBar();
+    if (state.currentView === "lesson_step" && state.ui.stepComment) syncStepCommentPopupWidth();
     if (state.editor.open && state.editor.pendingScrollBlockId) {
       const blockId = state.editor.pendingScrollBlockId;
       state.editor.pendingScrollBlockId = null;
@@ -3748,6 +3795,81 @@
     return normalizePopupBlocks(block.popupBlocks);
   }
 
+  // Lê comentário opcional do card no formato canônico.
+  function getStepCommentValue(step) {
+    return normalizeStepComment(step && step.comment);
+  }
+
+  // Indica se o popover fixo de comentário está aberto para o card informado.
+  function isStepCommentOpen(step) {
+    return !!(step && state.ui.stepComment && state.ui.stepComment.stepId === step.id);
+  }
+
+  // Renderiza o ícone fixo de comentário ao lado do avanço do card.
+  function renderStepCommentButton(step) {
+    if (!step) return "";
+    const open = isStepCommentOpen(step);
+    const hasComment = !!getStepCommentValue(step);
+    const label = open ? "Fechar comentário do card" : "Comentário do card";
+    return (
+      '<button class="next-icon next-icon-secondary step-comment-btn' +
+      (hasComment ? " has-comment" : "") +
+      (open ? " is-open" : "") +
+      '" data-action="toggle-step-comment" title="' +
+      escAttr(label) +
+      '" aria-label="' +
+      escAttr(label) +
+      '" aria-pressed="' +
+      (open ? "true" : "false") +
+      '">' +
+      '<span class="comment-glyph" aria-hidden="true"></span>' +
+      "</button>"
+    );
+  }
+
+  // Renderiza o popover fixo para comentário pessoal do card atual.
+  function renderStepCommentPopup() {
+    if (!(state.currentView === "lesson_step" && state.ui.stepComment && state.ui.stepComment.stepId)) return "";
+
+    const step = getCurrentStep();
+    if (!step || step.id !== state.ui.stepComment.stepId) return "";
+
+    const draft = String(state.ui.stepComment.draft || "");
+    const dialogLabel = 'Comentário do card: ' + clean(step.title, "Card atual");
+
+    return (
+      '<section class="step-comment-layer">' +
+      '<div class="step-comment-shell">' +
+      '<article class="step-comment-popup" data-step-comment-popup="true" role="dialog" aria-label="' +
+      escAttr(dialogLabel) +
+      '">' +
+      '<textarea class="block-input step-comment-input" rows="5" data-step-comment-input="true" aria-label="' +
+      escAttr(dialogLabel) +
+      '" placeholder="">' +
+      esc(draft) +
+      "</textarea>" +
+      "</article>" +
+      "</div>" +
+      "</section>"
+    );
+  }
+
+  // Sincroniza a largura do comentário com a largura realmente visível do card atual.
+  function syncStepCommentPopupWidth() {
+    const popupShell = document.querySelector(".step-comment-shell");
+    const popup = document.querySelector(".step-comment-popup");
+    const card = document.querySelector(".lesson-card");
+    if (!popupShell || !popup || !card) return;
+
+    const cardRect = card.getBoundingClientRect();
+    const safeWidth = Math.max(0, Math.round(cardRect.width));
+    if (!safeWidth) return;
+
+    popupShell.style.width = safeWidth + "px";
+    popup.style.width = "100%";
+    popup.style.maxWidth = safeWidth + "px";
+  }
+
   // Renderiza a faixa fixa de ações da lição, fora da área rolável do card.
   function renderStepActionDock(step) {
     const actionHtml = renderStepDockActions(step);
@@ -3775,6 +3897,7 @@
 
     return (
       '<div class="lesson-next-wrap">' +
+      renderStepCommentButton(step) +
       '<button class="next-icon" data-action="' +
       action +
       '" data-popup="0" title="Continuar" aria-label="Continuar">&#10140;</button>' +
@@ -3805,6 +3928,7 @@
           escAttr(step.id) +
           '" title="Limpar" aria-label="Limpar">&#8635;</button>'
         : "") +
+      renderStepCommentButton(step) +
       '<button class="next-icon" data-action="popup-continue" data-popup-block-id="' +
       escAttr(block.id) +
       '" title="Continuar" aria-label="Continuar">&#10140;</button>' +
@@ -3830,6 +3954,7 @@
           escAttr(step.id) +
           '" title="Limpar" aria-label="Limpar">&#8635;</button>'
         : "") +
+      renderStepCommentButton(step) +
       '<button class="next-icon step-main-btn" data-action="step-button-click" data-block-id="' +
       escAttr(block.id) +
       '" data-popup="' +
@@ -5429,6 +5554,7 @@
   function blankEditorForm(type) {
     return {
       stepType: type || "content",
+      comment: "",
       blocks: [defaultButtonBlock()]
     };
   }
@@ -5473,6 +5599,7 @@
   function toEditorForm(step) {
     const stepType = step.type === "lesson_complete" ? "lesson_complete" : "content";
     const form = blankEditorForm(stepType);
+    form.comment = getStepCommentValue(step);
     form.blocks = Array.isArray(step.blocks)
       ? step.blocks.map(function (block) {
         const next = {
@@ -5829,6 +5956,8 @@
       title: clean(heading, stepTypeBase === "lesson_complete" ? "Lição concluída" : "Novo card"),
       blocks: blocks
     };
+    const comment = normalizeStepComment(form && form.comment);
+    if (comment) base.comment = comment;
 
     if (stepTypeBase === "lesson_complete") {
       const firstParagraph = blocks.find(function (block) {
@@ -8753,6 +8882,7 @@
 
   // Abre/fecha menu lateral.
   function toggleSideMenu() {
+    closeStepCommentEditor({ render: false });
     state.ui.sideOpen = !state.ui.sideOpen;
     state.ui.contextMenu = null;
     renderApp();
@@ -8760,6 +8890,7 @@
 
   // Abre/fecha painel rapido da licao.
   function toggleLessonQuick() {
+    closeStepCommentEditor({ render: false });
     state.ui.lessonQuickOpen = !state.ui.lessonQuickOpen;
     state.ui.contextMenu = null;
     renderApp();
@@ -8767,9 +8898,95 @@
 
   // Abre menu contextual de curso/modulo/licao.
   function openContextMenu(data) {
+    closeStepCommentEditor({ render: false });
     state.ui.contextMenu = data;
     state.ui.sideOpen = false;
     renderApp();
+  }
+
+  // Busca o step-alvo do comentário aberto dentro da lição atual.
+  function getOpenStepCommentTarget(stepId) {
+    const currentStep = getCurrentStep();
+    if (currentStep && currentStep.id === stepId) return currentStep;
+
+    const lessonEntry = getCurrentLessonEntry();
+    if (!lessonEntry || !Array.isArray(lessonEntry.lesson.steps)) return null;
+    return lessonEntry.lesson.steps.find(function (step) {
+      return step && step.id === stepId;
+    }) || null;
+  }
+
+  // Persiste comentário normalizado no próprio step, removendo o campo quando vazio.
+  function setStepCommentValue(step, value) {
+    if (!step) return;
+    const normalized = normalizeStepComment(value);
+    if (normalized) {
+      step.comment = normalized;
+      return;
+    }
+    delete step.comment;
+  }
+
+  // Move o foco para o textarea do comentário após renderizações.
+  function focusStepCommentInput() {
+    requestAnimationFrame(function () {
+      const input = document.querySelector("[data-step-comment-input='true']");
+      if (!input || typeof input.focus !== "function") return;
+      try {
+        input.focus({ preventScroll: true });
+      } catch (_error) {
+        input.focus();
+      }
+      if (typeof input.setSelectionRange === "function") {
+        const length = String(input.value || "").length;
+        input.setSelectionRange(length, length);
+      }
+    });
+  }
+
+  // Abre o popover fixo de comentário do card atual.
+  function openStepCommentEditor(step) {
+    if (!step) return;
+    closeStepCommentEditor({ render: false });
+    state.inlinePopupOpen = null;
+    state.flowchartPopupOpen = null;
+    state.ui.lessonQuickOpen = false;
+    state.ui.stepComment = {
+      stepId: step.id,
+      draft: getStepCommentValue(step)
+    };
+    renderApp();
+    focusStepCommentInput();
+  }
+
+  // Fecha o editor de comentário salvando o rascunho no próprio step.
+  function closeStepCommentEditor(options) {
+    const editor = state.ui.stepComment;
+    if (!editor) return false;
+
+    const targetStep = getOpenStepCommentTarget(editor.stepId);
+    if (targetStep) setStepCommentValue(targetStep, editor.draft);
+
+    state.ui.stepComment = null;
+    if (!options || options.render !== false) renderApp();
+    return true;
+  }
+
+  // Alterna o comentário do step atual sem disputar espaço com o popup de progressão.
+  function toggleStepCommentEditor() {
+    const step = getCurrentStep();
+    if (!step) return;
+    if (isStepCommentOpen(step)) {
+      closeStepCommentEditor();
+      return;
+    }
+    openStepCommentEditor(step);
+  }
+
+  // Atualiza o rascunho do comentário em memória enquanto o usuário digita.
+  function updateStepCommentDraft(value) {
+    if (!state.ui.stepComment) return;
+    state.ui.stepComment.draft = String(value || "").replace(/\r/g, "");
   }
 
   // Fecha overlays ativos (contexto, lateral, popup etc.).
@@ -8792,6 +9009,10 @@
       state.inlinePopupOpen = null;
       changed = true;
     }
+    if (state.ui.stepComment) {
+      closeStepCommentEditor({ render: false });
+      changed = true;
+    }
 
     if (changed) renderApp();
   }
@@ -8802,6 +9023,7 @@
   // ============================================================================
   // Navega para menu principal e preserva progresso atual quando necessario.
   function goMain() {
+    closeStepCommentEditor({ render: false });
     persistCurrentLessonProgress();
     state.currentView = "main_menu";
     state.currentLessonId = null;
@@ -8813,6 +9035,7 @@
 
   // Navega para menu de curso (lista de modulos/licoes).
   function goCourse(courseId) {
+    closeStepCommentEditor({ render: false });
     persistCurrentLessonProgress();
     const course = getCourse(courseId || state.currentCourseId);
     if (!course) return goMain();
@@ -8828,6 +9051,7 @@
 
   // Abre licao no ponto salvo de progresso (retomada).
   function openLesson(lessonId) {
+    closeStepCommentEditor({ render: false });
     const entry = findLesson(state.currentCourseId, lessonId);
     if (!entry) return;
     state.currentView = "lesson_step";
@@ -8841,6 +9065,7 @@
 
   // Avanca para proximo card da licao e salva progresso.
   function nextStep() {
+    closeStepCommentEditor({ render: false });
     const lessonEntry = getCurrentLessonEntry();
     if (!lessonEntry) return;
 
@@ -8860,6 +9085,7 @@
 
   // Volta para card anterior e salva progresso.
   function prevStep() {
+    closeStepCommentEditor({ render: false });
     const lessonEntry = getCurrentLessonEntry();
     if (!lessonEntry) return;
 
@@ -9247,6 +9473,7 @@
 
   // Limpa estados temporarios de interacao da UI.
   function resetTransient() {
+    state.ui.stepComment = null;
     state.inlinePopupOpen = null;
     state.flowchartPopupOpen = null;
     state.tokenByStepId = {};
@@ -10732,6 +10959,10 @@
       targetStep.subtitle = importedStep.subtitle;
       changed = true;
     }
+    if (!getStepCommentValue(targetStep) && getStepCommentValue(importedStep)) {
+      targetStep.comment = getStepCommentValue(importedStep);
+      changed = true;
+    }
     return changed;
   }
 
@@ -11676,6 +11907,7 @@
       case "exit-lesson": goCourse(state.currentCourseId); return;
       case "continue-step": nextStep(); return;
       case "complete-continue": goCourse(state.currentCourseId); return;
+      case "toggle-step-comment": toggleStepCommentEditor(); return;
       case "toggle-lesson-quick": toggleLessonQuick(); return;
       case "step-button-click": {
         const step = getCurrentStep();
@@ -11687,6 +11919,7 @@
           if (validation.hasExercise && validation.status !== "correct") return;
         }
         const popup = trigger.getAttribute("data-popup") === "1";
+        closeStepCommentEditor({ render: false });
         if (popup) {
           state.inlinePopupOpen = { stepId: step.id, blockId: trigger.getAttribute("data-block-id") || "" };
           renderApp();
@@ -11700,6 +11933,7 @@
         return;
       }
       case "popup-continue": {
+        closeStepCommentEditor({ render: false });
         const step = getCurrentStep();
         if (step) {
           const popupValidation = validateInteractiveBlocks(step, getOpenPopupInteractiveBlocks(step));
@@ -12191,6 +12425,11 @@
   function onRootInput(event) {
     const target = event.target;
     if (!target) return;
+
+    if (target.matches("[data-step-comment-input]")) {
+      updateStepCommentDraft(target.value);
+      return;
+    }
 
     if (target.matches("[data-table-inline-input]")) {
       setTableInputDraft(
@@ -12793,6 +13032,15 @@
       return;
     }
 
+    if (state.ui.stepComment && state.currentView === "lesson_step") {
+      const inCommentPopup = event.target.closest("[data-step-comment-popup='true']");
+      const onCommentToggle = event.target.closest("[data-action='toggle-step-comment']");
+      if (!inCommentPopup && !onCommentToggle) {
+        closeStepCommentEditor();
+        return;
+      }
+    }
+
     if (state.inlinePopupOpen && state.currentView === "lesson_step") {
       const inPopup = event.target.closest(".inline-popup");
       const onLegacyPopupButton = event.target.closest("[data-action='popup-open']");
@@ -12907,6 +13155,10 @@
     }
 
     let changed = false;
+    if (state.ui.stepComment) {
+      closeStepCommentEditor({ render: false });
+      changed = true;
+    }
     if (state.inlinePopupOpen) {
       state.inlinePopupOpen = null;
       changed = true;
@@ -13030,7 +13282,12 @@
   // Expõe API minima para o wrapper Android consultar navegacao interna.
   if (typeof window !== "undefined") {
     window.AraLearnAndroid = window.AraLearnAndroid || {};
+    window.AraLearnAndroid.applyInsets = applyAndroidHostInsets;
     window.AraLearnAndroid.handleBackPress = handleAndroidBackPress;
+    window.addEventListener("aralearn:android-insets", onAndroidInsetsEvent);
+    if (window.__AraLearnAndroidInsets__) {
+      applyAndroidHostInsets(window.__AraLearnAndroidInsets__);
+    }
   }
 
   root.addEventListener("click", onRootClick);

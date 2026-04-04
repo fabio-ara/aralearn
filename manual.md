@@ -114,6 +114,7 @@ Campos:
 - `type`
 - `title`
 - `subtitle` opcional
+- `comment` opcional
 - `blocks[]`
 
 ### 3.6 Bloco
@@ -135,6 +136,7 @@ Regra estrutural:
 - todo step editável termina com exatamente um bloco `button`;
 - o botão final é persistido dentro de `blocks[]`;
 - popup pertence ao bloco `button`, nunca ao step raiz.
+- comentário pessoal do card pertence ao próprio `step`, não ao `button` nem a `popupBlocks[]`.
 
 ---
 
@@ -180,6 +182,7 @@ Arquivos centrais:
 Responsabilidades:
 
 - carregar a base web em `WebView`;
+- respeitar insets das barras e áreas de gesto do sistema para manter a interface clicável no Android;
 - fornecer seletor nativo de arquivo;
 - fornecer salvamento nativo;
 - encaminhar o botão voltar do Android para a navegação interna do app.
@@ -254,6 +257,7 @@ Step:
   id
   type
   title
+  comment opcional
   blocks[]
 
 Bloco:
@@ -282,6 +286,7 @@ Regras complementares:
 
 - o rótulo do botão final é implícito da interface e não pertence ao JSON;
 - bloco `button` não persiste `value`.
+- `step.comment` persiste comentário pessoal do card quando existir; comentário vazio pode ser omitido do JSON.
 
 ## 6.2 Progresso
 
@@ -334,8 +339,16 @@ O app deve permitir que o usuário:
 - crie módulos;
 - crie lições;
 - edite cards;
+- adicione comentário pessoal por card;
 - importe e exporte conteúdo;
 - reorganize conteúdo com o mínimo de atrito possível.
+
+Regras:
+
+- comentário do card abre por ação fixa no rodapé da lição, ao lado do avanço principal, em popover próprio;
+- o popover do comentário deve ocupar a largura útil do card e se reduzir à própria área de escrita, sem textos auxiliares nem CTA interno;
+- esse comentário pertence ao `step`, não depende de popup do `button` e continua disponível mesmo em cards sem conteúdo extra no botão final;
+- comentário vazio não precisa ocupar campo persistido.
 
 ## 7.2 Editor visual
 
@@ -460,6 +473,7 @@ Critério visual explícito:
 - a grade do editor preserva colunas e células vazias durante a autoria, mas o JSON salvo continua limpo, sem sobra estrutural vazia no resultado final;
 - a coluna lateral de remover linha deve ocupar só a largura do próprio botão;
 - a largura de cada coluna editável deve seguir o maior texto presente nela, sem largura mínima inflada artificialmente;
+- no runtime, sentenças em cabeçalhos e células de `table` não devem quebrar automaticamente em múltiplas linhas; a tabela deve ganhar rolagem horizontal quando o conteúdo pedir mais largura;
 - precisa permanecer legível em mobile.
 
 ## 8.5 Simulator
@@ -554,6 +568,8 @@ Critério visual explícito:
 - pode avançar diretamente ou abrir popup inline;
 - popup persiste em `popupBlocks[]`;
 - o CTA da lição vive fora do card, preso ao rodapé fixo da tela;
+- o comentário do card compartilha esse rodapé como ação irmã, mas usa popover fixo independente de `popupBlocks[]`;
+- esse popover segue a largura útil do card e evita rótulos textuais visíveis, ficando restrito à área de escrita e fechando pelo mesmo ícone do rodapé ou por clique fora;
 - o popup aberto usa esse mesmo rodapé como âncora visual, mas sobrepõe a parte inferior do card sem redimensionar o conteúdo atrás.
 
 ## 8.10 Fidelidade entre autoria, JSON e runtime
@@ -564,10 +580,12 @@ Princípio central:
 
 Contrato por contêiner:
 
+- `step.comment`: comentário pessoal opcional do card. A fonte de verdade é o texto persistido no próprio `step`; o runtime apenas o edita em popover fixo e exportação/importação precisam devolvê-lo sem movê-lo para `blocks[]`, progresso ou metadados de pacote.
 - `heading`: `value` e `align` são a fonte de verdade; o runtime pode reaproveitar o primeiro `heading` preenchido como `step.title`, mas não inventa formatação inline nem subtítulo.
 - `paragraph`: `value` é o texto canônico; `richText` é a visualização rica equivalente. O motor pode derivar um a partir do outro quando não houver ambiguidade, mas não deve preservar `richText` que contradiga o texto canônico. Em `lesson_complete`, `paragraph.align` e `heading.align` devem vir como `center`.
 - `image`: `value` é o caminho lógico ou data URL resolvida; o runtime apenas carrega esse recurso e não deduz legenda, recorte ou contexto.
 - `table`: a ordem de `headers[]` e `rows[][]` é a ordem de renderização; não há ordenação automática. Estilo é por célula inteira, não por trecho interno. Quando a célula traz `blank: true`, `value` continua sendo a resposta canônica daquela posição, `interactionMode: "choice"` usa `options[]` visíveis só para aquela célula e `interactionMode: "input"` libera digitação direta. Se não houver lacunas, a tabela continua apenas expositiva; se houver, ela participa da validação do card.
+- `table`: em leitura e prática, sentenças devem permanecer íntegras numa linha visual quando não houver quebra autoral explícita; o motor prefere expandir a largura útil da tabela e deixar a rolagem horizontal no contêiner, em vez de partir a sentença automaticamente dentro da célula.
 - `simulator`: o template e a ordem de `options[]` definem a experiência. Existe exatamente uma lacuna estrutural e cada opção injeta seu `value` nela, mostrando `result` abaixo. O motor não "corrige" opções nem infere avaliação semântica, porque o bloco é de exploração, não de prova. O runtime não deve pré-selecionar automaticamente a primeira opção.
 - `editor`: o template em `value` e as opções habilitadas são a fonte de verdade. `value` persiste com quebras `\n`, preserva linhas vazias intermediárias e espaços iniciais de cada linha, e continua legível no JSON mesmo quando o preview usa chips para `[[...]]`. `slotOrder` define a ordem estrutural das lacunas corretas; `displayOrder` define apenas a ordem visual das fichas. Duplicatas são válidas e precisam continuar distintas. Em `choice`, o runtime preenche a lacuna atualmente selecionada e, por padrão, mantém selecionada a primeira lacuna vazia na ordem do template. Em `input`, variantes aceitas precisam estar declaradas; o runtime não inventa equivalências de código, fórmula ou comando. Exportação e importação precisam devolver exatamente o mesmo `value`, salvo a canonicalização de quebra para `\n`.
 - `multiple_choice`: a ordem do array é a ordem visível no runtime, porque o bloco não tem `displayOrder`. `answerState` define só o idioma visual do selecionado; quem define o conjunto esperado é `option.answer`. O motor não usa cor para "descobrir" resposta.
@@ -668,6 +686,7 @@ Comportamento:
 
 - web e Android persistem o workspace internamente;
 - conteúdo e progresso são atualizados em tempo real no armazenamento local;
+- comentários pessoais por card entram no mesmo snapshot local do workspace;
 - importação cria ou altera conteúdo interno;
 - exportação gera um pacote portátil sob demanda;
 - não existe conceito de arquivo ativo, biblioteca de arquivos aprovados ou autosave externo.
@@ -744,7 +763,7 @@ Regra:
   - `module` receber `module` ou `lesson`
   - `lesson` receber `lesson`
 - ao detectar item equivalente no destino, oferecer pelo menos `Mesclar`, `Substituir` e `Cancelar`; quando o escopo permitir duplicação localizada, manter também `Duplicar`;
-- `Mesclar` deve preservar o que já existe e acrescentar apenas cursos, módulos, lições, steps, blocos e popupBlocks ainda ausentes;
+- `Mesclar` deve preservar o que já existe e acrescentar apenas cursos, módulos, lições, steps, blocos, popupBlocks e comentários de step ainda ausentes;
 - quando o escopo do arquivo for menor que o do ponto de importação compatível, inserir o conteúdo no contêiner atual com mensagem informativa;
 - rejeitar apenas combinações sem contêiner compatível;
 - normalizar conteúdo, progresso e assets;
@@ -758,6 +777,7 @@ Regra:
 - exportar apenas o conteúdo do escopo pedido;
 - exportar apenas imagens realmente referenciadas;
 - manter JSON legível;
+- preservar `step.comment` quando o card tiver comentário pessoal;
 - preservar dados necessários para reimportação;
 - manter `project.json` acessível para inspeção manual dentro do `.zip`.
 
@@ -794,6 +814,8 @@ No APK:
 
 - o conteúdo roda na mesma base web;
 - o hardcoded separado em `content/` acompanha o pacote web empacotado;
+- o wrapper Android precisa compensar barras do sistema e áreas de gesto para que topbar, rodapé fixo e popovers não fiquem sob regiões que roubem toque;
+- os insets nativos do Android devem ser publicados em variáveis CSS para que o rodapé fixo e camadas flutuantes possam subir quando a área de gesto inferior aumentar;
 - importação usa seletor nativo;
 - exportação usa seletor nativo;
 - o workspace fica persistido dentro do `WebView`;
@@ -825,6 +847,7 @@ Cobertura mínima esperada:
 - preservação de edição local sobre os mesmos cursos hardcoded;
 - retomada de progresso;
 - edição e persistência de cards;
+- comentário fixo por card com round-trip em exportação/importação;
 - popup estruturado;
 - paleta e formatação textual;
 - inserção após bloco ativo e foco visual do editor;
@@ -846,6 +869,7 @@ Estas regras devem continuar verdadeiras:
 - o workspace local do usuário prevalece sobre a mesma trilha já salva;
 - o manual documenta o motor, não o catálogo do usuário;
 - todo step editável termina com um único bloco `button`;
+- comentário pessoal do card vive em `step.comment`, fora de `blocks[]`, popup do botão e progresso;
 - popup do botão vive em `popupBlocks[]`;
 - `buttonText` não existe no modelo canônico;
 - bloco `button` não carrega texto persistido;
