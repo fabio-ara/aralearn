@@ -32,7 +32,7 @@ AraLearn é um motor local de aprendizagem em cards.
 Perfis principais:
 
 - autor: cria cursos, módulos, lições, cards e exercícios;
-- estudante: navega por lições curtas e retoma o progresso salvo.
+- estudante: navega por lições segmentadas e retoma o progresso salvo.
 
 Princípios do produto:
 
@@ -41,7 +41,7 @@ Princípios do produto:
 - sem backend obrigatório;
 - mesma base web para navegador e APK;
 - conteúdo mutável e externo ao núcleo do motor;
-- o app pode embarcar um catálogo de cursos separado em `content/`, sem misturar esse hardcoded ao código do motor;
+- o app pode embarcar um catálogo de cursos separado em `content/`, sem misturar esse catálogo ao código do motor;
 - suporte a cursos de naturezas diferentes, como programação, administração, processos, ferramentas e disciplinas teóricas;
 - combinação livre de narrativa, tabela, terminal, múltipla escolha, simulador e fluxograma conforme o objetivo didático;
 - persistência local imediata;
@@ -52,6 +52,36 @@ Princípios do produto:
 O app é fixo.
 
 O conteúdo é mutável.
+
+---
+
+## 2.1 Ecossistema de autoria
+
+O AraLearn convive com duas camadas autorais acima do runtime:
+
+- `Disassembly`: linguagem declarativa voltada à estrutura pedagógica do material, com curso, módulo, lição, card, dependências e interação mínima;
+- `AraLearn Factory`: compilador interno que valida essas fontes e as transforma no JSON consumido pelo app;
+- `lesson-json-spec.md`: contrato mais próximo da serialização final usada no runtime.
+
+Regra de separação:
+
+- o Disassembly descreve intenção pedagógica e topologia;
+- o Factory cuida de validação e compilação;
+- o AraLearn renderiza, persiste, importa, exporta e empacota o resultado.
+
+---
+
+## 2.2 Evolução pública
+
+Linha pública atual:
+
+- `v0.0.1`: estrutura pública do motor, catálogo embarcado e documentação principal;
+- `v0.0.2`: contêineres de autoria, importação por mesclagem e pacotes `.zip`;
+- `v0.0.3`: lacunas, tabelas e avaliação local;
+- `v0.0.4`: APK Android e comentários por card;
+- `v0.0.5`: interface Android estável, sem vão extra acima ou abaixo da tela de lição.
+
+Esses marcos também estão resumidos em `CHANGELOG.md`.
 
 ---
 
@@ -155,10 +185,10 @@ Arquivos centrais:
 Responsabilidades:
 
 - `index.html`: ponto de entrada;
-- `app.js`: estado, renderização, eventos, autoria, navegação, persistência e bootstrap do hardcoded separado;
+- `app.js`: estado, renderização, eventos, autoria, navegação, persistência e bootstrap do catálogo embarcado;
 - `styles.css`: identidade visual e layout;
 - `modules/`: funções puras e catálogos auxiliares;
-- `content/`: fontes dos cursos hardcoded e arquivo runtime gerado para o boot local.
+- `content/`: fontes do catálogo embarcado e arquivo runtime gerado para o boot local.
 
 ### 4.2 Módulos principais
 
@@ -187,6 +217,14 @@ Responsabilidades:
 - fornecer salvamento nativo;
 - encaminhar o botão voltar do Android para a navegação interna do app.
 
+### 4.4 Referências técnicas
+
+- Android em `WebView`: o tratamento de barras do sistema e teclado segue a documentação oficial de `WindowInsets` e `safe-area` no Android e no Chromium WebView.
+  - Android Developers: <https://developer.android.com/develop/ui/views/layout/webapps/understand-window-insets>
+  - Chromium WebView: <https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/insets.md>
+- Fluxogramas: o layout combina noções de teoria dos grafos, como ordenação topológica quando possível, identificação de arestas de retorno para laços e distribuição em camadas.
+  - quando o motor externo entra em ação, o projeto usa ELK: <https://eclipse.dev/elk/>
+
 ---
 
 ## 5. Conteúdo e código-fonte
@@ -194,20 +232,20 @@ Responsabilidades:
 Regra atual:
 
 - o motor não deve embutir cursos diretamente dentro de `app.js`;
-- o hardcoded oficial deve ficar separado em `content/`;
+- o catálogo embarcado oficial deve ficar separado em `content/`;
 - o runtime local usa `content/hardcoded-content.js`, gerado a partir dos `.json` ativos em `content/`;
-- a inicialização carrega primeiro o workspace local persistido e depois só complementa o que estiver faltando a partir do hardcoded.
+- a inicialização carrega primeiro o workspace local persistido e depois só complementa o que estiver faltando a partir do catálogo embarcado.
 
 Consequências:
 
 - o catálogo-padrão pode ser trocado sem editar o núcleo do app;
-- o usuário pode editar localmente os cursos hardcoded já carregados;
-- em caso de conflito entre hardcoded e workspace local, o conteúdo salvo localmente prevalece;
+- o usuário pode editar localmente os cursos embarcados já carregados;
+- em caso de conflito entre catálogo embarcado e workspace local, o conteúdo salvo localmente prevalece;
 - cursos, módulos, lições e cards continuam não pertencendo ao código-fonte do motor;
 - o manual não documenta cursos específicos;
 - fixtures de teste podem existir na suíte, mas não no runtime do app.
 
-Regras mínimas para o hardcoded oficial:
+Regras mínimas para o catálogo embarcado oficial:
 
 - card de prática precisa ser autossuficiente no próprio step, sem depender do card anterior para contexto essencial;
 - em prática com `table`, o próprio step precisa mostrar os casos, símbolos e valores de apoio necessários para resolver a grade; evite depender de rótulos como `Linha`, `linha 2` ou de uma tabela mostrada só em card anterior;
@@ -222,7 +260,7 @@ Regras mínimas para o hardcoded oficial:
 - quando o texto corrido mencionar sintaxe, comandos, tags, seletores, propriedades, atributos, métodos ou nomes de arquivo, a fonte deve preferir `richText` com destaque inline para esses fragmentos, em vez de deixá-los perdidos no parágrafo.
 - em `editor` e `simulator`, sintaxe literal como `<p>`, `</div>` ou `<!DOCTYPE html>` não pode ser engolida pelo saneamento inline; o runtime precisa mostrá-la como código visível e comparar as respostas preservando essa literalidade.
 - em popup de feedback, o conteúdo deve ir direto ao motivo técnico; evite frases como "você acertou" e evite repetir a alternativa correta quando ela já está visível no próprio card.
-- assets `image` do hardcoded oficial precisam privilegiar leitura em viewport mobile, usar paleta compatível com o app e evitar texto corrido dentro do SVG; prefira poucos rótulos curtos, formas grandes e contraste estável.
+- imagens do catálogo embarcado precisam privilegiar leitura em viewport mobile, usar paleta compatível com o app e evitar texto corrido dentro do SVG; prefira poucos rótulos, formas grandes e contraste estável.
 - em `editor` com `interactionMode: "choice"`, a ordem visual das opções deve vir por `displayOrder` embaralhado de forma não trivial; a ordem estrutural correta pertence a `slotOrder` e não deve vazar pela posição inicial das fichas.
 
 ---
@@ -325,7 +363,7 @@ Regras:
 
 - o caminho lógico de imagem do app vive em `assets/images/`;
 - imagens referenciadas devem poder entrar em pacotes ZIP;
-- assets órfãos devem ser podados antes de persistir ou exportar.
+- arquivos órfãos de imagem devem ser podados antes de persistir ou exportar.
 
 ---
 
@@ -347,8 +385,10 @@ Regras:
 
 - comentário do card abre por ação fixa no rodapé da lição, ao lado do avanço principal, em popover próprio;
 - o popover do comentário deve ocupar a largura útil do card e se reduzir à própria área de escrita, sem textos auxiliares nem CTA interno;
+- mesmo com foco e teclado móvel, o popover do comentário continua restrito à área de escrita, sobe para a área superior útil acima do teclado, reduz a própria altura quando o viewport fica apertado e não pode invadir topbar, faixa `module - lesson`, barra de status ou safe area superior;
 - esse comentário pertence ao `step`, não depende de popup do `button` e continua disponível mesmo em cards sem conteúdo extra no botão final;
 - comentário vazio não precisa ocupar campo persistido.
+- contêineres roláveis do app devem preservar a própria posição após re-renderizações da mesma view; quando um controle troca o alvo ativo, esse alvo precisa continuar visível dentro da sua área rolável.
 
 ## 7.2 Editor visual
 
@@ -417,7 +457,7 @@ Critério visual explícito:
 
 - o motor não é específico de Python nem de programação; ele precisa continuar útil para cursos de lógica, processos, administração, plataformas, planilhas e outras áreas;
 - o autor pode alternar métodos de input dentro da mesma lição quando isso melhorar treino, retenção e variedade de prática;
-- teoria tende a funcionar melhor em blocos curtos, seguida por vários exercícios progressivos;
+- teoria tende a funcionar melhor em blocos enxutos, seguida por vários exercícios progressivos;
 - a progressão ideal dentro da mesma lição parte de reconhecimento guiado, avança para produção e depois para combinação de habilidades já treinadas;
 - tabelas servem bem para consulta e contraste;
 - `multiple_choice` serve bem para discriminação;
@@ -469,7 +509,7 @@ Critério visual explícito:
 - os controles de alinhamento da tabela devem refletir a célula ativa em tempo real, com ícones visuais de alinhamento em vez de letras;
 - o alinhamento padrão das células e do título da tabela é à esquerda;
 - uma mesma tabela pode misturar lacunas por `Opções` e por `Digitação` em células diferentes;
-- quando a tabela tiver ao menos uma lacuna, o runtime deve mostrar um guia curto indicando se o preenchimento usa `Opções`, `Digitação` ou ambos;
+- quando a tabela tiver ao menos uma lacuna, o runtime deve mostrar um guia breve indicando se o preenchimento usa `Opções`, `Digitação` ou ambos;
 - a grade do editor preserva colunas e células vazias durante a autoria, mas o JSON salvo continua limpo, sem sobra estrutural vazia no resultado final;
 - a coluna lateral de remover linha deve ocupar só a largura do próprio botão;
 - a largura de cada coluna editável deve seguir o maior texto presente nela, sem largura mínima inflada artificialmente;
@@ -517,7 +557,7 @@ Critério visual explícito:
   - linha principal com `Arrastar opção`, `Habilitar/Desabilitar lacuna`, toggle `(.*)`, textbox, `Adicionar variante` e `Remover opção`;
   - linhas de variante alinhadas à principal, com apenas toggle `(.*)`, textbox e `Remover variante`;
 - quando a própria estrutura já explica a autoria, o modo `input` deve evitar textos auxiliares dentro do contêiner;
-- placeholders e textos-padrão do modo `input` devem ser curtos o bastante para não estourar nos campos compactos do mobile;
+- placeholders e textos-padrão do modo `input` devem ser breves o bastante para não estourar nos campos compactos do mobile;
 - na autoria de blocos textuais, os controles de negrito, itálico, cor e indentação devem ficar imediatamente acima da área editável;
 - ao selecionar um trecho já formatado, os controles inline devem refletir esse estado visualmente; acionar o mesmo controle sobre uma seleção totalmente já marcada deve remover o estilo, e não duplicá-lo;
 - por padrão, o modo `input` valida cada lacuna por comparação textual normalizada;
@@ -556,11 +596,12 @@ Critério visual explícito:
   - saída esquerda (`outputSlot: 0`) = `Não`
   - saída direita (`outputSlot: 1`) = `Sim`
 - na autoria, quando um losango tiver duas saídas ativas, os labels padrão devem aparecer já preenchidos nos campos, e não apenas como sugestão vaga;
-- placeholders dos campos compactos devem usar rótulos curtos, evitando truncamento visual;
+- placeholders dos campos compactos devem usar rótulos breves, evitando truncamento visual;
 - o combobox de símbolo deve alinhar visualmente o início dos textos das opções, mesmo quando os glifos das formas têm larguras diferentes;
 - layout precisa privilegiar legibilidade, laços e convergências;
 - em fluxogramas top-down, saídas laterais do losango devem evitar estrangulamento visual, dobras supérfluas, sobreposição com blocos e cruzamento desnecessário de setas;
 - quando houver caminho ortogonal direto livre entre a saída lateral e o bloco de destino, esse caminho mais simples deve ser preferido.
+- o arranjo automático deve preservar a leitura de cima para baixo, tratar laços como arestas de retorno e evitar cruzamentos desnecessários sempre que a estrutura do grafo permitir.
 
 ## 8.9 Button
 
@@ -643,11 +684,14 @@ Avançar step
 Regras de layout da lição:
 
 - telas de cursos e módulos mantêm cards em altura natural, sem esticar para preencher a viewport;
-- a rail lateral de ações globais e a barra inferior de ações usam a mesma espessura compacta, com botões centralizados no eixo curto;
+- a rail lateral de ações globais e a barra inferior de ações usam a mesma espessura compacta, com botões centralizados no eixo mais estreito;
 - o card atual ocupa toda a área útil entre o topo da lição e o rodapé fixo;
+- o vão visual entre card e dock fixa deve permanecer compacto; insets Android só acrescentam o espaço estritamente necessário para barras, gesto inferior e IME;
+- a faixa `module - lesson` acima do card reserva sempre duas linhas, mesmo quando o título ocupa pouco espaço, para manter a mesma altura útil do card e do comentário entre lições diferentes;
 - quando um `editor` em modo digitação está ativo, a lacuna continua sendo editada dentro do próprio preview, sem abrir compositor separado no rodapé;
-- se o conteúdo for curto, o card continua até o rodapé, mesmo com espaço vazio;
+- se o conteúdo ocupar pouco espaço, o card continua até o rodapé, mesmo com espaço vazio;
 - se o conteúdo ultrapassar a altura disponível, a rolagem acontece dentro do card, não no rodapé fixo;
+- quando uma validação gera `inline-feedback`, a visibilidade do card prioriza a própria mensagem; sem feedback novo, o runtime preserva a lacuna ou seleção ativa dentro do contêiner rolável atual;
 - no mobile, o gesto de arrastar deve rolar o conteúdo do card sem deslocar o CTA do rodapé.
 
 ---
@@ -664,7 +708,7 @@ Inclui:
 
 - conteúdo normalizado;
 - progresso serializado;
-- mapa de assets efetivamente usados;
+- mapa dos arquivos de imagem efetivamente usados;
 - `updatedAt`.
 
 Objetivo:
@@ -691,7 +735,7 @@ Comportamento:
 - exportação gera um pacote portátil sob demanda;
 - não existe conceito de arquivo ativo, biblioteca de arquivos aprovados ou autosave externo.
 
-## 10.3 Bootstrap do hardcoded
+## 10.3 Bootstrap do catálogo embarcado
 
 O catálogo embarcado não substitui cegamente o workspace local.
 
@@ -699,10 +743,10 @@ Comportamento:
 
 - o app lê `content/hardcoded-content.js` no boot;
 - esse arquivo é gerado a partir dos `.json` ativos em `content/`;
-- o hardcoded entra como semente complementar;
+- o catálogo embarcado entra como semente complementar;
 - se o usuário já tiver editado localmente o mesmo curso, módulo, lição, step ou bloco, a versão local prevalece;
-- itens ausentes no armazenamento local podem ser acrescentados a partir do hardcoded sem apagar o restante;
-- trocar o hardcoded oficial não exige editar o motor, apenas atualizar os JSONs-fonte e regenerar o runtime.
+- itens ausentes no armazenamento local podem ser acrescentados a partir do catálogo embarcado sem apagar o restante;
+- trocar o catálogo oficial não exige editar o motor, apenas atualizar os JSONs-fonte e regenerar o runtime.
 
 ---
 
@@ -717,7 +761,7 @@ Formato canônico:
 Conteúdo:
 
 - `project.json`
-- `assets/images/...` apenas para assets realmente usados
+- `assets/images/...` apenas para arquivos realmente usados
 
 Metadados obrigatórios em `project.json`:
 
@@ -766,9 +810,9 @@ Regra:
 - `Mesclar` deve preservar o que já existe e acrescentar apenas cursos, módulos, lições, steps, blocos, popupBlocks e comentários de step ainda ausentes;
 - quando o escopo do arquivo for menor que o do ponto de importação compatível, inserir o conteúdo no contêiner atual com mensagem informativa;
 - rejeitar apenas combinações sem contêiner compatível;
-- normalizar conteúdo, progresso e assets;
+- normalizar conteúdo, progresso e arquivos de apoio;
 - falhar com mensagem distinta para ZIP corrompido, `project.json` ausente, JSON inválido, asset ausente e método de compressão realmente não suportado;
-- podar assets órfãos;
+- podar arquivos órfãos de imagem;
 - reconciliar progresso;
 - persistir o resultado.
 
@@ -794,7 +838,7 @@ O app deve funcionar ao abrir `index.html` em Chrome no Windows.
 No navegador:
 
 - o workspace fica persistido no armazenamento interno disponível;
-- o hardcoded separado em `content/` é lido no boot apenas como semente complementar;
+- o catálogo embarcado separado em `content/` é lido no boot apenas como semente complementar;
 - `Importar` lê um pacote e aplica o conteúdo no workspace atual;
 - `Exportar` baixa um `.zip` do escopo pedido;
 - não existe vínculo contínuo com arquivo externo.
@@ -804,7 +848,7 @@ No navegador:
 Na publicação estática do projeto:
 
 - o artefato precisa incluir `index.html`, `app.js`, `styles.css`, `assets/`, `modules/` e `content/`;
-- o runtime do hardcoded deve ser regenerado antes do deploy, para manter `content/hardcoded-content.js` coerente com os JSONs-fonte ativos.
+- o runtime do catálogo embarcado deve ser regenerado antes do deploy, para manter `content/hardcoded-content.js` coerente com os JSONs-fonte ativos.
 
 ---
 
@@ -813,9 +857,16 @@ Na publicação estática do projeto:
 No APK:
 
 - o conteúdo roda na mesma base web;
-- o hardcoded separado em `content/` acompanha o pacote web empacotado;
-- o wrapper Android precisa compensar barras do sistema e áreas de gesto para que topbar, rodapé fixo e popovers não fiquem sob regiões que roubem toque;
-- os insets nativos do Android devem ser publicados em variáveis CSS para que o rodapé fixo e camadas flutuantes possam subir quando a área de gesto inferior aumentar;
+- o catálogo embarcado separado em `content/` acompanha o pacote web empacotado;
+- o wrapper Android usa edge-to-edge no `Activity`, preservando `adjustResize` para que o teclado móvel continue reposicionando o conteúdo web;
+- a compensação principal das barras do sistema acontece no layout web por meio de `safe-area-inset-*`; painéis inferiores, rodapé fixo e popovers precisam respeitar essas áreas;
+- em `WebView` moderno, não reespelhe `systemBars` e `IME` para o CSS por variáveis customizadas; deixe o próprio `WebView` entregar `safe-area-inset-*` e redimensionar a viewport;
+- o corte conservador adotado no wrapper é Chromium `140`: acima disso, o caminho padrão fica só com `safe-area` e `adjustResize`; abaixo disso, o fallback legado aplica padding nativo direto na `WebView` e zera os insets consumidos pelo conteúdo;
+- ao revisar insets no Android com `WebView`, evite duplicar compensação entre padding nativo e CSS, porque isso amplia recuos e pode quebrar o resize do teclado;
+- no `WebView` moderno, o IME já altera a área visível por viewport; por isso, evite reconstruir o teclado na camada web com overlays fixos e padding extra, sobretudo para componentes de edição;
+- o respiro entre topo, card e dock da lição é um espaçamento interno do layout; ele não deve ser confundido com compensação de barra do sistema nem somado ao inset externo;
+- o comentário do card deve permanecer no fluxo normal da tela de lição, logo abaixo da faixa `module - lesson`, para ficar visível perto do topo quando o teclado abre e não criar sobreposição artificial sobre o conteúdo.
+- a tela de lição não deve reintroduzir vão externo acima da barra superior nem abaixo do rodapé de ações em `WebView` moderno; esse comportamento passou a ser um marco fixo do produto.
 - importação usa seletor nativo;
 - exportação usa seletor nativo;
 - o workspace fica persistido dentro do `WebView`;
@@ -832,6 +883,7 @@ Validações obrigatórias:
 - `npm run test:e2e`
 - `pwsh -NoProfile -File ./scripts/validate.ps1`
 - build Android de debug dentro do fluxo completo
+- o APK publicado manualmente deve sair do mesmo ciclo validado; se a versão já existir e o problema estiver só no binário anexado, substitua o asset da release existente em vez de abrir uma nova versão sem mudança funcional
 
 Regras operacionais do E2E web:
 
@@ -841,10 +893,10 @@ Regras operacionais do E2E web:
 
 Cobertura mínima esperada:
 
-- boot com catálogo hardcoded separado;
-- auditoria do hardcoded contra textos de bastidor, dependência de card anterior e desalinhamento de `lesson_complete`;
+- boot com catálogo embarcado separado;
+- auditoria do catálogo embarcado contra textos de bastidor, dependência de card anterior e desalinhamento de `lesson_complete`;
 - `simulator` sem pré-seleção automática de opção;
-- preservação de edição local sobre os mesmos cursos hardcoded;
+- preservação de edição local sobre os mesmos cursos embarcados;
 - retomada de progresso;
 - edição e persistência de cards;
 - comentário fixo por card com round-trip em exportação/importação;
@@ -864,8 +916,8 @@ Cobertura mínima esperada:
 Estas regras devem continuar verdadeiras:
 
 - o app funciona sem backend;
-- o motor continua separado do hardcoded;
-- o hardcoded oficial vive fora do núcleo do motor, em `content/`;
+- o motor continua separado do catálogo embarcado;
+- o catálogo oficial vive fora do núcleo do motor, em `content/`;
 - o workspace local do usuário prevalece sobre a mesma trilha já salva;
 - o manual documenta o motor, não o catálogo do usuário;
 - todo step editável termina com um único bloco `button`;
@@ -877,9 +929,11 @@ Estas regras devem continuar verdadeiras:
 - importação e exportação são as únicas operações externas de arquivo;
 - exportação ZIP continua portátil entre web e Android;
 - o APK empacota a mesma base web da raiz do projeto;
+- no Android moderno, a tela de lição permanece sem vão externo extra acima e abaixo do conteúdo;
 - progresso órfão é removido;
-- assets órfãos são podados;
+- arquivos órfãos de imagem são podados;
 - fluxograma aceita no máximo duas saídas por nó;
+- texto de nó em `flowchart` precisa caber inteiro de forma legível; no mobile, o zoom inicial do quadro deve priorizar a largura do diagrama e deixar a rolagem vertical cuidar da altura total, em vez de achatar o conteúdo;
 - o editor continua compreensível para autor leigo.
 
 ---
@@ -900,7 +954,7 @@ Toda mudança relevante deve seguir este ciclo:
 Checklist mínimo:
 
 - o app continua independente do conteúdo?
-- se o hardcoded em `content/` mudou, o runtime gerado foi atualizado no mesmo ciclo?
+- se o catálogo embarcado em `content/` mudou, o runtime gerado foi atualizado no mesmo ciclo?
 - a persistência continua coerente na web e no Android?
 - o pacote ZIP continua reimportável?
 - o editor continua intuitivo?

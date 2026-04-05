@@ -5,12 +5,10 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
-import android.graphics.Insets;
-import android.os.Build;
+import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Base64;
-import android.view.WindowInsets;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -21,7 +19,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowCompat;
 import androidx.webkit.WebViewAssetLoader;
+import androidx.webkit.WebViewCompat;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,6 +36,7 @@ public class MainActivity extends Activity {
     private static final int REQUEST_EXPORT_DOCUMENT = 1002;
     private static final String DEFAULT_EXPORT_NAME = "aralearn-project.zip";
     private static final String DEFAULT_EXPORT_MIME = "application/zip";
+    private static final int WEBVIEW_PLATFORM_INSETS_MILESTONE = 140;
     private static final String BACK_PRESS_SCRIPT =
         "(function(){try{return !!(window.AraLearnAndroid && " +
         "window.AraLearnAndroid.handleBackPress && " +
@@ -42,7 +46,7 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> filePathCallback;
     private PendingDocumentWrite pendingExport;
     private WebViewAssetLoader assetLoader;
-    private String latestInsetsScript;
+    private InsetCapabilities insetCapabilities = new InsetCapabilities(false, 0);
 
     private static final class PendingDocumentWrite {
         final byte[] bytes;
@@ -56,18 +60,33 @@ public class MainActivity extends Activity {
         }
     }
 
+    private static final class InsetCapabilities {
+        final boolean usesPlatformInsets;
+        final int webViewMajorVersion;
+
+        InsetCapabilities(
+            boolean usesPlatformInsets,
+            int webViewMajorVersion
+        ) {
+            this.usesPlatformInsets = usesPlatformInsets;
+            this.webViewMajorVersion = webViewMajorVersion;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_main);
 
         webView = findViewById(R.id.main_webview);
+        insetCapabilities = detectInsetCapabilities();
         assetLoader = new WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
             .build();
 
-        configureSystemInsets();
         configureWebView();
+        configureInsetsHandling();
         WebView.setWebContentsDebuggingEnabled(isDebuggableApp());
 
         if (savedInstanceState == null) {
@@ -151,81 +170,70 @@ public class MainActivity extends Activity {
         webView.setWebChromeClient(new AraLearnWebChromeClient());
     }
 
-    private void configureSystemInsets() {
-        if (webView == null) return;
-
-        final int baseLeft = webView.getPaddingLeft();
-        final int baseTop = webView.getPaddingTop();
-        final int baseRight = webView.getPaddingRight();
-        final int baseBottom = webView.getPaddingBottom();
-
-        webView.setOnApplyWindowInsetsListener((view, insets) -> {
-            int left = Math.max(insets.getSystemWindowInsetLeft(), insets.getStableInsetLeft());
-            int top = Math.max(insets.getSystemWindowInsetTop(), insets.getStableInsetTop());
-            int right = Math.max(insets.getSystemWindowInsetRight(), insets.getStableInsetRight());
-            int bottom = Math.max(insets.getSystemWindowInsetBottom(), insets.getStableInsetBottom());
-            int extraGestureBottom = 0;
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                Insets gestureInsets = insets.getMandatorySystemGestureInsets();
-                extraGestureBottom = Math.max(0, gestureInsets.bottom - bottom);
-            }
-
-            view.setPadding(
-                baseLeft + left,
-                baseTop + top,
-                baseRight + right,
-                baseBottom + bottom
-            );
-            publishInsetsToWebView(left, top, right, bottom, extraGestureBottom);
-            return insets;
-        });
-
-        webView.requestApplyInsets();
-    }
-
-    private void publishInsetsToWebView(
-        int left,
-        int top,
-        int right,
-        int bottom,
-        int extraGestureBottom
-    ) {
-        latestInsetsScript = buildInsetsScript(left, top, right, bottom, extraGestureBottom);
-        if (webView == null) return;
-        webView.post(() -> webView.evaluateJavascript(latestInsetsScript, null));
-    }
-
-    private String buildInsetsScript(
-        int left,
-        int top,
-        int right,
-        int bottom,
-        int extraGestureBottom
-    ) {
-        return "(function(){var payload={" +
-            "left:" + left + "," +
-            "top:" + top + "," +
-            "right:" + right + "," +
-            "bottom:" + bottom + "," +
-            "extraGestureBottom:" + extraGestureBottom +
-            "};" +
-            "window.__AraLearnAndroidInsets__=payload;" +
-            "if(window.AraLearnAndroid&&typeof window.AraLearnAndroid.applyInsets==='function'){" +
-            "window.AraLearnAndroid.applyInsets(payload);" +
-            "return true;" +
-            "}" +
-            "try{" +
-            "window.dispatchEvent(new CustomEvent('aralearn:android-insets',{detail:payload}));" +
-            "}catch(_error){}" +
-            "return true;" +
-            "})();";
-    }
-
     private void clearFilePathCallback() {
         if (filePathCallback != null) {
             filePathCallback.onReceiveValue(null);
             filePathCallback = null;
+        }
+    }
+
+    private void configureInsetsHandling() {
+        if (webView == null) return;
+
+        if (insetCapabilities.usesPlatformInsets) {
+            webView.setPadding(0, 0, 0, 0);
+            return;
+        }
+
+        installLegacyInsetsFallback();
+    }
+
+    private void installLegacyInsetsFallback() {
+        ViewCompat.setOnApplyWindowInsetsListener(webView, (view, windowInsets) -> {
+            if (windowInsets == null) return WindowInsetsCompat.CONSUMED;
+
+            Insets systemBars = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout()
+            );
+            Insets gestures = windowInsets.getInsets(WindowInsetsCompat.Type.mandatorySystemGestures());
+
+            int left = Math.max(0, systemBars.left);
+            int top = Math.max(0, systemBars.top);
+            int right = Math.max(0, systemBars.right);
+            int bottom = Math.max(0, Math.max(systemBars.bottom, gestures.bottom));
+
+            // Fallback legado: compensa a WebView por fora e zera os insets entregues ao conteúdo.
+            view.setPadding(left, top, right, bottom);
+
+            WindowInsetsCompat.Builder passthrough = new WindowInsetsCompat.Builder(windowInsets);
+            passthrough.setInsets(
+                WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout(),
+                Insets.NONE
+            );
+            passthrough.setInsets(WindowInsetsCompat.Type.mandatorySystemGestures(), Insets.NONE);
+            return passthrough.build();
+        });
+        ViewCompat.requestApplyInsets(webView);
+    }
+
+    private InsetCapabilities detectInsetCapabilities() {
+        PackageInfo currentPackage = WebViewCompat.getCurrentWebViewPackage(this);
+        int webViewMajorVersion = parseWebViewMajorVersion(currentPackage != null ? currentPackage.versionName : null);
+        boolean usesPlatformInsets = webViewMajorVersion >= WEBVIEW_PLATFORM_INSETS_MILESTONE;
+        return new InsetCapabilities(usesPlatformInsets, webViewMajorVersion);
+    }
+
+    private int parseWebViewMajorVersion(String versionName) {
+        if (versionName == null || versionName.isEmpty()) {
+            return 0;
+        }
+
+        int separatorIndex = versionName.indexOf('.');
+        String majorToken = separatorIndex >= 0 ? versionName.substring(0, separatorIndex) : versionName;
+        try {
+            return Math.max(0, Integer.parseInt(majorToken));
+        } catch (NumberFormatException error) {
+            return 0;
         }
     }
 
@@ -329,8 +337,6 @@ public class MainActivity extends Activity {
         @Override
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
-            if (latestInsetsScript == null || view == null) return;
-            view.post(() -> view.evaluateJavascript(latestInsetsScript, null));
         }
     }
 

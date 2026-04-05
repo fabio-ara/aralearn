@@ -184,3 +184,48 @@ test("editor em modo opções permite quebrar respostas longas dentro da própri
 
   expect(metrics.height).toBeGreaterThan(44);
 });
+
+test("editor em modo opções mantém lacunas preenchidas após validação incompleta", async ({ page }) => {
+  const snapshot = createSampleProjectSnapshot();
+  snapshot.content.courses[0].modules[0].lessons[0].steps = [
+    {
+      id: "choice-incomplete-step",
+      type: "content",
+      title: "INCOMPLETO",
+      blocks: [
+        { id: "choice-incomplete-heading", kind: "heading", value: "INCOMPLETO" },
+        {
+          id: "choice-incomplete-editor",
+          kind: "editor",
+          interactionMode: "choice",
+          value: "[[A]] [[B]] [[C]]",
+          options: [
+            { id: "opt-a", value: "A", enabled: true, displayOrder: 0, slotOrder: 0 },
+            { id: "opt-b", value: "B", enabled: true, displayOrder: 1, slotOrder: 1 },
+            { id: "opt-c", value: "C", enabled: true, displayOrder: 2, slotOrder: 2 }
+          ]
+        },
+        {
+          id: "choice-incomplete-button",
+          kind: "button",
+          popupEnabled: false,
+          popupBlocks: []
+        }
+      ]
+    }
+  ];
+
+  await seedProject(page, snapshot);
+  await openFirstCourse(page);
+  await openFirstLesson(page);
+
+  await page.locator(".token-option", { hasText: "A" }).click();
+  await page.locator('[data-action="step-button-click"]').click();
+
+  await expect(page.locator(".inline-feedback.err")).toContainText("Preencha todas as lacunas.");
+  await expect(page.locator('[data-action="terminal-slot"][data-slot-index="0"]')).toContainText("A");
+  await expect(page.locator('[data-action="terminal-slot"][data-slot-index="1"]')).toContainText("□");
+
+  await page.locator('[data-action="step-button-click"]').click();
+  await expect(page.locator('[data-action="terminal-slot"][data-slot-index="0"]')).toContainText("A");
+});

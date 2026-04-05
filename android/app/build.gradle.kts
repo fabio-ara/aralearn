@@ -32,8 +32,8 @@ android {
         applicationId = "com.aralearn.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 9
-        versionName = "0.8.1"
+        versionCode = 5
+        versionName = "0.0.5"
     }
 
     buildTypes {
@@ -69,6 +69,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.core:core:1.15.0")
     implementation("androidx.webkit:webkit:1.15.0")
 }
 

@@ -4,9 +4,16 @@
   function createRenderStateTools() {
     const trackedSelectors = [
       ".screen-content",
+      ".lesson-card-body",
+      ".side-menu",
       ".editor-sheet",
       ".editor-step-strip",
       ".canvas-col",
+      ".table-editor-scroll",
+      ".table-scroll",
+      ".token-options",
+      ".terminal-box",
+      ".block-rich-input",
       ".flowchart-scroll"
     ];
 

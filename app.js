@@ -120,15 +120,15 @@
   const parseZip = fileHelpers.parseZip;
   const FLOWCHART_LAYOUT = {
     columns: 3,
-    cellWidth: 88,
+    cellWidth: 104,
     cellHeight: 98,
     gapX: 12,
     gapY: 18,
     shapeWidth: 80,
     shapeHeight: 48,
-    textWidth: 80,
-    textHeight: 42,
-    textTop: 55,
+    textWidth: 96,
+    textHeight: 84,
+    textTop: 56,
     boardPaddingX: 32,
     boardPaddingY: 24,
     routeStep: 10,
@@ -219,6 +219,7 @@
       contextMenu: null,
       lessonQuickOpen: false,
       stepComment: null,
+      pendingScrollReveal: null,
       pendingImport: null,
       flowchartLayoutCacheByBlockId: {},
       flowchartViewportByKey: {},
@@ -261,6 +262,93 @@
     return Math.max(0, Math.round(numeric));
   }
 
+  function normalizeAndroidInsetFlag(value) {
+    return value === true || value === "true" || value === 1 || value === "1";
+  }
+
+  function normalizeAndroidCssPixelValue(value) {
+    const numeric = Number.parseFloat(String(value || "0"));
+    return normalizeAndroidInsetValue(Number.isFinite(numeric) ? numeric : 0);
+  }
+
+  let browserSafeAreaProbe = null;
+
+  function ensureBrowserSafeAreaProbe() {
+    if (typeof document === "undefined") return null;
+    if (browserSafeAreaProbe && browserSafeAreaProbe.isConnected) return browserSafeAreaProbe;
+
+    const probe = document.createElement("div");
+    probe.setAttribute("aria-hidden", "true");
+    probe.style.cssText =
+      "position:fixed;left:-9999px;top:-9999px;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none;" +
+      "padding:env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);";
+    (document.body || document.documentElement).appendChild(probe);
+    browserSafeAreaProbe = probe;
+    return probe;
+  }
+
+  function readBrowserSafeAreaInsets() {
+    if (typeof window !== "undefined" && window.__AraLearnSafeAreaOverride__) {
+      const override = window.__AraLearnSafeAreaOverride__;
+      return {
+        left: normalizeAndroidInsetValue(override.left),
+        top: normalizeAndroidInsetValue(override.top),
+        right: normalizeAndroidInsetValue(override.right),
+        bottom: normalizeAndroidInsetValue(override.bottom)
+      };
+    }
+
+    if (typeof window === "undefined") {
+      return { left: 0, top: 0, right: 0, bottom: 0 };
+    }
+
+    const probe = ensureBrowserSafeAreaProbe();
+    if (!probe) {
+      return { left: 0, top: 0, right: 0, bottom: 0 };
+    }
+
+    const computed = window.getComputedStyle(probe);
+    return {
+      left: normalizeAndroidCssPixelValue(computed.paddingLeft),
+      top: normalizeAndroidCssPixelValue(computed.paddingTop),
+      right: normalizeAndroidCssPixelValue(computed.paddingRight),
+      bottom: normalizeAndroidCssPixelValue(computed.paddingBottom)
+    };
+  }
+
+  function resolveAndroidSafeAreaInsets(normalized) {
+    const browserSafe = readBrowserSafeAreaInsets();
+    const prefersWebViewSafeArea = !!normalized.supportsSafeAreaInsets;
+    return {
+      left: prefersWebViewSafeArea && browserSafe.left > 0 ? browserSafe.left : normalized.left,
+      top: prefersWebViewSafeArea && browserSafe.top > 0 ? browserSafe.top : normalized.top,
+      right: prefersWebViewSafeArea && browserSafe.right > 0 ? browserSafe.right : normalized.right,
+      bottom: prefersWebViewSafeArea && browserSafe.bottom > 0 ? browserSafe.bottom : normalized.bottom
+    };
+  }
+
+  function applyResolvedAndroidSafeArea(normalized) {
+    if (typeof document === "undefined" || !document.documentElement || !document.documentElement.style) {
+      return null;
+    }
+
+    const resolvedSafeArea = resolveAndroidSafeAreaInsets(normalized);
+    const tappableBottom = Math.max(resolvedSafeArea.bottom, normalized.extraGestureBottom);
+    const style = document.documentElement.style;
+    style.setProperty("--safe-left", resolvedSafeArea.left + "px");
+    style.setProperty("--safe-top", resolvedSafeArea.top + "px");
+    style.setProperty("--safe-right", resolvedSafeArea.right + "px");
+    style.setProperty("--safe-bottom", resolvedSafeArea.bottom + "px");
+    style.setProperty("--safe-bottom-tappable", tappableBottom + "px");
+    return {
+      left: resolvedSafeArea.left,
+      top: resolvedSafeArea.top,
+      right: resolvedSafeArea.right,
+      bottom: resolvedSafeArea.bottom,
+      tappableBottom: tappableBottom
+    };
+  }
+
   // Espelha insets do host nativo em variáveis CSS para o layout web reagir sem re-render.
   function applyAndroidHostInsets(payload) {
     if (typeof document === "undefined" || !document.documentElement || !document.documentElement.style) {
@@ -273,7 +361,11 @@
       top: normalizeAndroidInsetValue(safePayload.top),
       right: normalizeAndroidInsetValue(safePayload.right),
       bottom: normalizeAndroidInsetValue(safePayload.bottom),
-      extraGestureBottom: normalizeAndroidInsetValue(safePayload.extraGestureBottom)
+      extraGestureBottom: normalizeAndroidInsetValue(safePayload.extraGestureBottom),
+      imeBottom: normalizeAndroidInsetValue(safePayload.imeBottom),
+      supportsSafeAreaInsets: normalizeAndroidInsetFlag(safePayload.supportsSafeAreaInsets),
+      supportsImeViewportResize: normalizeAndroidInsetFlag(safePayload.supportsImeViewportResize),
+      webViewMajorVersion: normalizeAndroidInsetValue(safePayload.webViewMajorVersion)
     };
 
     const style = document.documentElement.style;
@@ -282,9 +374,12 @@
     style.setProperty("--android-safe-right", normalized.right + "px");
     style.setProperty("--android-safe-bottom", normalized.bottom + "px");
     style.setProperty("--android-extra-gesture-bottom", normalized.extraGestureBottom + "px");
+    style.setProperty("--android-ime-bottom", normalized.imeBottom + "px");
+    const resolvedSafeArea = applyResolvedAndroidSafeArea(normalized);
 
     if (typeof window !== "undefined") {
       window.__AraLearnAndroidInsets__ = normalized;
+      window.__AraLearnResolvedSafeArea__ = resolvedSafeArea;
     }
 
     return normalized;
@@ -294,6 +389,11 @@
   function onAndroidInsetsEvent(event) {
     const detail = event && event.detail ? event.detail : null;
     applyAndroidHostInsets(detail);
+  }
+
+  function refreshAndroidHostInsets() {
+    if (typeof window === "undefined" || !window.__AraLearnAndroidInsets__) return;
+    applyAndroidHostInsets(window.__AraLearnAndroidInsets__);
   }
 
   const bundledSeedChanged = applyBundledProjectSeed();
@@ -321,7 +421,6 @@
       '<input id="editor-image-file" class="hidden-input" type="file" accept="image/*">' +
       '<div class="app-shell">' +
       body +
-      renderStepCommentPopup() +
       renderSideMenu() +
       renderContextMenu() +
       renderLessonQuickPanel() +
@@ -340,7 +439,6 @@
     }
 
     if (state.currentView === "lesson_step") updateProgressBar();
-    if (state.currentView === "lesson_step" && state.ui.stepComment) syncStepCommentPopupWidth();
     if (state.editor.open && state.editor.pendingScrollBlockId) {
       const blockId = state.editor.pendingScrollBlockId;
       state.editor.pendingScrollBlockId = null;
@@ -355,6 +453,7 @@
         focusTableEditorCell(cellRef);
       });
     }
+    if (state.ui.pendingScrollReveal) syncPendingScrollReveal();
 
     // Persistencia em tempo real: sempre que renderizamos apos mudanca de estado, agendamos salvamento.
     scheduleProjectPersist();
@@ -525,6 +624,7 @@
       '<p class="muted tiny lesson-stage-meta">' +
       esc(lessonEntry.module.title + " - " + lessonEntry.lesson.title) +
       "</p>" +
+      renderStepCommentPopup() +
       stepHtml +
       "</section>" +
       "</main>" +
@@ -3072,16 +3172,54 @@
     return String(value || "").replace(/\r/g, "").trim();
   }
 
+  // Ordena lacunas por coluna para avançar para baixo antes de seguir para a direita.
+  function getOrderedTableChoiceEntries(table) {
+    return getTableExerciseCellEntries(table)
+      .filter(function (entry) {
+        return tableCellUsesChoiceBlank(entry.cell);
+      })
+      .sort(function (left, right) {
+        const leftColumn = Number(left.ref.columnIndex) || 0;
+        const rightColumn = Number(right.ref.columnIndex) || 0;
+        if (leftColumn !== rightColumn) return leftColumn - rightColumn;
+
+        const leftRow = left.ref.role === "header" ? -1 : Number(left.ref.rowIndex) || 0;
+        const rightRow = right.ref.role === "header" ? -1 : Number(right.ref.rowIndex) || 0;
+        if (leftRow !== rightRow) return leftRow - rightRow;
+
+        return 0;
+      });
+  }
+
+  // Retorna a próxima lacuna de escolha vazia respeitando a ordem de navegação por coluna.
+  function getNextEmptyTableChoiceCellKey(table, exercise, currentCellKey) {
+    const entries = getOrderedTableChoiceEntries(table);
+    if (!entries.length) return null;
+
+    let startIndex = 0;
+    if (currentCellKey) {
+      const currentIndex = entries.findIndex(function (entry) {
+        return getTableExerciseCellKey(entry.ref) === currentCellKey;
+      });
+      if (currentIndex > -1) startIndex = currentIndex + 1;
+    }
+
+    for (let index = startIndex; index < entries.length; index += 1) {
+      const cellKey = getTableExerciseCellKey(entries[index].ref);
+      if (isTableExerciseValueEmpty(exercise.values[cellKey])) return cellKey;
+    }
+
+    for (let index = 0; index < startIndex && index < entries.length; index += 1) {
+      const cellKey = getTableExerciseCellKey(entries[index].ref);
+      if (isTableExerciseValueEmpty(exercise.values[cellKey])) return cellKey;
+    }
+
+    return null;
+  }
+
   // Retorna a próxima célula de escolha ainda vazia.
   function getFirstEmptyTableChoiceCellKey(table, exercise) {
-    const entries = getTableExerciseCellEntries(table).filter(function (entry) {
-      return tableCellUsesChoiceBlank(entry.cell);
-    });
-
-    const found = entries.find(function (entry) {
-      return isTableExerciseValueEmpty(exercise.values[getTableExerciseCellKey(entry.ref)]);
-    });
-    return found ? getTableExerciseCellKey(found.ref) : null;
+    return getNextEmptyTableChoiceCellKey(table, exercise, null);
   }
 
   // Obtém ou cria o estado da tabela interativa.
@@ -3293,15 +3431,17 @@
     if (!exercise || !exercise.feedback) return "";
 
     if (exercise.feedback === "correct") {
-      return '<div class="inline-feedback ok"><p class="tiny">Correto.</p></div>';
+      return '<div class="inline-feedback ok" data-feedback-block-id="' + escAttr(block.id) + '"><p class="tiny">Correto.</p></div>';
     }
 
     if (exercise.feedback === "incomplete") {
-      return '<div class="inline-feedback err"><p class="tiny">Preencha todas as lacunas da tabela.</p></div>';
+      return '<div class="inline-feedback err" data-feedback-block-id="' + escAttr(block.id) + '"><p class="tiny">Preencha todas as lacunas da tabela.</p></div>';
     }
 
     return (
-      '<div class="inline-feedback err">' +
+      '<div class="inline-feedback err" data-feedback-block-id="' +
+      escAttr(block.id) +
+      '">' +
       '<p class="tiny">Algumas células não correspondem ao esperado.</p>' +
       '<div class="feedback-icons">' +
       '<button class="icon-pill" data-action="table-view-answer" data-block-id="' +
@@ -3330,6 +3470,7 @@
     }
     entry.exercise.activeCellKey = cellKey;
     entry.exercise.feedback = null;
+    scheduleTableChoiceCellReveal(blockId, cellKey);
     renderApp();
   }
 
@@ -3341,9 +3482,11 @@
     const activeEntry = getActiveTableChoiceEntry(entry.table, entry.exercise);
     if (!activeEntry) return;
 
-    entry.exercise.values[getTableExerciseCellKey(activeEntry.ref)] = String(value || "");
+    const currentCellKey = getTableExerciseCellKey(activeEntry.ref);
+    entry.exercise.values[currentCellKey] = String(value || "");
     entry.exercise.feedback = null;
-    entry.exercise.activeCellKey = getFirstEmptyTableChoiceCellKey(entry.table, entry.exercise);
+    entry.exercise.activeCellKey = getNextEmptyTableChoiceCellKey(entry.table, entry.exercise, currentCellKey);
+    scheduleTableChoiceCellReveal(blockId, entry.exercise.activeCellKey || currentCellKey);
     renderApp();
   }
 
@@ -3373,6 +3516,7 @@
     });
     if (hasEmpty) {
       exercise.feedback = "incomplete";
+      scheduleFeedbackReveal(block.id);
       return "incomplete";
     }
 
@@ -3381,6 +3525,7 @@
       return normalizeTableExerciseAttemptValue(exercise.values[cellKey]) === normalizeTableExerciseAttemptValue(entry.cell.value);
     });
     exercise.feedback = ok ? "correct" : "incorrect";
+    scheduleFeedbackReveal(block.id);
     return exercise.feedback;
   }
 
@@ -3394,6 +3539,7 @@
     });
     entry.exercise.feedback = "correct";
     entry.exercise.activeCellKey = null;
+    scheduleFeedbackReveal(blockId);
     renderApp();
   }
 
@@ -3402,6 +3548,10 @@
     const entry = getCurrentTableExercise(blockId);
     if (!entry) return;
     entry.exercise.feedback = null;
+    scheduleTableChoiceCellReveal(
+      blockId,
+      entry.exercise.activeCellKey || getFirstEmptyTableChoiceCellKey(entry.table, entry.exercise)
+    );
     renderApp();
   }
 
@@ -3650,6 +3800,7 @@
 
     if (!selected.length) {
       exercise.feedback = "incomplete";
+      scheduleFeedbackReveal(block.id);
       return "incomplete";
     }
 
@@ -3657,6 +3808,7 @@
       selected.length === expected.length &&
       selected.every(function (value, index) { return value === expected[index]; });
     exercise.feedback = ok ? "correct" : "incorrect";
+    scheduleFeedbackReveal(block.id);
     return exercise.feedback;
   }
 
@@ -3669,6 +3821,7 @@
       .filter(function (option) { return option.answer; })
       .map(function (option) { return option.id; });
     entry.exercise.feedback = "correct";
+    scheduleFeedbackReveal(blockId);
     renderApp();
   }
 
@@ -3686,15 +3839,17 @@
     if (!exercise.feedback) return "";
 
     if (exercise.feedback === "correct") {
-      return '<div class="inline-feedback ok"><p class="tiny">Correto.</p></div>';
+      return '<div class="inline-feedback ok" data-feedback-block-id="' + escAttr(block.id) + '"><p class="tiny">Correto.</p></div>';
     }
 
     if (exercise.feedback === "incomplete") {
-      return '<div class="inline-feedback err"><p class="tiny">Selecione pelo menos uma resposta.</p></div>';
+      return '<div class="inline-feedback err" data-feedback-block-id="' + escAttr(block.id) + '"><p class="tiny">Selecione pelo menos uma resposta.</p></div>';
     }
 
     return (
-      '<div class="inline-feedback err">' +
+      '<div class="inline-feedback err" data-feedback-block-id="' +
+      escAttr(block.id) +
+      '">' +
       '<p class="tiny">As respostas marcadas não correspondem ao conjunto esperado.</p>' +
       '<div class="feedback-icons">' +
       '<button class="icon-pill" data-action="multiple-choice-view-answer" data-block-id="' +
@@ -3827,7 +3982,7 @@
     );
   }
 
-  // Renderiza o popover fixo para comentário pessoal do card atual.
+  // Renderiza o comentário do card no fluxo normal da tela para não disputar o viewport com o IME.
   function renderStepCommentPopup() {
     if (!(state.currentView === "lesson_step" && state.ui.stepComment && state.ui.stepComment.stepId)) return "";
 
@@ -3840,7 +3995,7 @@
     return (
       '<section class="step-comment-layer">' +
       '<div class="step-comment-shell">' +
-      '<article class="step-comment-popup" data-step-comment-popup="true" role="dialog" aria-label="' +
+      '<article class="clean-card step-comment-popup" data-step-comment-popup="true" role="group" aria-label="' +
       escAttr(dialogLabel) +
       '">' +
       '<textarea class="block-input step-comment-input" rows="5" data-step-comment-input="true" aria-label="' +
@@ -3854,20 +4009,62 @@
     );
   }
 
-  // Sincroniza a largura do comentário com a largura realmente visível do card atual.
-  function syncStepCommentPopupWidth() {
-    const popupShell = document.querySelector(".step-comment-shell");
-    const popup = document.querySelector(".step-comment-popup");
-    const card = document.querySelector(".lesson-card");
-    if (!popupShell || !popup || !card) return;
+  // Agenda a rolagem mínima necessária para manter um alvo ativo visível após o re-render.
+  function scheduleScrollReveal(target) {
+    state.ui.pendingScrollReveal = target ? clone(target) : null;
+  }
 
-    const cardRect = card.getBoundingClientRect();
-    const safeWidth = Math.max(0, Math.round(cardRect.width));
-    if (!safeWidth) return;
+  // Agenda a célula ativa da tabela para continuar visível dentro do contêiner rolável.
+  function scheduleTableChoiceCellReveal(blockId, cellKey) {
+    if (!blockId || !cellKey) return;
+    scheduleScrollReveal({
+      kind: "table-choice-cell",
+      blockId: blockId,
+      cellKey: cellKey
+    });
+  }
 
-    popupShell.style.width = safeWidth + "px";
-    popup.style.width = "100%";
-    popup.style.maxWidth = safeWidth + "px";
+  // Agenda o bloco de feedback para receber a prioridade de visibilidade após o re-render.
+  function scheduleFeedbackReveal(blockId) {
+    if (!blockId) return;
+    scheduleScrollReveal({
+      kind: "feedback-block",
+      blockId: blockId
+    });
+  }
+
+  // Reaplica a visibilidade do alvo ativo depois que o DOM e os scrolls foram restaurados.
+  function syncPendingScrollReveal() {
+    const pending = state.ui.pendingScrollReveal;
+    if (!pending) return;
+    state.ui.pendingScrollReveal = null;
+
+    requestAnimationFrame(function () {
+      let target = null;
+
+      if (pending.kind === "table-choice-cell") {
+        target = root.querySelector(
+          '.table-choice-slot[data-block-id="' +
+          cssEsc(pending.blockId) +
+          '"][data-cell-key="' +
+          cssEsc(pending.cellKey) +
+          '"]'
+        );
+      } else if (pending.kind === "feedback-block") {
+        target = root.querySelector(
+          '.inline-feedback[data-feedback-block-id="' +
+          cssEsc(pending.blockId) +
+          '"]'
+        );
+      }
+
+      if (!target || typeof target.scrollIntoView !== "function") return;
+      try {
+        target.scrollIntoView({ block: "nearest", inline: "nearest" });
+      } catch (_error) {
+        target.scrollIntoView();
+      }
+    });
   }
 
   // Renderiza a faixa fixa de ações da lição, fora da área rolável do card.
@@ -4154,15 +4351,17 @@
     if (!exercise.feedback) return "";
 
     if (exercise.feedback === "correct") {
-      return '<div class="inline-feedback ok"><p class="tiny">Correto.</p></div>';
+      return '<div class="inline-feedback ok" data-feedback-block-id="' + escAttr(block.id) + '"><p class="tiny">Correto.</p></div>';
     }
 
     if (exercise.feedback === "incomplete") {
-      return '<div class="inline-feedback err"><p class="tiny">Preencha todas as lacunas.</p></div>';
+      return '<div class="inline-feedback err" data-feedback-block-id="' + escAttr(block.id) + '"><p class="tiny">Preencha todas as lacunas.</p></div>';
     }
 
     return (
-      '<div class="inline-feedback err">' +
+      '<div class="inline-feedback err" data-feedback-block-id="' +
+      escAttr(block.id) +
+      '">' +
       '<p class="tiny">Incorreto.</p>' +
       '<div class="feedback-icons">' +
       '<button class="icon-pill" data-action="terminal-view-answer" data-block-id="' +
@@ -4792,6 +4991,16 @@
     return String(value || "shape").replace(/[^a-zA-Z0-9_-]/g, "");
   }
 
+  // Diminui a densidade tipográfica quando o texto do nó fica longo demais.
+  function getFlowchartTextFitClass(text) {
+    const compact = String(text || "").replace(/\s+/g, " ").trim();
+    if (!compact) return "";
+    if (compact.length >= 72) return " flowchart-text-fit-3";
+    if (compact.length >= 56) return " flowchart-text-fit-2";
+    if (compact.length >= 40) return " flowchart-text-fit-1";
+    return "";
+  }
+
   // Resume a topologia do fluxograma para reaproveitar layout enquanto o grafo não muda.
   function getFlowchartTopologySignature(nodes, links) {
     const normalizedNodes = getFlowchartSortedNodes(nodes).map(function (node) {
@@ -4915,10 +5124,11 @@
         ? Math.max(220, Math.round(window.innerHeight * 0.42))
         : 320;
 
-    const fitScale = Math.min(1, viewportWidth / layout.width, viewportHeight / layout.height);
+    const widthFitScale = Math.min(1, viewportWidth / layout.width);
+    const heightFitScale = Math.min(1, viewportHeight / layout.height);
     const preferredScale = isDesktopFlowchartViewport()
-      ? Math.max(0.38, fitScale)
-      : fitScale;
+      ? Math.max(0.38, Math.min(widthFitScale, heightFitScale))
+      : widthFitScale;
 
     return normalizeFlowchartViewportScale(preferredScale);
   }
@@ -5049,6 +5259,7 @@
       const textBlank = flowchartNodeUsesTextBlank(node);
       const currentShape = mode === "practice" && shapeBlank ? String(exercise.shapes[node.id] || "") : node.shape;
       const currentText = mode === "practice" && textBlank ? String(exercise.texts[node.id] || "") : node.text;
+      const textFitClass = getFlowchartTextFitClass(currentText);
       const shapeHtml = currentShape
         ? renderFlowchartShapeSvg(currentShape)
         : '<div class="flowchart-shape-placeholder" aria-hidden="true"></div>';
@@ -5084,6 +5295,7 @@
             : '<div class="flowchart-shape-fixed">' + shapeHtml + "</div>") +
         (mode === "practice" && textBlank
           ? '<button class="flowchart-text-button' +
+            textFitClass +
             (textActive ? " active" : "") +
             (currentText ? " filled" : "") +
             '" data-action="flowchart-open-text" data-block-id="' +
@@ -5095,6 +5307,7 @@
             "</button>"
           : mode === "editor"
             ? '<button class="flowchart-text-fixed flowchart-board-jump' +
+              textFitClass +
               (currentText ? " filled" : "") +
               '" data-action="flowchart-focus-node-text" data-block-id="' +
               escAttr(block.id) +
@@ -5104,6 +5317,7 @@
               (currentText ? esc(currentText) : "&nbsp;") +
               "</button>"
             : '<div class="flowchart-text-fixed' +
+              textFitClass +
               (currentText ? " filled" : "") +
               '">' +
               (currentText ? esc(currentText) : "&nbsp;") +
@@ -5491,15 +5705,17 @@
     if (!exercise.feedback) return "";
 
     if (exercise.feedback === "correct") {
-      return '<div class="inline-feedback ok"><p class="tiny">Correto.</p></div>';
+      return '<div class="inline-feedback ok" data-feedback-block-id="' + escAttr(block.id) + '"><p class="tiny">Correto.</p></div>';
     }
 
     if (exercise.feedback === "incomplete") {
-      return '<div class="inline-feedback err"><p class="tiny">Preencha todos os blocos e textos.</p></div>';
+      return '<div class="inline-feedback err" data-feedback-block-id="' + escAttr(block.id) + '"><p class="tiny">Preencha todos os blocos e textos.</p></div>';
     }
 
     return (
-      '<div class="inline-feedback err">' +
+      '<div class="inline-feedback err" data-feedback-block-id="' +
+      escAttr(block.id) +
+      '">' +
       '<p class="tiny">Fluxograma incorreto.</p>' +
       '<div class="feedback-icons">' +
       '<button class="icon-pill" data-action="flowchart-view-answer" data-block-id="' +
@@ -8932,8 +9148,16 @@
     requestAnimationFrame(function () {
       const input = document.querySelector("[data-step-comment-input='true']");
       if (!input || typeof input.focus !== "function") return;
+      const panel = input.closest(".step-comment-layer");
+      if (panel && typeof panel.scrollIntoView === "function") {
+        try {
+          panel.scrollIntoView({ block: "nearest", inline: "nearest" });
+        } catch (_error) {
+          panel.scrollIntoView();
+        }
+      }
       try {
-        input.focus({ preventScroll: true });
+        input.focus();
       } catch (_error) {
         input.focus();
       }
@@ -9682,6 +9906,7 @@
     const exercise = getTerminalExerciseState(step, block, parsed.answers.length);
     if (!isFilled(exercise.slots)) {
       exercise.feedback = "incomplete";
+      scheduleFeedbackReveal(block.id);
       return "incomplete";
     }
 
@@ -9701,6 +9926,7 @@
     }
 
     exercise.feedback = status;
+    scheduleFeedbackReveal(block.id);
     return status;
   }
 
@@ -9807,6 +10033,7 @@
     entry.exercise.slots = entry.parsed.answers.slice();
     entry.exercise.feedback = "correct";
     entry.exercise.activeSlot = null;
+    scheduleFeedbackReveal(blockId);
     renderApp();
   }
 
@@ -9961,6 +10188,7 @@
     });
 
     exercise.feedback = incorrect ? "incorrect" : incomplete ? "incomplete" : "correct";
+    scheduleFeedbackReveal(block.id);
     return exercise.feedback;
   }
 
@@ -9994,6 +10222,7 @@
     });
     entry.exercise.feedback = "correct";
     state.flowchartPopupOpen = null;
+    scheduleFeedbackReveal(blockId);
     renderApp();
   }
 
@@ -12753,6 +12982,15 @@
 
   // Inicia arraste por ponteiro (mouse/toque) no botao de arrastar.
   function onRootPointerDown(event) {
+    const actionTrigger = event.target && typeof event.target.closest === "function"
+      ? event.target.closest(
+        "[data-action='step-button-click'], [data-action='popup-continue'], [data-action='continue-step'], [data-action='complete-continue']"
+      )
+      : null;
+    if (actionTrigger && state.ui.stepComment && state.currentView === "lesson_step") {
+      closeStepCommentEditor({ render: false });
+    }
+
     if (state.editor.open) {
       const blockNode = event.target.closest ? event.target.closest(".builder-block") : null;
       const tableField = getNearestTableEditorField(event.target, blockNode);
@@ -13032,15 +13270,6 @@
       return;
     }
 
-    if (state.ui.stepComment && state.currentView === "lesson_step") {
-      const inCommentPopup = event.target.closest("[data-step-comment-popup='true']");
-      const onCommentToggle = event.target.closest("[data-action='toggle-step-comment']");
-      if (!inCommentPopup && !onCommentToggle) {
-        closeStepCommentEditor();
-        return;
-      }
-    }
-
     if (state.inlinePopupOpen && state.currentView === "lesson_step") {
       const inPopup = event.target.closest(".inline-popup");
       const onLegacyPopupButton = event.target.closest("[data-action='popup-open']");
@@ -13285,6 +13514,10 @@
     window.AraLearnAndroid.applyInsets = applyAndroidHostInsets;
     window.AraLearnAndroid.handleBackPress = handleAndroidBackPress;
     window.addEventListener("aralearn:android-insets", onAndroidInsetsEvent);
+    window.addEventListener("resize", refreshAndroidHostInsets);
+    if (window.visualViewport && window.visualViewport.addEventListener) {
+      window.visualViewport.addEventListener("resize", refreshAndroidHostInsets);
+    }
     if (window.__AraLearnAndroidInsets__) {
       applyAndroidHostInsets(window.__AraLearnAndroidInsets__);
     }

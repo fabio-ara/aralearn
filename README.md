@@ -1,81 +1,40 @@
 # AraLearn
 
-AraLearn é um motor local de aprendizagem em cards, com autoria visual, persistência offline e a mesma base para web e Android.
+AraLearn é um motor local de aprendizagem em cards, com autoria visual, persistência no próprio dispositivo e a mesma base para web e Android.
 
-O projeto agora combina três frentes:
+O projeto está em desenvolvimento inicial. O marco público atual é `v0.0.5`, que estabiliza a tela de lição no Android, remove o vão extra junto às barras do sistema em `WebView` moderno e preserva a mesma base de conteúdo entre navegador e APK.
 
-- motor do app em `app.js`, `styles.css`, `index.html` e `modules/`;
-- catálogo hardcoded separado em `content/`;
-- importação/exportação por pacotes `.zip` com mesclagem incremental.
+## O que este repositório reúne
+
+- runtime web em `index.html`, `app.js`, `styles.css` e `modules/`;
+- wrapper Android em `android/`;
+- catálogo embarcado em `content/`;
+- contratos de autoria e arquitetura em `manual.md` e `lesson-json-spec.md`.
+
+## Ecossistema de autoria
+
+- `Disassembly`: linguagem declarativa interna usada para descrever estrutura pedagógica, dependências entre cards e interação mínima;
+- `AraLearn Factory`: compilador interno que valida essas fontes e gera a estrutura JSON usada pelo runtime;
+- `lesson-json-spec.md`: contrato mais próximo da forma final consumida pelo app.
+
+O Disassembly e o AraLearn Factory não são públicos neste repositório, mas orientam a organização pedagógica e a forma dos dados que chegam ao app.
 
 ## Estrutura principal
 
-- `index.html`: entrada da versão web
-- `app.js`: estado, renderização, autoria, importação/exportação e persistência
-- `modules/`: utilitários de conteúdo, progresso, arquivos e fluxograma
-- `content/*.json`: fontes dos cursos embarcados ativos
-- `content/hardcoded-content.js`: arquivo runtime gerado para o boot local
-- `content/aralearn-course-curso-matematica-informatica-ifsp-2026.zip`: pacote ZIP do curso hoje embarcado por padrão
-- `examples/`: pacotes ZIP e fontes JSON mantidos fora do hardcoded atual
-- `scripts/build-web-course-example.mjs`: gerador do exemplo grande de fundamentos web
-- `manual.md`: documentação oficial do produto
-
-## Cursos embarcados
-
-O app sobe com um catálogo de cursos embarcados separado do motor.
-
-Regras práticas:
-
-- cada JSON em `content/` pode contribuir com um ou mais cursos;
-- o app consome `content/hardcoded-content.js` para continuar funcionando ao abrir `index.html` diretamente;
-- o armazenamento local do usuário continua soberano: se ele editar um desses cursos no app, a versão local prevalece;
-- em novos boots, o hardcoded só complementa o que ainda não existir.
-
-Catálogo embarcado atual:
-
-- `content/curso-matematica-informatica-ifsp-2026.json`
-
-Pacotes e fontes fora do hardcoded atual ficam em `examples/`, inclusive os cursos desembarcados desta versão.
-
-Depois de editar os JSONs-fonte, rode:
-
-```powershell
-npm run build:hardcoded-content
-```
-
-## Importação
-
-AraLearn aceita pacotes de:
-
-- aplicação
-- curso
-- módulo
-- lição
-
-Quando já existe conteúdo relacionado, o app agora pode:
-
-- `mesclar`
-- `substituir`
-- `duplicar`
-- `cancelar`
-
-Na mesclagem, o app preserva o que já existe e adiciona apenas cursos, módulos, lições, cards e blocos que ainda não estavam no destino.
+- `index.html`: entrada da versão web;
+- `app.js`: estado, renderização, autoria, importação, exportação e persistência;
+- `modules/`: utilitários de conteúdo, progresso, arquivos e fluxograma;
+- `content/*.json`: fontes do catálogo embarcado;
+- `content/hardcoded-content.js`: runtime gerado a partir dos JSONs ativos;
+- `examples/`: pacotes e fontes mantidos fora do catálogo embarcado;
+- `manual.md`: regras do produto, arquitetura e invariantes;
+- `CHANGELOG.md`: marcos públicos da linha `0.0.x`.
 
 ## Execução
 
 ### Web
 
 Abra `index.html` no Chrome ou rode um servidor estático local.
-
-### GitHub Pages
-
-O repositório já inclui workflow para publicar a versão web a partir da branch `main`.
-
-Se o Pages estiver habilitado no repositório `fabio-ara/aralearn`, a URL esperada é:
-
-```text
-https://fabio-ara.github.io/aralearn/
-```
 
 ### Instalação e testes
 
@@ -85,9 +44,6 @@ npm run build:hardcoded-content
 npm run test:unit
 npm run test:e2e
 ```
-
-O E2E sobe um servidor local próprio em `http://127.0.0.1:4273` por padrão.
-Se precisar trocar a porta, defina `ARALEARN_TEST_PORT` antes de rodar o Playwright.
 
 Validação completa:
 
@@ -108,7 +64,9 @@ Saída esperada:
 
 ## Documentação
 
-Regras, arquitetura e invariantes do projeto estão em [manual.md](./manual.md).
+- [manual.md](./manual.md): arquitetura, regras de autoria, persistência, Android e invariantes;
+- [lesson-json-spec.md](./lesson-json-spec.md): contrato JSON das lições;
+- [CHANGELOG.md](./CHANGELOG.md): linha pública de versões.
 
 ## Licença
 

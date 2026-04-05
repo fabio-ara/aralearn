@@ -16,10 +16,13 @@ test("salva comentário por card e o preserva no export/import do pacote", async
   await expect(page.locator(".step-comment-popup")).not.toContainText("WELCOME");
   await expect(page.locator(".step-comment-popup").locator("button")).toHaveCount(0);
   const popupBox = await page.locator(".step-comment-popup").boundingBox();
+  const shellBox = await page.locator(".step-comment-shell").boundingBox();
   const cardBox = await page.locator(".lesson-card").boundingBox();
   expect(popupBox).toBeTruthy();
+  expect(shellBox).toBeTruthy();
   expect(cardBox).toBeTruthy();
-  expect(Math.abs((popupBox && popupBox.width) - (cardBox && cardBox.width))).toBeLessThan(6);
+  expect(Math.abs((shellBox && shellBox.width) - (cardBox && cardBox.width))).toBeLessThan(6);
+  expect((popupBox && popupBox.width) || 0).toBeLessThanOrEqual((shellBox && shellBox.width) || 0);
   await commentInput.fill(comment);
   await page.locator('[data-action="toggle-step-comment"]').click();
 

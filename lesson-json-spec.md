@@ -15,7 +15,7 @@ Ele cobre:
 Escopo principal:
 
 - este documento foca no objeto `lesson` e nos blocos;
-- empacotamento `.zip`, assets binários e escopo de importação podem ser tratados depois;
+- empacotamento `.zip`, arquivos binários de apoio e escopo de importação podem ser tratados depois;
 - progresso do estudante não faz parte da lição serializada.
 - em pipelines maiores, vale primeiro planejar `course -> module -> lesson` a partir das fontes e só depois detalhar cada `lesson` em JSON;
 - mesmo nesses casos, o contrato final de cada card continua sendo este documento.
@@ -110,7 +110,7 @@ Campos:
 
 - `id`: identificador estável;
 - `title`: nome da lição;
-- `subtitle`: apoio curto opcional;
+- `subtitle`: apoio breve opcional;
 - `steps[]`: sequência de cards.
 
 ### 4.2 Step
@@ -345,7 +345,7 @@ Regras:
 - em `choice`, `options[]` pertence apenas àquela célula e abastece o seletor visível abaixo da tabela;
 - em `input`, o estudante digita diretamente dentro da célula;
 - a mesma tabela pode misturar células `choice` e `input`;
-- quando existir ao menos uma lacuna, o runtime mostra um guia curto com `Opções`, `Digitação` ou ambos;
+- quando existir ao menos uma lacuna, o runtime mostra um guia breve com `Opções`, `Digitação` ou ambos;
 - em tabela de exercício, prefira lacunas atômicas por célula quando o objetivo for treinar leitura de coluna, subexpressão, conectivo ou caso;
 - em tabela-verdade, o próprio step deve trazer os casos ou combinações necessários para a resolução; evite depender de rótulos como `Linha 2` ou de uma tabela mostrada apenas em card anterior;
 - em texto visível ao estudante sobre tabela-verdade, prefira `caso` ou `combinação` quando a numeração de linhas não for o próprio conceito ensinado;
@@ -722,14 +722,14 @@ Tabela de leitura rápida:
 Leitura operacional por bloco:
 
 - `heading`: use quando o card precisa de um rótulo visual forte; não use para texto explicativo longo.
-- `paragraph`: use para teoria curta, instrução explícita, tradução de termo técnico e feedback breve. Gere sempre um `value` legível e, quando houver destaque, um `richText` semanticamente espelhado.
+- `paragraph`: use para explicação objetiva, instrução explícita, tradução de termo técnico e feedback breve. Gere sempre um `value` legível e, quando houver destaque, um `richText` semanticamente espelhado.
 - `image`: use apenas quando a imagem realmente acrescentar leitura, referência ou contexto. O bloco não carrega legenda implícita; se precisar explicar a imagem, faça isso em `paragraph`.
 - `table`: use para contraste, consulta, checklist, mapeamento, resumo comparativo ou exercício em grade. A ordem das linhas e colunas é a ordem em que o estudante vai ler, e cada célula com `blank: true` continua guardando em `value` a resposta esperada daquela posição.
 - `simulator`: use quando uma única escolha precisa mostrar um efeito ou resultado logo abaixo, sem transformar o card em checagem de acerto.
 - `editor`: use quando o estudante precisa completar, montar ou digitar código, fórmula, comando, texto técnico ou fragmentos de sintaxe. O template em `value` é a estrutura principal do card, persiste com `\n`, preserva linhas vazias e espaços iniciais por linha, e o preview autoral precisa refletir a mesma renderização literal usada pelo runtime fora das lacunas.
 - `multiple_choice`: use quando a tarefa é discriminar ou classificar alternativas. Como o bloco não tem `displayOrder`, a ordem renderizada é exatamente a ordem do array; embaralhe antes de serializar.
 - `flowchart`: use quando o estudante precisa visualizar processo, algoritmo, decisão, laço ou convergência. As lacunas praticáveis são as que nascem das opções extras por nó.
-- `button`: use popup para feedback, reforço, saída mostrada, explicação curta ou exercício complementar; não use popup vazio.
+- `button`: use popup para feedback, reforço, saída mostrada, explicação breve ou exercício complementar; não use popup vazio.
 
 ---
 
@@ -832,7 +832,7 @@ O motor do AraLearn não impõe esse padrão, mas ele é um excelente default de
 
 ### 7.1 Arquétipos recorrentes
 
-`Contexto curto`
+`Contexto pontual`
 
 - abre a lição com curiosidade, analogia, narrativa ou microcontexto;
 - normalmente usa `paragraph` e às vezes `editor` estático;
@@ -842,7 +842,7 @@ O motor do AraLearn não impõe esse padrão, mas ele é um excelente default de
 
 - introduz um elemento novo com instrução muito explícita;
 - normalmente usa `heading` como `FILL IN THE BLANKS` ou equivalente;
-- em seguida usa `paragraph` curto e `editor` com uma ou poucas lacunas.
+- em seguida usa `paragraph` objetivo e `editor` com uma ou poucas lacunas.
 
 `Exploração controlada de erro`
 
@@ -893,7 +893,7 @@ Padrão dominante:
 
 1. apresentar ou contextualizar;
 2. pedir uma ação mínima;
-3. confirmar o acerto com feedback curto;
+3. confirmar o acerto com feedback direto;
 4. acrescentar uma pequena camada nova;
 5. reaproveitar o que acabou de ser visto;
 6. fechar com resumo ou mini-projeto.
@@ -906,7 +906,7 @@ Em `Library` e `Joining strings`, aparece uma progressão adicional:
 
 Em `Expressions` e `Cycling club`, aparecem mais alguns padrões fortes:
 
-- a teoria costuma vir em doses mínimas, normalmente 1 a 3 frases curtas por card;
+- a teoria costuma vir em doses mínimas, normalmente 1 a 3 frases por card;
 - cada exercício altera apenas um detalhe local do código, em vez de exigir montagem longa de uma vez;
 - o mesmo conceito reaparece em contextos diferentes até ficar confortável;
 - o card deixa clara a diferença entre `código digitado` e `resultado exibido`;
@@ -914,7 +914,7 @@ Em `Expressions` e `Cycling club`, aparecem mais alguns padrões fortes:
 
 Em lições de revisão como `Comments` e `Mei's quiz`, o padrão útil é:
 
-- teoria ainda mais curta que nas lições-base;
+- teoria ainda mais enxuta que nas lições-base;
 - vários exercícios seguidos, cada um cobrando um detalhe diferente do mesmo repertório;
 - progressão interna que vai de comentário, string ou número isolado até combinação entre temas;
 - alternância entre escolha e produção quando isso aumenta retenção sem virar adivinhação.
@@ -922,7 +922,7 @@ Em lições de revisão como `Comments` e `Mei's quiz`, o padrão útil é:
 Nas versões corrigidas de `Library` e `Joining strings`, aparecem mais algumas regras muito úteis:
 
 - cards de prática não deixam `paragraph` vazio; cada bloco textual cumpre uma função didática real;
-- um padrão especialmente forte é `microcontexto curto + instrução explícita`, muitas vezes em dois `paragraphs`;
+- um padrão especialmente forte é `microcontexto pontual + instrução explícita`, muitas vezes em dois `paragraphs`;
 - o primeiro `paragraph` contextualiza a cena ou o objetivo;
 - o segundo `paragraph` diz exatamente o que mostrar, digitar, unir, somar, multiplicar ou corrigir;
 - o texto instrucional repete em dourado o operador, literal, número ou saída que deve virar foco do olhar;
@@ -944,7 +944,7 @@ São restrições de autoria recomendadas para qualquer fluxo manual ou assistid
 - a instrução do card deve dizer exatamente o que fazer;
 - quando o card introduzir um termo técnico novo, ele deve ser explicado em linguagem simples no mesmo card ou no popup;
 - se a explicação ficar longa, divida em dois cards.
-- prefira teoria em blocos muito curtos, normalmente 1 a 3 frases por card;
+- prefira teoria em blocos enxutos, normalmente 1 a 3 frases por card;
 - em geral, a lição deve ter mais cards de prática do que cards de teoria;
 - se um exercício exigir várias ações, quebre em vários cards;
 - ensine uma única novidade por vez;
@@ -1034,7 +1034,7 @@ Exemplos:
 
 O feedback de acerto deve ser:
 
-- curto;
+- breve;
 - positivo;
 - informativo;
 - imediatamente conectado ao que acabou de ser feito.
@@ -1055,7 +1055,7 @@ Evite:
 
 ### 8.7 Regra de estilo textual
 
-- prefira frases curtas;
+- prefira frases diretas;
 - explique antes de abstrair;
 - use exemplos concretos;
 - mantenha o vocabulário compatível com iniciante;
@@ -1107,7 +1107,7 @@ Sempre que o card usar `editor` com `choice`, `simulator` ou `multiple_choice`:
 - embaralhe a ordem visual das alternativas antes de entregar o JSON final;
 - não deixe a opção correta sempre na primeira posição;
 - faça cada distrator corresponder a uma confusão real, como operador errado, ordem invertida, aspas ausentes ou confusão entre expressão e resultado.
-- a decomposição em tokens pequenos é permitida quando isso fizer parte do treino pretendido, como escolher aspas, operadores, `#` ou pedaços curtos de sintaxe;
+- a decomposição em tokens pequenos é permitida quando isso fizer parte do treino pretendido, como escolher aspas, operadores, `#` ou pedaços pequenos de sintaxe;
 - não aumente artificialmente a granularidade só porque existe repetição de token; o runtime suporta fichas repetidas e mira explícita de lacuna em `choice`;
 - prefira opções maiores e semanticamente completas apenas quando a fragmentação deixar de ensinar o conceito e passar a virar ruído operacional ou ambiguidade desnecessária.
 
@@ -1137,7 +1137,7 @@ Regra base:
 Aceite normalmente:
 
 - variações triviais de espaçamento quando espaçamento não for o conceito ensinado;
-- formas equivalentes previsíveis e curtas, como `1312+576` para `1312 + 576`;
+- formas equivalentes previsíveis e breves, como `1312+576` para `1312 + 576`;
 - permutação de operandos em operações comutativas, como soma e multiplicação, quando o card estiver ensinando a operação e não a ordem.
 - em exercícios cujo objetivo é completar apenas o conteúdo de uma string, coloque as aspas fora de `[[...]]` e faça a lacuna aceitar só o conteúdo interno, como `print("Terrain: " + "[[hilly]]")`.
 
@@ -1248,7 +1248,7 @@ Perguntas de veto antes de aceitar um card:
 
 ### 8.12 Regra de decomposição curricular a partir de fontes
 
-Em muitos fluxos reais, a autoria não parte apenas de um tema curto.
+Em muitos fluxos reais, a autoria não parte apenas de um tema isolado.
 
 O material de origem pode incluir:
 
@@ -1286,7 +1286,7 @@ Planejamento mínimo antes de gerar cards:
 - lista do que pode ser reutilizado em cada módulo e em cada lição;
 - lista de termos técnicos que precisarão de explicação inicial;
 - inventário de erros previsíveis do iniciante;
-- decisão de onde usar teoria curta, prática guiada, produção, discriminação, simulação e revisão.
+- decisão de onde usar teoria enxuta, prática guiada, produção, discriminação, simulação e revisão.
 
 Controle de dificuldade:
 
@@ -1504,7 +1504,7 @@ Ao montar uma lição, vale exigir explicitamente:
 - declarar explicitamente variantes aceitas em exercícios de código, fórmula ou comando;
 - evitar `paragraph` vazio; cada `paragraph` deve ter função de contexto, instrução ou explicação;
 - para cada bloco, deixar claro qual campo é estrutural e qual campo é apenas visual;
-- manter teoria curta e segmentada, sem cards densos demais;
+- manter teoria enxuta e segmentada, sem cards densos demais;
 - não usar campos legados nem aliases;
 - não depender de normalização implícita para completar lacunas estruturais;
 - respeitar as limitações reais de formatação por campo;
@@ -1513,7 +1513,7 @@ Ao montar uma lição, vale exigir explicitamente:
 - repetir em dourado, no texto instrucional, o mesmo operador, literal, valor ou saída que o estudante deve localizar ou produzir;
 - usar negrito com moderação para a ênfase conceitual principal;
 - garantir progressão sem exigir conhecimento ainda não apresentado;
-- preferir várias práticas curtas em sequência a uma única prática longa e densa;
+- preferir várias práticas em sequência a uma única prática longa e densa;
 - inserir cards-ponte quando o texto-base pressupuser um pré-requisito não explicado;
 - separar claramente `código a escrever` de `resultado esperado`;
 - em `input`, decidir explicitamente se a resposta aceita só a forma canônica, também aceita forma sem espaços, e também aceita permutação comutativa;

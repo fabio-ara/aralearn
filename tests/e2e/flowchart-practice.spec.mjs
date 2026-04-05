@@ -37,3 +37,40 @@ test("fluxograma com lacunas abre popup, fecha ao tocar fora e permite ver a res
   await page.locator('[data-action="flowchart-view-answer"]').click();
   await expect(page.locator(".inline-feedback.ok")).toContainText("Correto");
 });
+
+test("texto longo do fluxograma continua legível sem invadir o bloco seguinte", async ({ page }) => {
+  await resetApp(page);
+  await openFirstCourse(page);
+  await openFirstLesson(page);
+  await insertStepAfter(page);
+
+  await page.locator('[data-action="palette-add"][data-block-type="flowchart"]').click();
+  const nodeCards = page.locator("[data-flowchart-node-card]");
+  await nodeCards.nth(0).locator("[data-flowchart-node-text='true']").fill("máquinas físicas precisam distinguir informação com confiança");
+  await nodeCards.nth(1).locator("[data-flowchart-node-text='true']").fill("estados bem separados são mais robustos que estados ambíguos");
+
+  await saveEditor(page);
+  await advanceStep(page);
+  await waitForFlowchartReady(page);
+
+  const textBlocks = page.locator(".flowchart-text-fixed");
+  await expect(textBlocks).toHaveCount(2);
+
+  const metrics = await textBlocks.evaluateAll((nodes) => nodes.map((node) => ({
+    clientHeight: node.clientHeight,
+    scrollHeight: node.scrollHeight,
+    text: String(node.textContent || "").trim()
+  })));
+
+  for (const metric of metrics) {
+    expect(metric.text.length).toBeGreaterThan(0);
+    expect(metric.scrollHeight).toBeLessThanOrEqual(metric.clientHeight + 2);
+  }
+
+  const firstTextBox = await textBlocks.nth(0).boundingBox();
+  const secondShapeBox = await page.locator(".flowchart-shape-fixed").nth(1).boundingBox();
+
+  expect(firstTextBox).not.toBeNull();
+  expect(secondShapeBox).not.toBeNull();
+  expect(firstTextBox.y + firstTextBox.height).toBeLessThanOrEqual(secondShapeBox.y - 4);
+});
