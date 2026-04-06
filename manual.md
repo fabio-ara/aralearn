@@ -15,11 +15,12 @@ Ele descreve:
 
 Documento complementar:
 
-- `lesson-json-spec.md`: contrato recomendado para geração automática de lições em JSON, com foco em steps, blocos, popup e efeitos no runtime.
+- `lesson-json-spec.md`: contrato recomendado para geração automática de lições em JSON, com foco em steps, blocos, popup e efeitos no motor.
 
 Regra central:
 
 - o manual documenta o **motor do app**, não cursos específicos;
+- quando necessário, ele pode registrar apenas quais cursos oficiais acompanham a distribuição pública, sem entrar no conteúdo pedagógico interno de cada disciplina;
 - conteúdo autoral é volátil e não deve ser tratado como parte fixa do produto;
 - toda mudança estrutural, de UX, de persistência ou de regra de negócio deve atualizar este arquivo.
 
@@ -77,7 +78,7 @@ Consequência prática:
 No estado atual, o AraLearn permite que o usuário:
 
 - crie cursos, módulos, lições e cards;
-- edite cards em um editor visual de baixa codificação;
+- edite cards em um editor visual low-code;
 - combine explicação, imagem, tabela, múltipla escolha, terminal, simulação e fluxograma no mesmo percurso;
 - transforme trechos de texto, células de tabela, nós de fluxograma e trechos de terminal em lacunas;
 - configure opções corretas e incorretas;
@@ -88,10 +89,10 @@ No estado atual, o AraLearn permite que o usuário:
 
 ### 2.3 Ecossistema de autoria
 
-O runtime do AraLearn convive com duas camadas autorais acima dele:
+O motor do AraLearn convive com duas camadas autorais acima dele:
 
 - `Disassembly`: linguagem declarativa para arquitetura pedagógica, dependências entre cards, sequência principal da lição e explicitação da lógica autoral que depois pode ser reproduzida pelo editor de cards;
-- `AraLearn Factory`: compilador que transforma essas fontes em JSON compatível com o runtime.
+- `AraLearn Factory`: compilador que transforma essas fontes em JSON compatível com o motor.
 
 Estado de publicação:
 
@@ -107,7 +108,7 @@ Linha pública atual:
 - `v0.0.1` (`2026-03-26`): torna pública a base do motor, o contrato JSON das lições, o manual, a suíte inicial de validação, o catálogo inicial de contêineres do editor e o empacotamento Android em `WebView`. Na linha pública `0.0.x`, `heading`, `paragraph`, `image`, `table`, `simulator`, `editor`, `multiple_choice`, `flowchart` e `button` já aparecem aqui.
 - `v0.0.2` (`2026-03-30`): amadurece a autoria visual, amplia o trabalho com pacotes `.zip`, fortalece a auditoria do catálogo embarcado e expande a cobertura automatizada de importação, persistência e formatação.
 - `v0.0.3` (`2026-04-01`): aprofunda a prática com lacunas, tabelas, respostas por escolha e por digitação, incluindo variantes aceitas e apoio a expressões regulares quando necessário.
-- `v0.0.4` (`2026-04-04`): reforça a integração entre runtime e Android, adiciona comentários por card e amplia a cobertura de comportamento móvel. Este marco não inaugura o APK; ele amplia a experiência Android já pública desde `v0.0.1`.
+- `v0.0.4` (`2026-04-04`): reforça a integração entre o motor e o Android, adiciona comentários por card e amplia a cobertura de comportamento móvel. Este marco não inaugura o APK; ele amplia a experiência Android já pública desde `v0.0.1`.
 - `v0.0.5` (`2026-04-05`): estabiliza a tela de lição no `WebView` moderno, elimina o vão externo acima e abaixo da área útil e consolida preservação de rolagem, foco visual e comentário por card.
 
 Esses marcos também estão resumidos em `CHANGELOG.md` e devem permanecer coerentes com as releases públicas do repositório.
@@ -129,6 +130,16 @@ Contêineres publicados nesse marco:
 - `button`: avanço do card e popup complementar quando houver.
 
 Versões posteriores refinam contratos, autoria, validação, UX e integração Android desses mesmos contêineres, mas não redefinem esse catálogo público inicial.
+
+### 2.6 Catálogo oficial da distribuição pública
+
+No estado atual, a distribuição pública embarca:
+
+- `Matemática para Informática`, correspondente à disciplina homônima do primeiro semestre de Tecnologia em Análise e Desenvolvimento de Sistemas no Instituto Federal de São Paulo (IFSP).
+
+Próxima inclusão já preparada para embarque:
+
+- `Organização e Arquitetura de Computadores`, compilada pelo AraLearn Factory para o mesmo contexto de estudo offline em deslocamento.
 
 ---
 
@@ -235,7 +246,7 @@ Responsabilidades:
 - `app.js`: estado, renderização, eventos, autoria, navegação, persistência e bootstrap do catálogo embarcado;
 - `styles.css`: identidade visual e layout;
 - `modules/`: funções puras e catálogos auxiliares;
-- `content/`: fontes do catálogo embarcado e arquivo runtime gerado para o boot local.
+- `content/`: fontes do catálogo embarcado e arquivo gerado para o boot local.
 
 ### 4.2 Módulos principais
 
@@ -280,7 +291,7 @@ Regra atual:
 
 - o motor não deve embutir cursos diretamente dentro de `app.js`;
 - o catálogo embarcado oficial deve ficar separado em `content/`;
-- o runtime local usa `content/hardcoded-content.js`, gerado a partir dos `.json` ativos em `content/`;
+- o motor local usa `content/hardcoded-content.js`, gerado a partir dos `.json` ativos em `content/`;
 - a inicialização carrega primeiro o workspace local persistido e depois só complementa o que estiver faltando a partir do catálogo embarcado.
 
 Consequências:
@@ -290,7 +301,7 @@ Consequências:
 - em caso de conflito entre catálogo embarcado e workspace local, o conteúdo salvo localmente prevalece;
 - cursos, módulos, lições e cards continuam não pertencendo ao código-fonte do motor;
 - o manual não documenta cursos específicos;
-- fixtures de teste podem existir na suíte, mas não no runtime do app.
+- fixtures de teste podem existir na suíte, mas não no motor do app.
 
 Regras mínimas para o catálogo embarcado oficial:
 
@@ -303,9 +314,9 @@ Regras mínimas para o catálogo embarcado oficial:
 - texto visível ao estudante também não deve falar sobre a própria mecânica didática com expressões como "no próprio card", "esta lição", "neste curso", "o app como motor" ou equivalentes, exceto quando o termo fizer parte do conteúdo técnico real, como `app.js`;
 - cards recorrentes como `Vocabulário em foco`, `Confusões comuns` e `Fechamento rápido` precisam explicar o conceito ou o erro local da própria lição, em vez de reutilizar popup ou resumo genérico;
 - `lesson_complete` deve trazer `heading` e `paragraph` centralizados já no JSON-fonte;
-- o runtime pode reforçar visualmente o alinhamento central do `lesson_complete`, mas isso não substitui corrigir a fonte.
+- o motor pode reforçar visualmente o alinhamento central do `lesson_complete`, mas isso não substitui corrigir a fonte.
 - quando o texto corrido mencionar sintaxe, comandos, tags, seletores, propriedades, atributos, métodos ou nomes de arquivo, a fonte deve preferir `richText` com destaque inline para esses fragmentos, em vez de deixá-los perdidos no parágrafo.
-- em `editor` e `simulator`, sintaxe literal como `<p>`, `</div>` ou `<!DOCTYPE html>` não pode ser engolida pelo saneamento inline; o runtime precisa mostrá-la como código visível e comparar as respostas preservando essa literalidade.
+- em `editor` e `simulator`, sintaxe literal como `<p>`, `</div>` ou `<!DOCTYPE html>` não pode ser engolida pelo saneamento inline; o motor precisa mostrá-la como código visível e comparar as respostas preservando essa literalidade.
 - em popup de feedback, o conteúdo deve ir direto ao motivo técnico; evite frases como "você acertou" e evite repetir a alternativa correta quando ela já está visível no próprio card.
 - imagens do catálogo embarcado precisam privilegiar leitura em viewport mobile, usar paleta compatível com o app e evitar texto corrido dentro do SVG; prefira poucos rótulos, formas grandes e contraste estável.
 - em `editor` com `interactionMode: "choice"`, a ordem visual das opções deve vir por `displayOrder` embaralhado de forma não trivial; a ordem estrutural correta pertence a `slotOrder` e não deve vazar pela posição inicial das fichas.
@@ -506,7 +517,7 @@ Critério visual explícito:
 - títulos do app, do card e do popup devem usar versalete real quando a fonte/navegador permitirem, sem forçar minúsculas artificiais;
 - inputs e selects autorais usam tipografia um pouco menor e mais contida do que o conteúdo final, para reduzir ruído visual no mobile;
 - campos autorais de `editor` e `simulator` usam tipografia monoespaçada e mais suave para leitura longa;
-- superfícies de terminal no runtime usam mono mais leve, contraste menos agressivo e destaque dourado para expressões de linguagem quando o conteúdo assim pedir;
+- superfícies de terminal no app usam mono mais leve, contraste menos agressivo e destaque dourado para expressões de linguagem quando o conteúdo assim pedir;
 - quando o `editor` está em modo digitação, a digitação acontece diretamente dentro da própria lacuna do preview, com largura que cresce conforme o texto;
 - no modo `digitação`, o app não entrega `hint` nem autocompletar da resposta ao estudante;
 - o app deve priorizar legibilidade de estudo antes de mimetizar screenshots de conteúdo legado.
@@ -538,7 +549,7 @@ Critério visual explícito:
 - texto principal do card;
 - suporta `richText` inline com `strong`, `em`, `br` e tons permitidos.
 - `value` é o texto canônico legível do bloco e `richText` é a projeção visual rica equivalente;
-- se vier apenas `richText`, o runtime pode derivar `value`; se os dois vierem em conflito semântico, `value` vence e `richText` é regenerado;
+- se vier apenas `richText`, o motor pode derivar `value`; se os dois vierem em conflito semântico, `value` vence e `richText` é regenerado;
 - persiste alinhamento global do bloco no JSON;
 - a autoria do `paragraph` expõe alinhamento global à esquerda, centralizado e à direita, além dos destaques inline;
 - uma quebra simples dentro do mesmo bloco deve renderizar como quebra de linha real, sem virar novo parágrafo;
@@ -567,11 +578,11 @@ Critério visual explícito:
 - os controles de alinhamento da tabela devem refletir a célula ativa em tempo real, com ícones visuais de alinhamento em vez de letras;
 - o alinhamento padrão das células e do título da tabela é à esquerda;
 - uma mesma tabela pode misturar lacunas por `Opções` e por `Digitação` em células diferentes;
-- quando a tabela tiver ao menos uma lacuna, o runtime deve mostrar um guia breve indicando se o preenchimento usa `Opções`, `Digitação` ou ambos;
+- quando a tabela tiver ao menos uma lacuna, o motor deve mostrar um guia breve indicando se o preenchimento usa `Opções`, `Digitação` ou ambos;
 - a grade do editor preserva colunas e células vazias durante a autoria, mas o JSON salvo continua limpo, sem sobra estrutural vazia no resultado final;
 - a coluna lateral de remover linha deve ocupar só a largura do próprio botão;
 - a largura de cada coluna editável deve seguir o maior texto presente nela, sem largura mínima inflada artificialmente;
-- no runtime, sentenças em cabeçalhos e células de `table` não devem quebrar automaticamente em múltiplas linhas; a tabela deve ganhar rolagem horizontal quando o conteúdo pedir mais largura;
+- no motor, sentenças em cabeçalhos e células de `table` não devem quebrar automaticamente em múltiplas linhas; a tabela deve ganhar rolagem horizontal quando o conteúdo pedir mais largura;
 - precisa permanecer legível em mobile.
 
 ## 8.5 Simulator
@@ -583,7 +594,7 @@ Critério visual explícito:
 - a lacuna do template é visualmente destacada como chip autoral vazio, sem expor `[[...]]` cru nem texto técnico interno ao autor;
 - a opção escolhida preenche a lacuna do template e atualiza o painel inferior;
 - a ordem visual das opções não deve funcionar como dica involuntária da resposta;
-- as opções do runtime usam o mesmo idioma visual de fichas do `editor`;
+- as opções exibidas no app usam o mesmo idioma visual de fichas do `editor`;
 - não bloqueia avanço por padrão.
 
 ## 8.6 Editor
@@ -596,7 +607,7 @@ Critério visual explícito:
 - a troca entre `choice` e `input` não deve apagar silenciosamente a configuração do outro modo; o autor pode alternar e voltar;
 - até o preview do terminal, a autoria dos dois modos deve parecer reutilizável: troca de modo, ferramentas de texto e preview ficam na mesma posição;
 - em `choice`, opções habilitadas precisam corresponder aos marcadores;
-- em `choice`, o runtime trata as opções como multiconjunto, não como conjunto: fichas repetidas como `#`, `"` ou operadores iguais precisam continuar disponíveis tantas vezes quanto o autor configurou ou o template exigir;
+- em `choice`, o motor trata as opções como multiconjunto, não como conjunto: fichas repetidas como `#`, `"` ou operadores iguais precisam continuar disponíveis tantas vezes quanto o autor configurou ou o template exigir;
 - aceita formatação inline segura e indentação;
 - a autoria mostra lacunas como chips visuais, não como texto cru misturado ao restante;
 - no modo `input`, o preview do autor mostra o próprio valor esperado em cada lacuna;
@@ -622,15 +633,15 @@ Critério visual explícito:
 - variantes literais entram por lacuna, sem exigir duplicação do template inteiro;
 - regex é um recurso avançado por lacuna ou variante, não o fluxo principal;
 - por padrão, o motor não descobre sozinho soluções semanticamente equivalentes nem "sinônimos" de código que produzam o mesmo resultado;
-- no runtime de `choice`, a primeira lacuna vazia começa selecionada automaticamente;
-- no runtime de `choice`, ao preencher uma lacuna, a seleção avança para a próxima lacuna vazia na ordem do template;
+- no `choice` do app, a primeira lacuna vazia começa selecionada automaticamente;
+- no `choice` do app, ao preencher uma lacuna, a seleção avança para a próxima lacuna vazia na ordem do template;
 - tocar numa lacuna vazia permite redirecionar explicitamente a próxima ficha para ela;
 - clicar numa lacuna já preenchida remove o valor atual e deixa essa mesma lacuna pronta para receber outra ficha;
 - se uma lacuna do `editor` for salva vazia, ela deve ser eliminada do template em vez de permanecer como placeholder vazio;
-- quebras de linha imediatamente antes ou depois de lacunas devem ser preservadas na autoria e no runtime.
+- quebras de linha imediatamente antes ou depois de lacunas devem ser preservadas na autoria e no motor.
 - o campo `value` do `editor` é o template bruto canônico e usa `\n` como quebra de linha persistida;
 - linhas vazias intermediárias e espaços iniciais de cada linha fazem parte do contrato do `value` e não podem ser colapsados ao editar, salvar, exportar ou reimportar;
-- fora das próprias lacunas `[[...]]`, autoria, preview e runtime precisam usar a mesma renderização literal do terminal: tags HTML fora do conjunto inline aprovado aparecem como código visível, e não como estrutura interpretada;
+- fora das próprias lacunas `[[...]]`, autoria, preview e motor precisam usar a mesma renderização literal do terminal: tags HTML fora do conjunto inline aprovado aparecem como código visível, e não como estrutura interpretada;
 - valores de opções e variantes do `editor` não podem sofrer `trim` destrutivo se esse whitespace fizer parte da resposta canônica declarada;
 - o conteúdo do terminal pode usar ênfase inline segura para destacar expressões de linguagem, como `print()`, sem perder portabilidade no JSON.
 
@@ -641,7 +652,7 @@ Critério visual explícito:
 - autoria marca quais alternativas pertencem ao conjunto de resposta;
 - autoria também define por rádio se esse conjunto representa alternativas corretas ou incorretas;
 - os rádios `Corretas` e `Incorretas` reaproveitam o mesmo idioma visual de `Opções` e `Digitação`, sem card explicativo extra;
-- no runtime, a cor e a marca das alternativas selecionadas seguem apenas o `answerState` do bloco;
+- no app, a cor e a marca das alternativas selecionadas seguem apenas o `answerState` do bloco;
 - isso é um idioma visual fixo do modo do exercício, não uma pista sobre quais alternativas individuais pertencem à resposta;
 - o feedback final de acerto continua sendo `Correto.` independentemente do `answerState`;
 - validação exige igualdade exata entre o conjunto esperado e o conjunto marcado.
@@ -671,7 +682,7 @@ Critério visual explícito:
 - esse popover segue a largura útil do card e evita rótulos textuais visíveis, ficando restrito à área de escrita e fechando pelo mesmo ícone do rodapé ou por clique fora;
 - o popup aberto usa esse mesmo rodapé como âncora visual, mas sobrepõe a parte inferior do card sem redimensionar o conteúdo atrás.
 
-## 8.10 Fidelidade entre autoria, JSON e runtime
+## 8.10 Fidelidade entre autoria, JSON e motor
 
 Princípio central:
 
@@ -679,17 +690,17 @@ Princípio central:
 
 Contrato por contêiner:
 
-- `step.comment`: comentário pessoal opcional do card. A fonte de verdade é o texto persistido no próprio `step`; o runtime apenas o edita em popover fixo e exportação/importação precisam devolvê-lo sem movê-lo para `blocks[]`, progresso ou metadados de pacote.
-- `heading`: `value` e `align` são a fonte de verdade; o runtime pode reaproveitar o primeiro `heading` preenchido como `step.title`, mas não inventa formatação inline nem subtítulo.
+- `step.comment`: comentário pessoal opcional do card. A fonte de verdade é o texto persistido no próprio `step`; o motor apenas o edita em popover fixo e exportação/importação precisam devolvê-lo sem movê-lo para `blocks[]`, progresso ou metadados de pacote.
+- `heading`: `value` e `align` são a fonte de verdade; o motor pode reaproveitar o primeiro `heading` preenchido como `step.title`, mas não inventa formatação inline nem subtítulo.
 - `paragraph`: `value` é o texto canônico; `richText` é a visualização rica equivalente. O motor pode derivar um a partir do outro quando não houver ambiguidade, mas não deve preservar `richText` que contradiga o texto canônico. Em `lesson_complete`, `paragraph.align` e `heading.align` devem vir como `center`.
-- `image`: `value` é o caminho lógico ou data URL resolvida; o runtime apenas carrega esse recurso e não deduz legenda, recorte ou contexto.
+- `image`: `value` é o caminho lógico ou data URL resolvida; o motor apenas carrega esse recurso e não deduz legenda, recorte ou contexto.
 - `table`: a ordem de `headers[]` e `rows[][]` é a ordem de renderização; não há ordenação automática. Estilo é por célula inteira, não por trecho interno. Quando a célula traz `blank: true`, `value` continua sendo a resposta canônica daquela posição, `interactionMode: "choice"` usa `options[]` visíveis só para aquela célula e `interactionMode: "input"` libera digitação direta. Se não houver lacunas, a tabela continua apenas expositiva; se houver, ela participa da validação do card.
 - `table`: em leitura e prática, sentenças devem permanecer íntegras numa linha visual quando não houver quebra autoral explícita; o motor prefere expandir a largura útil da tabela e deixar a rolagem horizontal no contêiner, em vez de partir a sentença automaticamente dentro da célula.
-- `simulator`: o template e a ordem de `options[]` definem a experiência. Existe exatamente uma lacuna estrutural e cada opção injeta seu `value` nela, mostrando `result` abaixo. O motor não "corrige" opções nem infere avaliação semântica, porque o bloco é de exploração, não de prova. O runtime não deve pré-selecionar automaticamente a primeira opção.
-- `editor`: o template em `value` e as opções habilitadas são a fonte de verdade. `value` persiste com quebras `\n`, preserva linhas vazias intermediárias e espaços iniciais de cada linha, e continua legível no JSON mesmo quando o preview usa chips para `[[...]]`. `slotOrder` define a ordem estrutural das lacunas corretas; `displayOrder` define apenas a ordem visual das fichas. Duplicatas são válidas e precisam continuar distintas. Em `choice`, o runtime preenche a lacuna atualmente selecionada e, por padrão, mantém selecionada a primeira lacuna vazia na ordem do template. Em `input`, variantes aceitas precisam estar declaradas; o runtime não inventa equivalências de código, fórmula ou comando. Exportação e importação precisam devolver exatamente o mesmo `value`, salvo a canonicalização de quebra para `\n`.
-- `multiple_choice`: a ordem do array é a ordem visível no runtime, porque o bloco não tem `displayOrder`. `answerState` define só o idioma visual do selecionado; quem define o conjunto esperado é `option.answer`. O motor não usa cor para "descobrir" resposta.
-- `flowchart`: `nodes[]` e `links[]` definem o diagrama; opções extras por nó definem as lacunas praticáveis. `outputSlot` governa a lateralidade da seta e, em decisão binária, sustenta a convenção `Não` à esquerda e `Sim` à direita. O runtime valida apenas símbolo e texto das lacunas abertas, não a "intenção algorítmica" inteira fora do que foi explicitado.
-- `button`: o botão final governa o avanço do step e, opcionalmente, o popup. `popupBlocks[]` pertencem ao próprio botão. O runtime primeiro exige a resolução dos exercícios do card principal e, se o popup também tiver exercícios, exige a resolução deles antes de continuar.
+- `simulator`: o template e a ordem de `options[]` definem a experiência. Existe exatamente uma lacuna estrutural e cada opção injeta seu `value` nela, mostrando `result` abaixo. O motor não "corrige" opções nem infere avaliação semântica, porque o bloco é de exploração, não de prova. O motor não deve pré-selecionar automaticamente a primeira opção.
+- `editor`: o template em `value` e as opções habilitadas são a fonte de verdade. `value` persiste com quebras `\n`, preserva linhas vazias intermediárias e espaços iniciais de cada linha, e continua legível no JSON mesmo quando o preview usa chips para `[[...]]`. `slotOrder` define a ordem estrutural das lacunas corretas; `displayOrder` define apenas a ordem visual das fichas. Duplicatas são válidas e precisam continuar distintas. Em `choice`, o motor preenche a lacuna atualmente selecionada e, por padrão, mantém selecionada a primeira lacuna vazia na ordem do template. Em `input`, variantes aceitas precisam estar declaradas; o motor não inventa equivalências de código, fórmula ou comando. Exportação e importação precisam devolver exatamente o mesmo `value`, salvo a canonicalização de quebra para `\n`.
+- `multiple_choice`: a ordem do array é a ordem visível no motor, porque o bloco não tem `displayOrder`. `answerState` define só o idioma visual do selecionado; quem define o conjunto esperado é `option.answer`. O motor não usa cor para "descobrir" resposta.
+- `flowchart`: `nodes[]` e `links[]` definem o diagrama; opções extras por nó definem as lacunas praticáveis. `outputSlot` governa a lateralidade da seta e, em decisão binária, sustenta a convenção `Não` à esquerda e `Sim` à direita. O motor valida apenas símbolo e texto das lacunas abertas, não a "intenção algorítmica" inteira fora do que foi explicitado.
+- `button`: o botão final governa o avanço do step e, opcionalmente, o popup. `popupBlocks[]` pertencem ao próprio botão. O motor primeiro exige a resolução dos exercícios do card principal e, se o popup também tiver exercícios, exige a resolução deles antes de continuar.
 
 O que o motor pode derivar com segurança:
 
@@ -749,7 +760,7 @@ Regras de layout da lição:
 - quando um `editor` em modo digitação está ativo, a lacuna continua sendo editada dentro do próprio preview, sem abrir compositor separado no rodapé;
 - se o conteúdo ocupar pouco espaço, o card continua até o rodapé, mesmo com espaço vazio;
 - se o conteúdo ultrapassar a altura disponível, a rolagem acontece dentro do card, não no rodapé fixo;
-- quando uma validação gera `inline-feedback`, a visibilidade do card prioriza a própria mensagem; sem feedback novo, o runtime preserva a lacuna ou seleção ativa dentro do contêiner rolável atual;
+- quando uma validação gera `inline-feedback`, a visibilidade do card prioriza a própria mensagem; sem feedback novo, o motor preserva a lacuna ou seleção ativa dentro do contêiner rolável atual;
 - no mobile, o gesto de arrastar deve rolar o conteúdo do card sem deslocar o CTA do rodapé.
 
 ---
@@ -804,7 +815,7 @@ Comportamento:
 - o catálogo embarcado entra como semente complementar;
 - se o usuário já tiver editado localmente o mesmo curso, módulo, lição, step ou bloco, a versão local prevalece;
 - itens ausentes no armazenamento local podem ser acrescentados a partir do catálogo embarcado sem apagar o restante;
-- trocar o catálogo oficial não exige editar o motor, apenas atualizar os JSONs-fonte e regenerar o runtime.
+- trocar o catálogo oficial não exige editar o motor, apenas atualizar os JSONs-fonte e regenerar o catálogo gerado.
 
 ---
 
@@ -906,7 +917,7 @@ No navegador:
 Na publicação estática do projeto:
 
 - o artefato precisa incluir `index.html`, `app.js`, `styles.css`, `assets/`, `modules/` e `content/`;
-- o runtime do catálogo embarcado deve ser regenerado antes do deploy, para manter `content/hardcoded-content.js` coerente com os JSONs-fonte ativos.
+- o catálogo gerado do conteúdo embarcado deve ser regenerado antes do deploy, para manter `content/hardcoded-content.js` coerente com os JSONs-fonte ativos.
 
 ---
 
@@ -1012,7 +1023,7 @@ Toda mudança relevante deve seguir este ciclo:
 Checklist mínimo:
 
 - o app continua independente do conteúdo?
-- se o catálogo embarcado em `content/` mudou, o runtime gerado foi atualizado no mesmo ciclo?
+- se o catálogo embarcado em `content/` mudou, o catálogo gerado foi atualizado no mesmo ciclo?
 - a persistência continua coerente na web e no Android?
 - o pacote ZIP continua reimportável?
 - o editor continua intuitivo?

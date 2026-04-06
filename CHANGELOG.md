@@ -24,10 +24,10 @@ Referências centrais deste marco:
 
 Data do marco: `2026-04-04`
 
-- reforça a integração entre o runtime e o wrapper Android já público desde `v0.0.1`;
+- reforça a integração entre o motor e o wrapper Android já público desde `v0.0.1`;
 - adiciona comentários persistidos por card em `step.comment`;
 - amplia a cobertura de toque, teclado e comportamento da tela de lição no Android;
-- atualiza o catálogo embarcado para o curso de matemática e informática do IFSP.
+- atualiza o catálogo embarcado para o curso `Matemática para Informática`, do IFSP.
 
 Componentes em destaque:
 
@@ -58,13 +58,13 @@ Componentes em destaque:
 Referências centrais deste marco:
 
 - contrato de dados explícito em `lesson-json-spec.md`;
-- princípios de prática guiada e validação local do próprio runtime.
+- princípios de prática guiada e validação local do próprio motor.
 
 ## v0.0.2 - Autoria visual, pacotes e validação
 
 Data do marco: `2026-03-30`
 
-- amadurece a autoria visual já existente no runtime;
+- amadurece a autoria visual já existente no motor;
 - amplia o trabalho com pacotes `.zip`, inclusive conteúdo comprimido;
 - fortalece a auditoria do catálogo embarcado;
 - expande a cobertura automatizada de importação, persistência e formatação;
@@ -85,7 +85,7 @@ Referências centrais deste marco:
 
 Data do marco: `2026-03-26`
 
-- torna pública a base do runtime, do editor de cards e do catálogo embarcado;
+- torna pública a base do motor, do editor de cards e do catálogo embarcado;
 - publica o contrato JSON das lições e o manual principal do produto;
 - disponibiliza o empacotamento Android, o gerador do catálogo embarcado e a suíte inicial de testes;
 - estabelece o catálogo inicial de contêineres que segue público na linha `0.0.x`.
@@ -112,4 +112,4 @@ Referências centrais deste marco:
 
 - ELK para apoio ao arranjo de fluxogramas;
 - desenho hierárquico de grafos como base conceitual para leitura de cima para baixo, laços e convergências;
-- documentação oficial de APIs web e Android usadas pelo runtime.
+- documentação oficial de APIs web e Android usadas pelo motor.

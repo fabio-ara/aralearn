@@ -9,7 +9,7 @@ O projeto foi pensado para estudo offline em condições reais de deslocamento: 
 No AraLearn, o usuário pode:
 
 - criar cursos, módulos, lições e cards;
-- editar cards por meio de um editor visual de baixa codificação;
+- editar cards por meio de um editor visual low-code;
 - escolher contêineres como `heading`, `paragraph`, `image`, `table`, `simulator`, `editor`, `multiple_choice`, `flowchart` e `button`;
 - transformar texto, células, nós e trechos de terminal em lacunas;
 - definir opções corretas e incorretas;
@@ -18,13 +18,13 @@ No AraLearn, o usuário pode:
 - exportar conteúdo para JSON e ZIP;
 - importar esse conteúdo em outra instância do AraLearn, tanto na web quanto no Android.
 
-O runtime foi desenhado para que o mesmo curso possa sair do editor, ser exportado e voltar a funcionar em outra instalação sem depender de servidor.
+O motor foi desenhado para que o mesmo curso possa sair do editor, ser exportado e voltar a funcionar em outra instalação sem depender de servidor.
 
 Na linha pública `0.0.x`, o catálogo inicial de contêineres e o empacotamento Android já aparecem em `v0.0.1`. As versões seguintes passam a detalhar melhor autoria, pacotes, exercícios, comentários e estabilidade da interface móvel.
 
 ## Editor de cards
 
-O editor de cards funciona como uma ferramenta de baixa codificação voltada à autoria didática. Ele permite:
+O editor de cards funciona como uma ferramenta low-code voltada à autoria didática. Ele permite:
 
 - montar a estrutura visual e lógica do card no próprio app;
 - combinar explicação, imagem, tabela, prática guiada, terminal, múltipla escolha e fluxograma;
@@ -38,9 +38,9 @@ Isso faz do AraLearn não apenas um leitor de cursos, mas também uma ferramenta
 
 O projeto hoje trabalha com três camadas complementares:
 
-- `AraLearn`: runtime, editor visual, persistência, importação, exportação e empacotamento web/Android;
+- `AraLearn`: motor, editor visual, persistência, importação, exportação e empacotamento web/Android;
 - `Disassembly`: linguagem declarativa para prototipar arquitetura pedagógica, dependências entre cards, sequência principal de estudo e a própria lógica autoral que depois aparece no editor;
-- `AraLearn Factory`: compilador que transforma essas fontes autorais em JSON compatível com o runtime.
+- `AraLearn Factory`: compilador que transforma essas fontes autorais em JSON compatível com o motor.
 
 O repositório público do Disassembly está aqui:
 
@@ -52,7 +52,7 @@ O AraLearn Factory ainda não está publicado.
 
 O app suporta cursos embarcados em `content/`, separados do núcleo do motor.
 
-Hoje a distribuição pública traz um curso embarcado ligado às disciplinas do primeiro semestre de Tecnologia em Análise e Desenvolvimento de Sistemas que estou cursando. A estrutura do produto, porém, não é específica desse curso: o editor permite criar novos cursos e exportá-los para outras instâncias do app.
+Hoje a distribuição pública traz o curso embarcado `Matemática para Informática`, correspondente à disciplina homônima do primeiro semestre de Tecnologia em Análise e Desenvolvimento de Sistemas no Instituto Federal de São Paulo (IFSP). A próxima inclusão prevista é `Organização e Arquitetura de Computadores`, já compilada pelo AraLearn Factory para o mesmo contexto de estudo em deslocamento. A estrutura do produto, porém, não é específica desses cursos: o editor permite criar novos cursos e exportá-los para outras instâncias do app.
 
 ## Estrutura principal
 
@@ -61,7 +61,7 @@ Hoje a distribuição pública traz um curso embarcado ligado às disciplinas do
 - `styles.css`: identidade visual e layout;
 - `modules/`: utilitários de conteúdo, progresso, arquivos e fluxograma;
 - `content/*.json`: fontes do catálogo embarcado;
-- `content/hardcoded-content.js`: runtime gerado a partir dos JSONs ativos;
+- `content/hardcoded-content.js`: catálogo gerado a partir dos JSONs ativos;
 - `android/`: wrapper Android baseado em `WebView`;
 - `manual.md`: arquitetura, regras do produto e invariantes;
 - `lesson-json-spec.md`: contrato JSON das lições;
