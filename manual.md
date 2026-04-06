@@ -918,6 +918,8 @@ Na publicação estática do projeto:
 
 - o artefato precisa incluir `index.html`, `app.js`, `styles.css`, `assets/`, `modules/` e `content/`;
 - o catálogo gerado do conteúdo embarcado deve ser regenerado antes do deploy, para manter `content/hardcoded-content.js` coerente com os JSONs-fonte ativos.
+- o workflow de Pages deve rodar manualmente, só quando a versão web realmente precisar ser republicada;
+- evite publicar o Pages a cada `push` na `main`, para não inflar o histórico público de deployments sem ganho real de produto.
 
 ---
 

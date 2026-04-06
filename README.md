@@ -82,6 +82,12 @@ Alguns pontos centrais do projeto se apoiam em referências técnicas e conceitu
 
 Abra `index.html` no Chrome ou rode um servidor estático local.
 
+### GitHub Pages
+
+A publicação do site no GitHub Pages é manual, pela aba `Actions`, no workflow `Publicar versão web no Pages`.
+
+Isso evita criar um novo deployment a cada ajuste na `main` e mantém o histórico público do repositório mais legível.
+
 ### Instalação e testes
 
 ```powershell
