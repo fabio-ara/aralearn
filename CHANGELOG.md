@@ -1,6 +1,6 @@
 # Histórico de versões
 
-## v0.0.5 — Interface Android estável
+## v0.0.5 - Interface Android estável
 
 Data do marco: `2026-04-05`
 
@@ -20,7 +20,7 @@ Referências centrais deste marco:
 - Android Developers, `WindowInsets` e `safe-area`;
 - Chromium WebView, tratamento de insets e viewport.
 
-## v0.0.4 — Android integrado e comentários por card
+## v0.0.4 - Android integrado e comentários por card
 
 Data do marco: `2026-04-04`
 
@@ -40,7 +40,7 @@ Referências centrais deste marco:
 - Android Developers, `WebView`, insets e integração com sistema;
 - práticas de empacotamento híbrido com a mesma base HTML, CSS e JavaScript.
 
-## v0.0.3 — Lacunas, tabelas e avaliação local
+## v0.0.3 - Lacunas, tabelas e avaliação local
 
 Data do marco: `2026-04-01`
 
@@ -60,7 +60,7 @@ Referências centrais deste marco:
 - contrato de dados explícito em `lesson-json-spec.md`;
 - princípios de prática guiada e validação local do próprio runtime.
 
-## v0.0.2 — Autoria visual, pacotes e validação
+## v0.0.2 - Autoria visual, pacotes e validação
 
 Data do marco: `2026-03-30`
 
@@ -81,7 +81,7 @@ Referências centrais deste marco:
 - formato ZIP e processamento local em JavaScript;
 - boas práticas de validação automatizada para conteúdo e persistência.
 
-## v0.0.1 — Base pública do motor
+## v0.0.1 - Base pública do motor
 
 Data do marco: `2026-03-26`
 
