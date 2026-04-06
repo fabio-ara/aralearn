@@ -1,34 +1,80 @@
 # AraLearn
 
-AraLearn é um motor local de aprendizagem em cards, com autoria visual, persistência no próprio dispositivo e a mesma base para web e Android.
+AraLearn é um motor local de aprendizagem em cards, com a mesma base para web e Android.
 
-O projeto está em desenvolvimento inicial. O marco público atual é `v0.0.5`, que estabiliza a tela de lição no Android, remove o vão extra junto às barras do sistema em `WebView` moderno e preserva a mesma base de conteúdo entre navegador e APK.
+O projeto foi pensado para estudo offline em condições reais de deslocamento: pouco tempo, atenção fragmentada, uso em pé no transporte público e ausência de internet. Por isso, o foco do app é permitir autoria e consumo de conteúdo no próprio dispositivo, com persistência local, exportação portátil e interface preparada para sessões de estudo objetivas.
 
-## O que este repositório reúne
+## O que o produto entrega
 
-- runtime web em `index.html`, `app.js`, `styles.css` e `modules/`;
-- wrapper Android em `android/`;
-- catálogo embarcado em `content/`;
-- contratos de autoria e arquitetura em `manual.md` e `lesson-json-spec.md`.
+No AraLearn, o usuário pode:
+
+- criar cursos, módulos, lições e cards;
+- editar cards por meio de um editor visual de baixa codificação;
+- escolher contêineres como `heading`, `paragraph`, `image`, `table`, `simulator`, `editor`, `multiple_choice`, `flowchart` e `button`;
+- transformar texto, células, nós e trechos de terminal em lacunas;
+- definir opções corretas e incorretas;
+- definir respostas por digitação, com variantes aceitas e suporte a expressões regulares quando o exercício exigir;
+- manter comentários pessoais por card;
+- exportar conteúdo para JSON e ZIP;
+- importar esse conteúdo em outra instância do AraLearn, tanto na web quanto no Android.
+
+O runtime foi desenhado para que o mesmo curso possa sair do editor, ser exportado e voltar a funcionar em outra instalação sem depender de servidor.
+
+Na linha pública `0.0.x`, o catálogo inicial de contêineres e o empacotamento Android já aparecem em `v0.0.1`. As versões seguintes passam a detalhar melhor autoria, pacotes, exercícios, comentários e estabilidade da interface móvel.
+
+## Editor de cards
+
+O editor de cards funciona como uma ferramenta de baixa codificação voltada à autoria didática. Ele permite:
+
+- montar a estrutura visual e lógica do card no próprio app;
+- combinar explicação, imagem, tabela, prática guiada, terminal, múltipla escolha e fluxograma;
+- configurar feedback e avanço do card;
+- definir lacunas por escolha e por digitação;
+- controlar alternativas aceitas sem precisar editar manualmente o JSON final.
+
+Isso faz do AraLearn não apenas um leitor de cursos, mas também uma ferramenta de autoria local.
 
 ## Ecossistema de autoria
 
-- `Disassembly`: linguagem declarativa interna usada para descrever estrutura pedagógica, dependências entre cards e interação mínima;
-- `AraLearn Factory`: compilador interno que valida essas fontes e gera a estrutura JSON usada pelo runtime;
-- `lesson-json-spec.md`: contrato mais próximo da forma final consumida pelo app.
+O projeto hoje trabalha com três camadas complementares:
 
-O Disassembly e o AraLearn Factory não são públicos neste repositório, mas orientam a organização pedagógica e a forma dos dados que chegam ao app.
+- `AraLearn`: runtime, editor visual, persistência, importação, exportação e empacotamento web/Android;
+- `Disassembly`: linguagem declarativa para prototipar arquitetura pedagógica, dependências entre cards, sequência principal de estudo e a própria lógica autoral que depois aparece no editor;
+- `AraLearn Factory`: compilador que transforma essas fontes autorais em JSON compatível com o runtime.
+
+O repositório público do Disassembly está aqui:
+
+- <https://github.com/fabio-ara/Disassembly>
+
+O AraLearn Factory ainda não está publicado.
+
+## Catálogo embarcado
+
+O app suporta cursos embarcados em `content/`, separados do núcleo do motor.
+
+Hoje a distribuição pública traz um curso embarcado ligado às disciplinas do primeiro semestre de Tecnologia em Análise e Desenvolvimento de Sistemas que estou cursando. A estrutura do produto, porém, não é específica desse curso: o editor permite criar novos cursos e exportá-los para outras instâncias do app.
 
 ## Estrutura principal
 
 - `index.html`: entrada da versão web;
 - `app.js`: estado, renderização, autoria, importação, exportação e persistência;
+- `styles.css`: identidade visual e layout;
 - `modules/`: utilitários de conteúdo, progresso, arquivos e fluxograma;
 - `content/*.json`: fontes do catálogo embarcado;
 - `content/hardcoded-content.js`: runtime gerado a partir dos JSONs ativos;
-- `examples/`: pacotes e fontes mantidos fora do catálogo embarcado;
-- `manual.md`: regras do produto, arquitetura e invariantes;
-- `CHANGELOG.md`: marcos públicos da linha `0.0.x`.
+- `android/`: wrapper Android baseado em `WebView`;
+- `manual.md`: arquitetura, regras do produto e invariantes;
+- `lesson-json-spec.md`: contrato JSON das lições;
+- `CHANGELOG.md`: linha pública de versões.
+
+## Fundamentos e referências
+
+Alguns pontos centrais do projeto se apoiam em referências técnicas e conceituais explícitas:
+
+- Android em `WebView`: tratamento de barras do sistema, `safe-area` e teclado com base na documentação oficial do Android e do Chromium WebView;
+- fluxogramas: organização visual inspirada em desenho hierárquico de grafos, com apoio do ELK e de ideias clássicas de layout em camadas;
+- autoria declarativa: o Disassembly descreve intenção pedagógica, dependências e sequência principal antes da compilação para JSON;
+- contratos de resposta: o editor expõe alternativas corretas, incorretas, variantes e expressões regulares a partir de um modelo de dados explícito, documentado em `lesson-json-spec.md`.
 
 ## Execução
 
@@ -64,9 +110,9 @@ Saída esperada:
 
 ## Documentação
 
-- [manual.md](./manual.md): arquitetura, regras de autoria, persistência, Android e invariantes;
+- [manual.md](./manual.md): arquitetura, editor, persistência, Android e invariantes;
 - [lesson-json-spec.md](./lesson-json-spec.md): contrato JSON das lições;
-- [CHANGELOG.md](./CHANGELOG.md): linha pública de versões.
+- [CHANGELOG.md](./CHANGELOG.md): marcos públicos da linha `0.0.x`.
 
 ## Licença
 

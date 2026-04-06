@@ -53,35 +53,82 @@ O app é fixo.
 
 O conteúdo é mutável.
 
+### 2.1 Cenário de uso
+
+O produto foi pensado para estudantes-trabalhadores que estudam em condições adversas de tempo, atenção e conforto físico.
+
+Cenário priorizado:
+
+- estudo em deslocamento;
+- uso em pé no transporte público;
+- pouco tempo disponível entre trabalho, faculdade e outras obrigações;
+- ausência frequente de internet;
+- necessidade de retomar o ponto anterior sem atrito;
+- necessidade de transformar materiais próprios em trilhas de prática portátil.
+
+Consequência prática:
+
+- o app precisa funcionar offline;
+- a autoria precisa acontecer no próprio dispositivo ou ser facilmente portada;
+- a interface precisa privilegiar foco, continuidade e baixa fricção.
+
+### 2.2 O que o produto oferece
+
+No estado atual, o AraLearn permite que o usuário:
+
+- crie cursos, módulos, lições e cards;
+- edite cards em um editor visual de baixa codificação;
+- combine explicação, imagem, tabela, múltipla escolha, terminal, simulação e fluxograma no mesmo percurso;
+- transforme trechos de texto, células de tabela, nós de fluxograma e trechos de terminal em lacunas;
+- configure opções corretas e incorretas;
+- configure respostas por digitação, com variantes aceitas e expressões regulares quando o exercício exigir;
+- mantenha comentários pessoais por card;
+- exporte o conteúdo para JSON e ZIP;
+- reimporte esse conteúdo em outra instância do AraLearn, tanto na web quanto no Android.
+
+### 2.3 Ecossistema de autoria
+
+O runtime do AraLearn convive com duas camadas autorais acima dele:
+
+- `Disassembly`: linguagem declarativa para arquitetura pedagógica, dependências entre cards, sequência principal da lição e explicitação da lógica autoral que depois pode ser reproduzida pelo editor de cards;
+- `AraLearn Factory`: compilador que transforma essas fontes em JSON compatível com o runtime.
+
+Estado de publicação:
+
+- a especificação pública do Disassembly está em <https://github.com/fabio-ara/Disassembly>;
+- o AraLearn Factory ainda não está publicado.
+
 ---
 
-## 2.1 Ecossistema de autoria
-
-O AraLearn convive com duas camadas autorais acima do runtime:
-
-- `Disassembly`: linguagem declarativa voltada à estrutura pedagógica do material, com curso, módulo, lição, card, dependências e interação mínima;
-- `AraLearn Factory`: compilador interno que valida essas fontes e as transforma no JSON consumido pelo app;
-- `lesson-json-spec.md`: contrato mais próximo da serialização final usada no runtime.
-
-Regra de separação:
-
-- o Disassembly descreve intenção pedagógica e topologia;
-- o Factory cuida de validação e compilação;
-- o AraLearn renderiza, persiste, importa, exporta e empacota o resultado.
-
----
-
-## 2.2 Evolução pública
+## 2.4 Evolução pública
 
 Linha pública atual:
 
-- `v0.0.1`: estrutura pública do motor, catálogo embarcado e documentação principal;
-- `v0.0.2`: contêineres de autoria, importação por mesclagem e pacotes `.zip`;
-- `v0.0.3`: lacunas, tabelas e avaliação local;
-- `v0.0.4`: APK Android e comentários por card;
-- `v0.0.5`: interface Android estável, sem vão extra acima ou abaixo da tela de lição.
+- `v0.0.1` (`2026-03-26`): torna pública a base do motor, o contrato JSON das lições, o manual, a suíte inicial de validação, o catálogo inicial de contêineres do editor e o empacotamento Android em `WebView`. Na linha pública `0.0.x`, `heading`, `paragraph`, `image`, `table`, `simulator`, `editor`, `multiple_choice`, `flowchart` e `button` já aparecem aqui.
+- `v0.0.2` (`2026-03-30`): amadurece a autoria visual, amplia o trabalho com pacotes `.zip`, fortalece a auditoria do catálogo embarcado e expande a cobertura automatizada de importação, persistência e formatação.
+- `v0.0.3` (`2026-04-01`): aprofunda a prática com lacunas, tabelas, respostas por escolha e por digitação, incluindo variantes aceitas e apoio a expressões regulares quando necessário.
+- `v0.0.4` (`2026-04-04`): reforça a integração entre runtime e Android, adiciona comentários por card e amplia a cobertura de comportamento móvel. Este marco não inaugura o APK; ele amplia a experiência Android já pública desde `v0.0.1`.
+- `v0.0.5` (`2026-04-05`): estabiliza a tela de lição no `WebView` moderno, elimina o vão externo acima e abaixo da área útil e consolida preservação de rolagem, foco visual e comentário por card.
 
-Esses marcos também estão resumidos em `CHANGELOG.md`.
+Esses marcos também estão resumidos em `CHANGELOG.md` e devem permanecer coerentes com as releases públicas do repositório.
+
+### 2.5 Catálogo público de contêineres
+
+Na linha pública atual, o catálogo inicial do editor de cards entrou junto em `v0.0.1`.
+
+Contêineres publicados nesse marco:
+
+- `heading`: título visual do card e origem preferencial de `step.title`;
+- `paragraph`: explicação, teoria, enunciado e feedback textual;
+- `image`: apoio visual embarcado por caminho lógico em `assets/images/...`;
+- `table`: consulta estruturada e prática por células, inclusive com lacunas;
+- `simulator`: exploração guiada com uma lacuna estrutural e resultado associado;
+- `editor`: prática operacional com lacunas por escolha ou digitação, variantes e expressões regulares;
+- `multiple_choice`: verificação objetiva por alternativas explícitas;
+- `flowchart`: modelagem de algoritmos, processos e decisões com nós, ligações e lacunas;
+- `button`: avanço do card e popup complementar quando houver.
+
+Versões posteriores refinam contratos, autoria, validação, UX e integração Android desses mesmos contêineres, mas não redefinem esse catálogo público inicial.
 
 ---
 
@@ -389,6 +436,7 @@ Regras:
 - esse comentário pertence ao `step`, não depende de popup do `button` e continua disponível mesmo em cards sem conteúdo extra no botão final;
 - comentário vazio não precisa ocupar campo persistido.
 - contêineres roláveis do app devem preservar a própria posição após re-renderizações da mesma view; quando um controle troca o alvo ativo, esse alvo precisa continuar visível dentro da sua área rolável.
+- o produto deve permanecer compreensível para autor leigo, mesmo quando o card combinar mais de um tipo de prática.
 
 ## 7.2 Editor visual
 
@@ -415,6 +463,16 @@ Regras:
 - popup do botão usa o mesmo motor de blocos do editor principal;
 - popup aceita todos os blocos, exceto `button`.
 - ao sair de um campo rico de `editor` ou `simulator`, a normalização do conteúdo não deve roubar o foco do próximo bloco escolhido pelo autor.
+
+O editor precisa deixar claro, sem exigir edição manual de JSON, que o autor pode:
+
+- escolher entre `heading`, `paragraph`, `image`, `table`, `simulator`, `editor`, `multiple_choice`, `flowchart` e `button`;
+- configurar lacunas por escolha e por digitação;
+- definir quais opções são corretas e quais são incorretas;
+- declarar variantes aceitas por lacuna;
+- usar expressões regulares quando a validação exigir esse grau de flexibilidade;
+- montar prática dentro de tabela, terminal e fluxograma;
+- manter a mesma lógica de resposta quando o conteúdo for exportado e reimportado.
 
 ## 7.3 Ordem lógica da paleta
 
@@ -489,7 +547,7 @@ Critério visual explícito:
 ## 8.3 Image
 
 - persiste caminho lógico em `assets/images/...`;
-- pode nascer de arquivo importado e virar asset interno.
+- pode nascer de arquivo importado e virar arquivo interno do projeto.
 
 ## 8.4 Table
 
@@ -811,7 +869,7 @@ Regra:
 - quando o escopo do arquivo for menor que o do ponto de importação compatível, inserir o conteúdo no contêiner atual com mensagem informativa;
 - rejeitar apenas combinações sem contêiner compatível;
 - normalizar conteúdo, progresso e arquivos de apoio;
-- falhar com mensagem distinta para ZIP corrompido, `project.json` ausente, JSON inválido, asset ausente e método de compressão realmente não suportado;
+- falhar com mensagem distinta para ZIP corrompido, `project.json` ausente, JSON inválido, arquivo de imagem ausente e método de compressão realmente não suportado;
 - podar arquivos órfãos de imagem;
 - reconciliar progresso;
 - persistir o resultado.
@@ -883,7 +941,7 @@ Validações obrigatórias:
 - `npm run test:e2e`
 - `pwsh -NoProfile -File ./scripts/validate.ps1`
 - build Android de debug dentro do fluxo completo
-- o APK publicado manualmente deve sair do mesmo ciclo validado; se a versão já existir e o problema estiver só no binário anexado, substitua o asset da release existente em vez de abrir uma nova versão sem mudança funcional
+- o APK publicado manualmente deve sair do mesmo ciclo validado; se a versão já existir e o problema estiver só no binário anexado, substitua o arquivo da release existente em vez de abrir uma nova versão sem mudança funcional
 
 Regras operacionais do E2E web:
 
