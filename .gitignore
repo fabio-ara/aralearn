@@ -1,0 +1,10 @@
+AGENTS.md
+manual.md
+plano-incremental.md
+prompts-private/
+notes-private/
+notas-private/
+private/
+*.private.*
+.DS_Store
+Thumbs.db
