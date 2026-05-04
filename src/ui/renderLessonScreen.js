@@ -808,20 +808,16 @@ function renderDraftGeneratorScreen({ lesson, microsequence, cards, selection, e
     .filter((item) => editorSupport.selectedDependencyKeys.includes(item.key))
     .map((item) => {
       return (
-        '<button class="dependency-tag active" type="button" data-action="remove-dependency" data-dependency-key="' +
+        '<button class="dependency-chip active" type="button" data-action="remove-dependency" data-dependency-key="' +
         escapeHtml(item.key) +
         '">' +
-        '<span class="dependency-tag-label">' +
+        '<span class="dependency-chip-label">' +
         escapeHtml(item.title || item.key) +
         "</span>" +
-        '<span class="dependency-tag-remove">&times;</span></button>'
+        '<span class="dependency-chip-remove">&times;</span></button>'
       );
     })
     .join("");
-  const emptyTagSlots = Math.max(0, 5 - (editorSupport.selectedDependencyKeys || []).length);
-  const tagSlotsPlaceholder = Array.from({ length: emptyTagSlots }, () => {
-    return '<div class="dependency-tag dependency-tag-slot" aria-hidden="true"></div>';
-  }).join("");
   const availableDependencyOptions = (editorSupport.dependencies || [])
     .filter((item) => !editorSupport.selectedDependencyKeys.includes(item.key))
     .map((item) => {
@@ -927,9 +923,8 @@ function renderDraftGeneratorScreen({ lesson, microsequence, cards, selection, e
     '<div class="field compact-field">' +
     "<label>Tags</label>" +
     dependencyPicker +
-    '<div class="dependency-strip">' +
+    '<div class="dependency-chip-row">' +
     selectedDependencyTags +
-    tagSlotsPlaceholder +
     "</div></div>" +
     '<div class="field compact-field">' +
     "<label>Pedido</label>" +
@@ -945,9 +940,10 @@ function renderDraftGeneratorScreen({ lesson, microsequence, cards, selection, e
     '<button class="open-mini" type="button" data-action="apply-assist" title="Gerar microssequência" aria-label="Gerar microssequência"' +
     (editorSupport.isSubmitting ? " disabled aria-disabled=\"true\"" : "") +
     ">&#9654;</button>" +
-    "</div></section>" +
+    "</div>" +
     assistWarning +
     assistStatus +
+    "</section>" +
     "</main></section>"
   );
 }

@@ -1348,13 +1348,19 @@ button {
 
 .generator-preview-stage {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: clamp(220px, 30dvh, 360px);
   overflow: hidden;
+}
+
+.generator-preview-stage .card-portrait-body {
+  min-height: clamp(220px, 30dvh, 360px);
 }
 
 .microsequence-generator-panel {
   flex: 0 0 auto;
   margin-top: auto;
+  max-height: min(40dvh, 360px);
+  overflow: auto;
 }
 
 .builder-layout,
@@ -1767,6 +1773,16 @@ button {
   align-content: start;
 }
 
+.dependency-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: calc((26px * 3) + 12px);
+  overflow: auto;
+  align-content: flex-start;
+  padding-top: 6px;
+}
+
 .assist-tag-picker {
   display: grid;
   grid-template-columns: 1fr 34px;
@@ -1820,6 +1836,33 @@ button {
   background: rgba(15, 12, 9, 0.36);
   cursor: default;
   min-height: 26px;
+}
+
+.dependency-chip {
+  width: auto;
+  max-width: 100%;
+  min-height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(170, 134, 86, 0.72);
+  background: linear-gradient(180deg, rgba(67, 53, 37, 0.98), rgba(44, 34, 24, 0.99));
+  color: #f5e6cb;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.dependency-chip-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dependency-chip-remove {
+  flex: 0 0 auto;
+  color: #f0d7a2;
 }
 
 .dependency-tag-label {
