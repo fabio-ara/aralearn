@@ -10,6 +10,7 @@ Nesta etapa, o projeto já define o contrato autoral `aralearn.intent.v1` e a va
 O repositório também já inclui a pipeline mínima do motor para carregar, validar, normalizar e compilar esse contrato.
 Há também uma camada inicial de renderização HTML baseada apenas no modelo compilado.
 Nesta etapa, a persistência local simples já fica atrás de uma camada própria, separando projeto e progresso.
+Também já existe uma camada inicial de edição manual de microssequências e cards, separada da renderização e da persistência.
 
 ## Estrutura
 
@@ -26,6 +27,7 @@ Nesta etapa, a persistência local simples já fica atrás de uma camada própri
 - `src/model/`
 - `src/render/`
 - `src/storage/`
+- `src/editor/`
 
 ## Validação
 

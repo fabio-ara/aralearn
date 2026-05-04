@@ -47,3 +47,13 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 - separação explícita entre projeto e progresso
 - exportação e importação JSON com validação antes da persistência
 - testes automatizados da persistência local
+
+## [0.6.0] - 2026-05-03
+
+### Added
+
+- camada inicial de edição manual em `src/editor`
+- operações para criar e editar microssequências
+- operações para criar, editar e mover cards dentro da microssequência
+- sessão de edição integrada à camada de storage
+- testes automatizados do editor manual básico
