@@ -3,16 +3,33 @@ import { renderCardEditorOverlay } from "./renderCardEditorOverlay.js";
 import { renderCardCommentOverlay } from "./renderCardCommentOverlay.js";
 import { renderEntityEditorOverlay } from "./renderEntityEditorOverlay.js";
 import {
+  buildCardPathKey,
+  collectAssistDependencies,
+  collectLessonCards,
+  findCard,
+  findCourse,
+  findLesson,
+  findMicrosequence,
+  findModule,
+  getDefaultDependencyKeys,
+  getFirstPath
+} from "./lessonEditorPaths.js";
+import {
+  readAssistCommentStorage,
+  readCommentStorage,
+  readHistoryStorage,
+  writeAssistCommentStorage,
+  writeCommentStorage,
+  writeHistoryStorage
+} from "./lessonEditorStorage.js";
+import { cloneBlocks, getBlockAtPath, getParentArrayAtPath } from "./cardBlockPath.js";
+import {
   createDefaultChildBlock,
   normalizeCardBlocks,
   summarizeCardTextFromBlocks
 } from "../core/cardBlockModel.js";
 
-const CARD_HISTORY_STORAGE_KEY = "aralearn.card-history.v1";
-const CARD_COMMENT_STORAGE_KEY = "aralearn.card-comments.v1";
-const ASSIST_CARD_COMMENT_STORAGE_KEY = "aralearn.assist-card-comments.v1";
 const MAX_ASSIST_DEPENDENCIES = 5;
-const DEFAULT_ASSIST_DEPENDENCIES = 3;
 const MAX_CARD_SNAPSHOTS = 6;
 
 function fail(message) {
@@ -25,264 +42,6 @@ function readCardText(card) {
   }
 
   return "";
-}
-
-function readHistoryStorage() {
-  if (!globalThis.localStorage) {
-    return {};
-  }
-
-  try {
-    const rawValue = globalThis.localStorage.getItem(CARD_HISTORY_STORAGE_KEY);
-    if (!rawValue) {
-      return {};
-    }
-
-    const parsed = JSON.parse(rawValue);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function writeHistoryStorage(historyMap) {
-  if (!globalThis.localStorage) {
-    return;
-  }
-
-  try {
-    globalThis.localStorage.setItem(CARD_HISTORY_STORAGE_KEY, JSON.stringify(historyMap));
-  } catch {
-    // Evita quebrar a edição se a quota local estiver indisponível.
-  }
-}
-
-function readCommentStorage() {
-  if (!globalThis.localStorage) {
-    return {};
-  }
-
-  try {
-    const rawValue = globalThis.localStorage.getItem(CARD_COMMENT_STORAGE_KEY);
-    if (!rawValue) {
-      return {};
-    }
-
-    const parsed = JSON.parse(rawValue);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function readAssistCommentStorage() {
-  if (!globalThis.localStorage) {
-    return {};
-  }
-
-  try {
-    const rawValue = globalThis.localStorage.getItem(ASSIST_CARD_COMMENT_STORAGE_KEY);
-    if (!rawValue) {
-      return {};
-    }
-
-    const parsed = JSON.parse(rawValue);
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function writeCommentStorage(commentMap) {
-  if (!globalThis.localStorage) {
-    return;
-  }
-
-  try {
-    globalThis.localStorage.setItem(CARD_COMMENT_STORAGE_KEY, JSON.stringify(commentMap));
-  } catch {
-    // Evita quebrar a anotação se a quota local estiver indisponível.
-  }
-}
-
-function writeAssistCommentStorage(commentMap) {
-  if (!globalThis.localStorage) {
-    return;
-  }
-
-  try {
-    globalThis.localStorage.setItem(ASSIST_CARD_COMMENT_STORAGE_KEY, JSON.stringify(commentMap));
-  } catch {
-    // Evita quebrar o comentário para a API se a quota local estiver indisponível.
-  }
-}
-
-function buildCardPathKey(selection) {
-  return [
-    selection.courseKey,
-    selection.moduleKey,
-    selection.lessonKey,
-    selection.microsequenceKey,
-    selection.cardKey
-  ].join("::");
-}
-
-function parseBlockPath(path) {
-  return String(path || "")
-    .split(".")
-    .map((item) => (/^\d+$/.test(item) ? Number.parseInt(item, 10) : item))
-    .filter((item) => item !== "");
-}
-
-function cloneBlocks(blocks) {
-  return structuredClone(blocks);
-}
-
-function getBlockAtPath(blocks, path) {
-  const segments = parseBlockPath(path);
-  let current = blocks;
-
-  for (const segment of segments) {
-    if (current === undefined || current === null) {
-      return null;
-    }
-    current = current[segment];
-  }
-
-  return current ?? null;
-}
-
-function getParentArrayAtPath(blocks, path) {
-  const segments = parseBlockPath(path);
-  if (!segments.length) {
-    return null;
-  }
-
-  const itemIndex = segments[segments.length - 1];
-  const parentSegments = segments.slice(0, -1);
-  let current = blocks;
-
-  for (const segment of parentSegments) {
-    if (current === undefined || current === null) {
-      return null;
-    }
-    current = current[segment];
-  }
-
-  return Array.isArray(current) ? { array: current, index: itemIndex } : null;
-}
-
-function collectAssistDependencies(course, moduleValue, lesson, microsequence) {
-  if (!course || !moduleValue || !lesson || !microsequence) {
-    return [];
-  }
-
-  const dependencies = [];
-  const seenKeys = new Set();
-
-  function pushDependency(item, scope) {
-    if (!item || !item.key || item.key === microsequence.key || seenKeys.has(item.key)) {
-      return;
-    }
-
-    seenKeys.add(item.key);
-    dependencies.push({
-      key: item.key,
-      title: item.title || item.key,
-      scope
-    });
-  }
-
-  const lessonMicrosequences = lesson.microsequences || [];
-  const currentIndex = lessonMicrosequences.findIndex((item) => item.key === microsequence.key);
-  lessonMicrosequences.slice(0, Math.max(0, currentIndex)).forEach((item) => pushDependency(item, "Lição"));
-
-  (moduleValue.lessons || []).forEach((moduleLesson) => {
-    if (moduleLesson.key === lesson.key) {
-      return;
-    }
-
-    (moduleLesson.microsequences || []).forEach((item) => pushDependency(item, "Módulo"));
-  });
-
-  (course.modules || []).forEach((courseModule) => {
-    if (courseModule.key === moduleValue.key) {
-      return;
-    }
-
-    (courseModule.lessons || []).forEach((courseLesson) => {
-      (courseLesson.microsequences || []).forEach((item) => pushDependency(item, "Curso"));
-    });
-  });
-
-  return dependencies;
-}
-
-function getDefaultDependencyKeys(dependencies) {
-  return dependencies.slice(0, DEFAULT_ASSIST_DEPENDENCIES).map((item) => item.key);
-}
-
-function getFirstPath(project) {
-  const course = project.course;
-  const moduleValue = course.modules[0];
-  const lesson = moduleValue.lessons[0];
-  const microsequence = lesson.microsequences[0];
-  const card = (microsequence.cards || [])[0] || null;
-
-  return {
-    courseKey: course.key,
-    moduleKey: moduleValue.key,
-    lessonKey: lesson.key,
-    microsequenceKey: microsequence.key,
-    cardKey: card ? card.key : null,
-    cardIndex: 0
-  };
-}
-
-function findCourse(project, courseKey) {
-  if (project.course && project.course.key === courseKey) {
-    return project.course;
-  }
-
-  return null;
-}
-
-function findModule(project, courseKey, moduleKey) {
-  const course = findCourse(project, courseKey);
-  if (!course) return null;
-  return (course.modules || []).find((item) => item.key === moduleKey) || null;
-}
-
-function findLesson(project, courseKey, moduleKey, lessonKey) {
-  const moduleValue = findModule(project, courseKey, moduleKey);
-  if (!moduleValue) return null;
-  return (moduleValue.lessons || []).find((item) => item.key === lessonKey) || null;
-}
-
-function findMicrosequence(project, courseKey, moduleKey, lessonKey, microsequenceKey) {
-  const lesson = findLesson(project, courseKey, moduleKey, lessonKey);
-  if (!lesson) return null;
-  return (lesson.microsequences || []).find((item) => item.key === microsequenceKey) || null;
-}
-
-function findCard(microsequence, cardKey) {
-  return (microsequence.cards || []).find((item) => item.key === cardKey) || null;
-}
-
-function collectLessonCards(lesson) {
-  const entries = [];
-  (lesson?.microsequences || []).forEach((microsequence) => {
-    (microsequence.cards || []).forEach((card, cardIndex) => {
-      entries.push({
-        microsequenceKey: microsequence.key,
-        microsequenceTitle: microsequence.title || microsequence.key,
-        cardKey: card.key,
-        card,
-        cardIndex
-      });
-    });
-  });
-  return entries;
 }
 
 function makeEntityEditorModel(state) {
