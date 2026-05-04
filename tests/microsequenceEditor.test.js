@@ -58,6 +58,12 @@ test("cria microssequência nova dentro da lição sem gerar card solto", () => 
 
 test("edita título e objetivo da microssequência", () => {
   const document = readNormalizedProject("./docs/examples/aralearn-intent-v1.valid.json");
+  document.courses[0].modules[0].lessons[0].microsequences.push({
+    key: "microsequence-segunda",
+    title: "Microssequência revisada",
+    objective: "Outra sequência",
+    cards: [{ key: "card-segundo", title: "Card", intent: "text", data: { text: "ok" } }]
+  });
 
   const nextDocument = updateMicrosequence(document, {
     courseKey: "course-curso-de-exemplo",
@@ -69,7 +75,7 @@ test("edita título e objetivo da microssequência", () => {
   });
 
   const microsequence = nextDocument.courses[0].modules[0].lessons[0].microsequences[0];
-  assert.equal(microsequence.title, "Microssequência revisada");
+  assert.equal(microsequence.title, "Microssequência revisada (2)");
   assert.equal(microsequence.objective, "Apresentar o conceito com outro foco");
 });
 
@@ -253,6 +259,48 @@ test("move microssequência para outra lição sem invalidar a origem", () => {
   assert.equal(sourceLesson.microsequences.length, 1);
   assert.equal(targetLesson.microsequences.length, 2);
   assert.equal(targetLesson.microsequences[1].key, "microsequence-apresentar-o-primeiro-conceito");
+});
+
+test("aplica renomeações com fallback determinístico durante reposicionamento", () => {
+  const document = readNormalizedProject("./docs/examples/aralearn-intent-v1.valid.json");
+  document.courses[0].modules[0].lessons.push({
+    key: "lesson-segunda-licao",
+    title: "Segunda lição",
+    microsequences: [
+      {
+        key: "microsequence-cascata",
+        title: "Modelo cascata",
+        objective: "Base",
+        cards: [{ key: "card-a", title: "A", intent: "text", data: { text: "ok" } }]
+      },
+      {
+        key: "microsequence-modelo-v",
+        title: "Modelo em V",
+        objective: "Base",
+        cards: [{ key: "card-b", title: "B", intent: "text", data: { text: "ok" } }]
+      }
+    ]
+  });
+
+  const nextDocument = moveMicrosequence(document, {
+    courseKey: "course-curso-de-exemplo",
+    moduleKey: "module-fundamentos",
+    lessonKey: "lesson-primeira-licao",
+    microsequenceKey: "microsequence-apresentar-o-primeiro-conceito",
+    targetCourseKey: "course-curso-de-exemplo",
+    targetModuleKey: "module-fundamentos",
+    targetLessonKey: "lesson-segunda-licao",
+    targetPosition: 1,
+    renames: [
+      {
+        microsequenceKey: "microsequence-apresentar-o-primeiro-conceito",
+        title: "Modelo cascata"
+      }
+    ]
+  });
+
+  const targetLesson = nextDocument.courses[0].modules[0].lessons[1];
+  assert.equal(targetLesson.microsequences[1].title, "Modelo cascata (2)");
 });
 
 test("garante curso especial de rascunhos para geração por API", () => {

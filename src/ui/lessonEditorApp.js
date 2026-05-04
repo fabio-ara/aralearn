@@ -57,6 +57,15 @@ function fail(message) {
   throw new Error(message);
 }
 
+function normalizeComparableText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 function readCardText(card) {
   if (card && card.data && typeof card.data.text === "string") {
     return card.data.text;
@@ -306,8 +315,15 @@ export function createLessonEditorApp({ root, storage, editor }) {
     return collectAssistDependencies(context.course, context.moduleValue, context.lesson, context.microsequence);
   }
 
-  function collectRepositionDestinations(project = state.project) {
-    const destinations = [];
+  function collectRepositionSlots(project = state.project) {
+    const selectedTagTitles = state.assistDraft.dependencyKeys;
+    if (!selectedTagTitles.length) {
+      return [];
+    }
+
+    const normalizedSelectedTags = new Set(selectedTagTitles.map((item) => normalizeComparableText(item)));
+    const slots = [];
+    const seenSlotIds = new Set();
 
     (project.courses || []).forEach((course) => {
       if (!course || course.key === DRAFT_COURSE_KEY) {
@@ -316,19 +332,75 @@ export function createLessonEditorApp({ root, storage, editor }) {
 
       (course.modules || []).forEach((moduleValue) => {
         (moduleValue.lessons || []).forEach((lesson) => {
-          destinations.push({
-            courseKey: course.key,
-            courseTitle: course.title || course.key,
-            moduleKey: moduleValue.key,
-            moduleTitle: moduleValue.title || moduleValue.key,
-            lessonKey: lesson.key,
-            lessonTitle: lesson.title || lesson.key
+          const microsequences = lesson.microsequences || [];
+          microsequences.forEach((microsequence, startIndex) => {
+            const normalizedTitle = normalizeComparableText(microsequence.title || microsequence.key);
+            if (!normalizedSelectedTags.has(normalizedTitle)) {
+              return;
+            }
+
+            const sequence = microsequences.slice(startIndex);
+            const sequenceTitles = sequence.map((item) => item.title || item.key);
+            const beforeSlotId = [
+              "slot",
+              course.key,
+              moduleValue.key,
+              lesson.key,
+              "before",
+              microsequence.key
+            ].join("::");
+            if (!seenSlotIds.has(beforeSlotId)) {
+              seenSlotIds.add(beforeSlotId);
+              slots.push({
+                slotId: beforeSlotId,
+                courseKey: course.key,
+                courseTitle: course.title || course.key,
+                moduleKey: moduleValue.key,
+                moduleTitle: moduleValue.title || moduleValue.key,
+                lessonKey: lesson.key,
+                lessonTitle: lesson.title || lesson.key,
+                insertBeforeMicrosequenceKey: microsequence.key,
+                insertBeforeTitle: microsequence.title || microsequence.key,
+                targetPosition: startIndex,
+                sequenceTitles
+              });
+            }
+
+            sequence.forEach((sequenceItem, relativeIndex) => {
+              const absoluteIndex = startIndex + relativeIndex;
+              const slotId = [
+                "slot",
+                course.key,
+                moduleValue.key,
+                lesson.key,
+                "after",
+                sequenceItem.key
+              ].join("::");
+              if (seenSlotIds.has(slotId)) {
+                return;
+              }
+
+              seenSlotIds.add(slotId);
+              slots.push({
+                slotId,
+                courseKey: course.key,
+                courseTitle: course.title || course.key,
+                moduleKey: moduleValue.key,
+                moduleTitle: moduleValue.title || moduleValue.key,
+                lessonKey: lesson.key,
+                lessonTitle: lesson.title || lesson.key,
+                insertAfterMicrosequenceKey: sequenceItem.key,
+                insertAfterTitle: sequenceItem.title || sequenceItem.key,
+                targetPosition: absoluteIndex + 1,
+                sequenceTitles
+              });
+            });
           });
         });
       });
     });
 
-    return destinations;
+    return slots;
   }
 
   function getAssistModeOptions() {
@@ -899,31 +971,37 @@ export function createLessonEditorApp({ root, storage, editor }) {
     syncAssistDraft();
   }
 
-  function applyMicrosequenceReposition({ courseKey, moduleKey, lessonKey }) {
+  function applyMicrosequenceReposition(slot, renames = []) {
+    if (!slot) {
+      fail("A API escolheu um slot de reposicionamento inexistente. Ajuste o pedido e tente de novo.");
+    }
+
     const nextProject = editor.moveMicrosequence({
       courseKey: state.selection.courseKey,
       moduleKey: state.selection.moduleKey,
       lessonKey: state.selection.lessonKey,
       microsequenceKey: state.selection.microsequenceKey,
-      targetCourseKey: courseKey,
-      targetModuleKey: moduleKey,
-      targetLessonKey: lessonKey
+      targetCourseKey: slot.courseKey,
+      targetModuleKey: slot.moduleKey,
+      targetLessonKey: slot.lessonKey,
+      targetPosition: slot.targetPosition,
+      renames
     });
 
     setProject(nextProject);
     const movedMicrosequence = findMicrosequence(
       nextProject,
-      courseKey,
-      moduleKey,
-      lessonKey,
+      slot.courseKey,
+      slot.moduleKey,
+      slot.lessonKey,
       state.selection.microsequenceKey
     );
     const firstCard = movedMicrosequence?.cards?.[0] || null;
 
     applySelection({
-      courseKey,
-      moduleKey,
-      lessonKey,
+      courseKey: slot.courseKey,
+      moduleKey: slot.moduleKey,
+      lessonKey: slot.lessonKey,
       microsequenceKey: movedMicrosequence?.key || state.selection.microsequenceKey,
       cardKey: firstCard ? firstCard.key : null,
       cardIndex: 0
@@ -939,7 +1017,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     const dependencyTitles = assistCatalog
       .filter((item) => state.assistDraft.dependencyKeys.includes(item.key))
       .map((item) => item.title || item.key);
-    const destinationLessons = collectRepositionDestinations();
+    const destinationSlots = collectRepositionSlots();
     const requestedMode = state.assistDraft.selectedMode;
     const mode =
       requestedMode === ASSIST_USER_MODES.REPOSITION
@@ -952,6 +1030,10 @@ export function createLessonEditorApp({ root, storage, editor }) {
     render({ preserveState: true });
 
     try {
+      if (mode === "reposition-microsequence" && !destinationSlots.length) {
+        fail("Nenhum slot de reposicionamento foi encontrado a partir das tags escolhidas. Selecione tags válidas e tente de novo.");
+      }
+
       const result = await runGeminiAssist({
         apiKey: state.assistConfig.apiKey,
         model: state.assistConfig.model,
@@ -965,7 +1047,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
             : context.microsequence,
         card: context.card,
         dependencyTitles,
-        destinationLessons,
+        destinationSlots,
         promptText: state.assistDraft.promptText
       });
 
@@ -986,12 +1068,17 @@ export function createLessonEditorApp({ root, storage, editor }) {
           timestamp: new Date().toISOString()
         };
       } else {
-        applyMicrosequenceReposition(result);
-        const destinationLesson = findLesson(state.project, result.courseKey, result.moduleKey, result.lessonKey);
+        const chosenSlot = destinationSlots.find((item) => item.slotId === result.slotId);
+        if (!chosenSlot) {
+          fail("O Gemini devolveu um slot inválido para reposicionamento. Informe o problema no pedido e tente novamente.");
+        }
+
+        applyMicrosequenceReposition(chosenSlot, result.renames);
+        const destinationLesson = findLesson(state.project, chosenSlot.courseKey, chosenSlot.moduleKey, chosenSlot.lessonKey);
         state.assistDraft.lastRequest = {
           title: "Microssequência reposicionada",
           description:
-            `${context.microsequence?.title || "Microssequência"} movida para ${destinationLesson?.title || result.lessonKey} com ${getAssistModelLabel(state.assistConfig.model)}.`,
+            `${context.microsequence?.title || "Microssequência"} movida para ${destinationLesson?.title || chosenSlot.lessonKey} com ${getAssistModelLabel(state.assistConfig.model)}.`,
           timestamp: new Date().toISOString()
         };
       }

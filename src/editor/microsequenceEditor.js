@@ -141,6 +141,72 @@ function normalizeOptionalTags(value) {
     .filter(Boolean);
 }
 
+function normalizeTitleForComparison(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function buildUniqueMicrosequenceTitle(lesson, desiredTitle, excludingKey) {
+  const baseTitle = String(desiredTitle || "").replace(/\s+/g, " ").trim();
+  if (!baseTitle) {
+    return "";
+  }
+
+  const titlesInUse = new Set(
+    (lesson.microsequences || [])
+      .filter((item) => item && item.key !== excludingKey)
+      .map((item) => normalizeTitleForComparison(item.title || item.key))
+      .filter(Boolean)
+  );
+
+  if (!titlesInUse.has(normalizeTitleForComparison(baseTitle))) {
+    return baseTitle;
+  }
+
+  let counter = 2;
+  let candidate = `${baseTitle} (${counter})`;
+  while (titlesInUse.has(normalizeTitleForComparison(candidate))) {
+    counter += 1;
+    candidate = `${baseTitle} (${counter})`;
+  }
+
+  return candidate;
+}
+
+function assignUniqueMicrosequenceTitle(lesson, microsequence, nextTitle) {
+  const uniqueTitle = buildUniqueMicrosequenceTitle(lesson, nextTitle, microsequence.key);
+  if (uniqueTitle) {
+    microsequence.title = uniqueTitle;
+  } else {
+    delete microsequence.title;
+  }
+}
+
+function normalizeOptionalRenames(value) {
+  if (value === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(value)) {
+    fail('Campo opcional inválido: "renames".');
+  }
+
+  return value.map((item) => {
+    if (!item || typeof item !== "object") {
+      fail('Campo opcional inválido: "renames".');
+    }
+
+    return {
+      microsequenceKey: normalizeText(item.microsequenceKey, "microsequenceKey"),
+      title: normalizeText(item.title, "title")
+    };
+  });
+}
+
 function buildCardPayload({ title, data }) {
   const normalizedTitle = title && typeof title === "string" ? title.trim() : "";
   if (data !== undefined) {
@@ -638,7 +704,6 @@ export function createMicrosequence(document, input) {
   const starterCardKey = uniqueKey("introducao", new Set(), "card");
   const microsequence = {
     key,
-    ...(title ? { title } : {}),
     objective,
     cards: [
       {
@@ -651,6 +716,9 @@ export function createMicrosequence(document, input) {
       }
     ]
   };
+  if (title) {
+    assignUniqueMicrosequenceTitle(lesson, microsequence, title);
+  }
 
   lesson.microsequences.push(microsequence);
   return ensureValidDocument(nextDocument);
@@ -668,7 +736,7 @@ export function updateMicrosequence(document, input) {
 
     const nextTitle = input.title.trim();
     if (nextTitle) {
-      microsequence.title = nextTitle;
+      assignUniqueMicrosequenceTitle(lesson, microsequence, nextTitle);
     } else {
       delete microsequence.title;
     }
@@ -701,13 +769,6 @@ export function deleteMicrosequence(document, input) {
 
 export function moveMicrosequence(document, input) {
   const nextDocument = clone(document);
-  if (
-    input.courseKey === input.targetCourseKey &&
-    input.moduleKey === input.targetModuleKey &&
-    input.lessonKey === input.targetLessonKey
-  ) {
-    return nextDocument;
-  }
   const { lesson: sourceLesson } = findLesson(nextDocument, input.moduleKey, input.lessonKey, input.courseKey);
   const { lesson: targetLesson } = findLesson(
     nextDocument,
@@ -723,7 +784,7 @@ export function moveMicrosequence(document, input) {
 
   const [microsequence] = sourceLesson.microsequences.splice(microsequenceIndex, 1);
 
-  if (!sourceLesson.microsequences.length) {
+  if (sourceLesson !== targetLesson && !sourceLesson.microsequences.length) {
     sourceLesson.microsequences.push(createStarterMicrosequence());
   }
 
@@ -733,8 +794,26 @@ export function moveMicrosequence(document, input) {
   }
 
   const targetPosition = Number.isInteger(input.targetPosition) ? input.targetPosition : targetLesson.microsequences.length;
-  const safeIndex = Math.max(0, Math.min(targetPosition, targetLesson.microsequences.length));
+  const adjustedTargetPosition =
+    sourceLesson === targetLesson && targetPosition > microsequenceIndex
+      ? targetPosition - 1
+      : targetPosition;
+  const safeIndex = Math.max(0, Math.min(adjustedTargetPosition, targetLesson.microsequences.length));
   targetLesson.microsequences.splice(safeIndex, 0, microsequence);
+
+  if (microsequence.title) {
+    assignUniqueMicrosequenceTitle(targetLesson, microsequence, microsequence.title);
+  }
+
+  const renames = normalizeOptionalRenames(input.renames);
+  renames.forEach((rename) => {
+    const targetMicrosequence = targetLesson.microsequences.find((item) => item.key === rename.microsequenceKey);
+    if (!targetMicrosequence) {
+      return;
+    }
+
+    assignUniqueMicrosequenceTitle(targetLesson, targetMicrosequence, rename.title);
+  });
 
   return ensureValidDocument(nextDocument);
 }
@@ -750,7 +829,15 @@ export function replaceMicrosequenceCards(document, input) {
   }
 
   if (input.title !== undefined) {
-    assignOptionalTextField(microsequence, "title", input.title);
+    if (typeof input.title !== "string") {
+      fail('Campo opcional inválido: "title".');
+    }
+    const nextTitle = input.title.trim();
+    if (nextTitle) {
+      assignUniqueMicrosequenceTitle(lesson, microsequence, nextTitle);
+    } else {
+      delete microsequence.title;
+    }
   }
 
   if (input.objective !== undefined) {

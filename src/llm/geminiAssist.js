@@ -66,25 +66,40 @@ function buildEditPrompt({ microsequence, card, dependencyTitles, promptText }) 
   ].join("\n");
 }
 
-function buildRepositionPrompt({ microsequence, dependencyTitles, promptText, destinationLessons }) {
+function buildRepositionPrompt({ microsequence, dependencyTitles, promptText, destinationSlots }) {
   const microsequenceTitle = normalizeText(microsequence?.title) || "Microssequência atual";
   const objective = normalizeText(microsequence?.objective) || "sem objetivo definido";
   const tags = dependencyTitles.length ? dependencyTitles.join(", ") : "sem tags";
-  const destinations = (destinationLessons || [])
-    .map((item) => `- ${item.courseTitle} > ${item.moduleTitle} > ${item.lessonTitle} | keys: ${item.courseKey} / ${item.moduleKey} / ${item.lessonKey}`)
+  const destinations = (destinationSlots || [])
+    .map((item) => {
+      const placement =
+        item.insertBeforeMicrosequenceKey
+          ? `antes de ${item.insertBeforeTitle}`
+          : `após ${item.insertAfterTitle}`;
+      return [
+        `- slotId: ${item.slotId}`,
+        `  curso: ${item.courseTitle}`,
+        `  módulo: ${item.moduleTitle}`,
+        `  lição: ${item.lessonTitle}`,
+        `  posição: ${placement}`,
+        `  sequência da tag até o fim: ${item.sequenceTitles.join(" -> ")}`
+      ].join("\n");
+    })
     .join("\n");
 
   return [
     `Microssequência: ${microsequenceTitle}`,
     `Objetivo atual: ${objective}`,
     `Tags explícitas: ${tags}`,
-    "Tarefa: escolher a lição mais apropriada para reposicionar esta microssequência.",
+    "Tarefa: escolher o slot mais apropriado para reposicionar esta microssequência.",
     "Restrições:",
-    "- escolha apenas uma das lições listadas;",
-    "- use exatamente as keys fornecidas;",
+    "- escolha apenas um slot listado;",
+    "- devolva exatamente o slotId escolhido;",
+    "- se precisar acomodar a nomenclatura, renomeie apenas microssequências da lição de destino;",
+    "- cada renomeação deve apontar para microsequenceKey existente na lição de destino;",
     "- baseie a decisão principalmente nas tags explícitas e no pedido do usuário;",
     `Pedido do usuário: ${promptText}`,
-    "Lições disponíveis:",
+    "Slots disponíveis:",
     destinations || "- nenhuma lição disponível"
   ].join("\n");
 }
@@ -131,11 +146,21 @@ function getRepositionSchema() {
   return {
     type: "object",
     properties: {
-      courseKey: { type: "string" },
-      moduleKey: { type: "string" },
-      lessonKey: { type: "string" }
+      slotId: { type: "string" },
+      renames: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            microsequenceKey: { type: "string" },
+            title: { type: "string" }
+          },
+          required: ["microsequenceKey", "title"],
+          additionalProperties: false
+        }
+      }
     },
-    required: ["courseKey", "moduleKey", "lessonKey"],
+    required: ["slotId", "renames"],
     additionalProperties: false
   };
 }
@@ -175,15 +200,23 @@ function normalizeEditResult(value) {
 }
 
 function normalizeRepositionResult(value) {
-  const courseKey = normalizeText(value?.courseKey);
-  const moduleKey = normalizeText(value?.moduleKey);
-  const lessonKey = normalizeText(value?.lessonKey);
+  const slotId = normalizeText(value?.slotId);
+  const renames = Array.isArray(value?.renames)
+    ? value.renames.map((item) => {
+        const microsequenceKey = normalizeText(item?.microsequenceKey);
+        const title = normalizeText(item?.title);
+        if (!microsequenceKey || !title) {
+          fail("A API devolveu renomeações inválidas para o reposicionamento.");
+        }
+        return { microsequenceKey, title };
+      })
+    : null;
 
-  if (!courseKey || !moduleKey || !lessonKey) {
-    fail("Resposta inválida da API para reposicionamento da microssequência.");
+  if (!slotId || !renames) {
+    fail("A API devolveu um slot inválido para o reposicionamento da microssequência.");
   }
 
-  return { courseKey, moduleKey, lessonKey };
+  return { slotId, renames };
 }
 
 async function parseGeminiResponse(response) {
@@ -218,7 +251,7 @@ export async function runGeminiAssist({
   microsequence,
   card,
   dependencyTitles = [],
-  destinationLessons = [],
+  destinationSlots = [],
   promptText
 }) {
   const trimmedKey = normalizeText(apiKey);
@@ -253,10 +286,10 @@ export async function runGeminiAssist({
   } else if (mode === "reposition-microsequence") {
     body = makeRequestBody({
       systemInstruction,
-      prompt: buildRepositionPrompt({ microsequence, dependencyTitles, promptText: trimmedPrompt, destinationLessons }),
+      prompt: buildRepositionPrompt({ microsequence, dependencyTitles, promptText: trimmedPrompt, destinationSlots }),
       schema: getRepositionSchema(),
       temperature: 0.2,
-      maxOutputTokens: 512
+      maxOutputTokens: 1024
     });
   } else if (mode === "edit-card") {
     body = makeRequestBody({
