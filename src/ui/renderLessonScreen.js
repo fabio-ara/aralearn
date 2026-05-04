@@ -798,7 +798,12 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
   );
 }
 
-function renderDraftGeneratorScreen({ editorSupport }) {
+function renderDraftGeneratorScreen({ lesson, microsequence, cards, selection, editorSupport }) {
+  const activeIndex = Number.isInteger(selection.cardIndex) ? selection.cardIndex : 0;
+  const safeIndex = Math.max(0, Math.min(activeIndex, Math.max(0, cards.length - 1)));
+  const activeCard = cards[safeIndex] || null;
+  const bodyText =
+    activeCard && activeCard.data && typeof activeCard.data.text === "string" ? activeCard.data.text : "";
   const selectedDependencyTags = (editorSupport.dependencies || [])
     .filter((item) => editorSupport.selectedDependencyKeys.includes(item.key))
     .map((item) => {
@@ -873,10 +878,52 @@ function renderDraftGeneratorScreen({ editorSupport }) {
     renderTopbar({
       title: "Gerar microssequência",
       canGoBack: true,
-      backTitle: "Voltar para a fila"
+      backTitle: "Voltar para a fila",
+      editAction: "edit-microsequence",
+      editTitle: "Ações da microssequência",
+      editIcon: "&#8943;"
     }) +
-    '<main class="screen-content microsequence-assist-screen">' +
+    '<main class="screen-content microsequence-generator-screen">' +
     '<section class="microsequence-assist-panel">' +
+    '<div class="field compact-field">' +
+    "<label>Título da microssequência</label>" +
+    '<input data-field="assist-microsequence-title" type="text" value="' +
+    escapeHtml(microsequence?.title || "") +
+    '">' +
+    "</div>" +
+    '<div class="assist-toolbar">' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="open-version-history" title="Versões do card" aria-label="Versões do card">&#8635;</button>' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="switch-microsequence-edit" title="Abrir editor de cards" aria-label="Abrir editor de cards">&#9998;</button>' +
+    "</div>" +
+    "</section>" +
+    '<section class="editor-step-nav">' +
+    '<div class="editor-step-nav-head">' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="editor-prev-card" ' +
+    (safeIndex <= 0 ? 'disabled aria-disabled="true"' : "") +
+    ' title="Card anterior" aria-label="Card anterior">&larr;</button>' +
+    '<p class="chip-muted">Card ' +
+    String(safeIndex + 1) +
+    " de " +
+    String(cards.length) +
+    "</p>" +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="editor-next-card" ' +
+    (safeIndex >= cards.length - 1 ? 'disabled aria-disabled="true"' : "") +
+    ' title="Próximo card" aria-label="Próximo card">&rarr;</button>' +
+    "</div>" +
+    '<div class="editor-step-strip">' +
+    renderEditorCardStrip(cards, safeIndex) +
+    "</div></section>" +
+    '<section class="card-portrait editor-card-portrait study-stage generator-preview-stage">' +
+    '<article class="card-portrait-body card-portrait-sheet runtime-card-sheet">' +
+    '<div class="runtime-card-title">' +
+    escapeHtml(activeCard ? activeCard.title || activeCard.key : "Sem card") +
+    "</div>" +
+    '<div class="card-sheet-content">' +
+    renderRuntimeBlocks(activeCard, bodyText) +
+    "</div>" +
+    "</article>" +
+    "</section>" +
+    '<section class="microsequence-assist-panel microsequence-generator-panel">' +
     '<div class="field compact-field">' +
     "<label>Tags</label>" +
     dependencyPicker +
@@ -937,7 +984,7 @@ export function renderLessonScreen({ project, view, selection, course, moduleVal
   }
 
   if (view === "draft-generator") {
-    return renderDraftGeneratorScreen({ editorSupport });
+    return renderDraftGeneratorScreen({ lesson, microsequence, cards, selection, editorSupport });
   }
 
   if (view === "card-editor") {

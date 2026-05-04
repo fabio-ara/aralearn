@@ -172,3 +172,4 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 - correção de estouro horizontal no painel da microssequência em telas estreitas, com quebra adequada de chips e contenção dos campos do editor
 - simplificação da tela `Revisar microssequência`, removendo chips de contexto do topo, o campo `Objetivo` e o bloco `Card ativo`
 - simplificação da tela `Gerar microssequência`, removendo chips e instruções do topo e deixando as tags sem pré-seleção, com espaço fixo para até 5
+- refatoração da tela `Gerar microssequência` para usar o mesmo layout da revisão, com título, navegação `Card 1 de X`, prévia superior do card e painel de geração na parte inferior

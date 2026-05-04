@@ -817,7 +817,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       cardKey: firstCard ? firstCard.key : null,
       cardIndex: 0
     });
-    state.view = "microsequence-assist";
+    state.view = "draft-generator";
     syncAssistDraft();
   }
 
