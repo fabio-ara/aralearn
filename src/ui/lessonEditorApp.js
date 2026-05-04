@@ -358,6 +358,8 @@ export function createLessonEditorApp({ root, storage, editor }) {
       cardIndex: 0
     });
     state.view = "draft-generator";
+    state.assistDraft.dependencyKeys = [];
+    state.assistDraft.pendingDependencyKey = "";
     state.cardEditorOpen = false;
     state.cardCommentOpen = false;
     state.versionHistoryOpen = false;
@@ -440,7 +442,11 @@ export function createLessonEditorApp({ root, storage, editor }) {
     const allowedKeys = new Set(dependencies.map((item) => item.key));
     const filteredKeys = state.assistDraft.dependencyKeys.filter((key) => allowedKeys.has(key));
     state.assistDraft.dependencyKeys =
-      filteredKeys.length > 0 ? filteredKeys.slice(0, MAX_ASSIST_DEPENDENCIES) : getDefaultDependencyKeys(dependencies);
+      state.view === "draft-generator"
+        ? filteredKeys.slice(0, MAX_ASSIST_DEPENDENCIES)
+        : filteredKeys.length > 0
+          ? filteredKeys.slice(0, MAX_ASSIST_DEPENDENCIES)
+          : getDefaultDependencyKeys(dependencies);
 
     const availableKeys = dependencies
       .filter((item) => !state.assistDraft.dependencyKeys.includes(item.key))

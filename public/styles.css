@@ -1794,6 +1794,14 @@ button {
   box-shadow: 0 0 0 1px rgba(228, 186, 104, 0.32) inset;
 }
 
+.dependency-tag-slot {
+  border-style: dashed;
+  border-color: rgba(96, 77, 55, 0.72);
+  background: rgba(15, 12, 9, 0.36);
+  cursor: default;
+  min-height: 26px;
+}
+
 .dependency-tag-label {
   min-width: 0;
   overflow: hidden;

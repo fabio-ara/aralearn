@@ -813,6 +813,10 @@ function renderDraftGeneratorScreen({ editorSupport }) {
       );
     })
     .join("");
+  const emptyTagSlots = Math.max(0, 5 - (editorSupport.selectedDependencyKeys || []).length);
+  const tagSlotsPlaceholder = Array.from({ length: emptyTagSlots }, () => {
+    return '<div class="dependency-tag dependency-tag-slot" aria-hidden="true"></div>';
+  }).join("");
   const availableDependencyOptions = (editorSupport.dependencies || [])
     .filter((item) => !editorSupport.selectedDependencyKeys.includes(item.key))
     .map((item) => {
@@ -872,23 +876,13 @@ function renderDraftGeneratorScreen({ editorSupport }) {
       backTitle: "Voltar para a fila"
     }) +
     '<main class="screen-content microsequence-assist-screen">' +
-    '<section class="context-band context-band-tight">' +
-    '<span class="context-chip">Curso especial de rascunhos</span>' +
-    (editorSupport.selectedModelLabel ? '<span class="context-chip">' + escapeHtml(editorSupport.selectedModelLabel) + "</span>" : "") +
-    '<span class="context-chip">' +
-    (editorSupport.hasApiKey ? "chave local pronta" : "sem chave") +
-    "</span>" +
-    '<span class="context-chip">' + String(editorSupport.visibleDraftCount || 0) + ' rascunhos</span>' +
-    "</section>" +
-    '<section class="microsequence-assist-panel">' +
-    '<p class="muted assist-last-request">Escreva um pedido amplo. Use tags literais já existentes no acervo para reduzir erro de modelo barato.</p>' +
-    "</section>" +
     '<section class="microsequence-assist-panel">' +
     '<div class="field compact-field">' +
     "<label>Tags</label>" +
     dependencyPicker +
     '<div class="dependency-strip">' +
     selectedDependencyTags +
+    tagSlotsPlaceholder +
     "</div></div>" +
     '<div class="field compact-field">' +
     "<label>Pedido</label>" +
