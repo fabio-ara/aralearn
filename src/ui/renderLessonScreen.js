@@ -335,6 +335,77 @@ function renderMetaLine({ completed, total, parts = [] }) {
   );
 }
 
+function renderDraftCourseScreen({ course, draftMicrosequences, selectedModelLabel, hasApiKey }) {
+  const draftCards = (draftMicrosequences || [])
+    .map((microsequence) => {
+      const cardCount = countCardsInMicrosequence(microsequence);
+      const objective = normalizeInlineText(microsequence.objective || "");
+      return (
+        '<article class="clean-card microsequence-card progress-card draft-microsequence-card">' +
+        '<div class="microsequence-copy">' +
+        '<button class="row-main microsequence-main-button" type="button" data-action="open-draft-review" data-microsequence-key="' +
+        escapeHtml(microsequence.key) +
+        '">' +
+        '<span class="microsequence-title">' +
+        escapeHtml(microsequence.title || microsequence.key) +
+        "</span>" +
+        "</button>" +
+        (objective ? '<p class="card-subtitle lesson-description">' + escapeHtml(truncateText(objective, 140)) + "</p>" : "") +
+        renderMetaLine({
+          completed: 0,
+          total: cardCount,
+          parts: [String(cardCount) + " cards"]
+        }) +
+        "</div>" +
+        '<div class="microsequence-actions">' +
+        '<button class="icon-ghost tiny-icon" type="button" data-action="open-draft-review" data-microsequence-key="' +
+        escapeHtml(microsequence.key) +
+        '" title="Revisar microssequência" aria-label="Revisar microssequência">&#9998;</button>' +
+        "</div>" +
+        "</article>"
+      );
+    })
+    .join("");
+
+  return (
+    '<section class="screen">' +
+    renderTopbar({
+      title: course.title || "Curso",
+      canGoBack: true,
+      backTitle: "Menu principal",
+      editAction: "edit-course",
+      editTitle: "Ações",
+      editIcon: "&#9776;"
+    }) +
+    '<main class="screen-content course-screen">' +
+    '<section class="clean-card draft-course-hero">' +
+    '<p class="tiny course-badge">Curso especial</p>' +
+    '<h3 class="card-title">Gerar novas microssequências</h3>' +
+    '<p class="card-subtitle">Use um pedido amplo, selecione tags explícitas e gere rascunhos antes de consolidar em cursos definitivos.</p>' +
+    '<div class="context-band context-band-tight">' +
+    (selectedModelLabel ? '<span class="context-chip">' + escapeHtml(selectedModelLabel) + "</span>" : "") +
+    '<span class="context-chip">' +
+    (hasApiKey ? "chave local pronta" : "sem chave") +
+    "</span>" +
+    "</div>" +
+    '<button class="primary-btn draft-generate-btn" type="button" data-action="open-draft-generator">Gerar microssequência</button>' +
+    "</section>" +
+    '<section class="clean-card module-card progress-card">' +
+    '<header class="module-head">' +
+    '<h3 class="card-title">Fila de rascunhos</h3>' +
+    '<button class="icon-ghost" type="button" data-action="edit-lesson" data-module-key="' +
+    escapeHtml(course.modules?.[0]?.key || "") +
+    '" data-lesson-key="' +
+    escapeHtml(course.modules?.[0]?.lessons?.[0]?.key || "") +
+    '" title="Ações da fila" aria-label="Ações da fila">&ctdot;</button>' +
+    "</header>" +
+    (draftCards || '<p class="card-subtitle">Nenhuma microssequência gerada ainda.</p>') +
+    "</section>" +
+    "</main>" +
+    "</section>"
+  );
+}
+
 function renderCourseScreen({ course, progress }) {
   const modules = (course.modules || [])
     .map((moduleValue) => {
@@ -628,19 +699,6 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
       '<button class="icon-ghost tiny-icon" type="button" data-action="add-dependency" title="Adicionar tag" aria-label="Adicionar tag">+</button>' +
       "</div>"
     : "";
-  const modeOptions = (editorSupport.modeOptions || [])
-    .map((item) => {
-      return (
-        '<option value="' +
-        escapeHtml(item.value) +
-        '"' +
-        (item.value === editorSupport.selectedMode ? " selected" : "") +
-        ">" +
-        escapeHtml(item.label) +
-        "</option>"
-      );
-    })
-    .join("");
   const modelOptions = (editorSupport.modelOptions || [])
     .map((item) => {
       return (
@@ -741,18 +799,13 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
     "</div></section>" +
     '<section class="microsequence-assist-panel">' +
     '<div class="field compact-field">' +
-    "<label>Ação</label>" +
-    '<select data-field="assist-mode">' +
-    modeOptions +
-    "</select></div>" +
-    '<div class="field compact-field">' +
     "<label>Tags</label>" +
     dependencyPicker +
     '<div class="dependency-strip">' +
     selectedDependencyTags +
     "</div></div>" +
     '<div class="field compact-field">' +
-    "<label>Pedido</label>" +
+    "<label>Pedido de revisão</label>" +
     '<textarea data-field="assist-prompt" class="assist-prompt">' +
     escapeHtml(editorSupport.promptText || "") +
     "</textarea></div>" +
@@ -772,12 +825,139 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
   );
 }
 
+function renderDraftGeneratorScreen({ editorSupport }) {
+  const selectedDependencyTags = (editorSupport.dependencies || [])
+    .filter((item) => editorSupport.selectedDependencyKeys.includes(item.key))
+    .map((item) => {
+      return (
+        '<button class="dependency-tag active" type="button" data-action="remove-dependency" data-dependency-key="' +
+        escapeHtml(item.key) +
+        '">' +
+        '<span class="dependency-tag-label">' +
+        escapeHtml(item.title || item.key) +
+        "</span>" +
+        '<span class="dependency-tag-remove">&times;</span></button>'
+      );
+    })
+    .join("");
+  const availableDependencyOptions = (editorSupport.dependencies || [])
+    .filter((item) => !editorSupport.selectedDependencyKeys.includes(item.key))
+    .map((item) => {
+      return (
+        '<option value="' +
+        escapeHtml(item.key) +
+        '"' +
+        (item.key === editorSupport.pendingDependencyKey ? " selected" : "") +
+        ">" +
+        escapeHtml(item.title || item.key) +
+        "</option>"
+      );
+    })
+    .join("");
+  const dependencyPicker = availableDependencyOptions
+    ? '<div class="assist-tag-picker">' +
+      '<select data-field="assist-dependency-picker">' +
+      availableDependencyOptions +
+      "</select>" +
+      '<button class="icon-ghost tiny-icon" type="button" data-action="add-dependency" title="Adicionar tag" aria-label="Adicionar tag">+</button>' +
+      "</div>"
+    : "";
+  const modelOptions = (editorSupport.modelOptions || [])
+    .map((item) => {
+      return (
+        '<option value="' +
+        escapeHtml(item.value) +
+        '"' +
+        (item.value === editorSupport.selectedModel ? " selected" : "") +
+        ">" +
+        escapeHtml(item.label) +
+        "</option>"
+      );
+    })
+    .join("");
+  const assistWarning = editorSupport.assistError
+    ? '<section class="microsequence-assist-panel assist-status-panel is-warning">' +
+      '<p class="muted assist-last-request">' +
+      escapeHtml(editorSupport.assistError) +
+      "</p></section>"
+    : "";
+  const assistStatus = editorSupport.lastRequest
+    ? '<section class="microsequence-assist-panel">' +
+      '<p class="tiny muted">' +
+      escapeHtml(editorSupport.lastRequest.title || "Último pedido") +
+      "</p>" +
+      '<p class="muted assist-last-request">' +
+      escapeHtml(editorSupport.lastRequest.description || "") +
+      "</p></section>"
+    : "";
+
+  return (
+    '<section class="screen">' +
+    renderTopbar({
+      title: "Gerar microssequência",
+      canGoBack: true,
+      backTitle: "Voltar para a fila"
+    }) +
+    '<main class="screen-content microsequence-assist-screen">' +
+    '<section class="context-band context-band-tight">' +
+    '<span class="context-chip">Curso especial de rascunhos</span>' +
+    (editorSupport.selectedModelLabel ? '<span class="context-chip">' + escapeHtml(editorSupport.selectedModelLabel) + "</span>" : "") +
+    '<span class="context-chip">' +
+    (editorSupport.hasApiKey ? "chave local pronta" : "sem chave") +
+    "</span>" +
+    '<span class="context-chip">' + String(editorSupport.visibleDraftCount || 0) + ' rascunhos</span>' +
+    "</section>" +
+    '<section class="microsequence-assist-panel">' +
+    '<p class="muted assist-last-request">Escreva um pedido amplo. Use tags literais já existentes no acervo para reduzir erro de modelo barato.</p>' +
+    "</section>" +
+    '<section class="microsequence-assist-panel">' +
+    '<div class="field compact-field">' +
+    "<label>Tags</label>" +
+    dependencyPicker +
+    '<div class="dependency-strip">' +
+    selectedDependencyTags +
+    "</div></div>" +
+    '<div class="field compact-field">' +
+    "<label>Pedido</label>" +
+    '<textarea data-field="assist-prompt" class="assist-prompt">' +
+    escapeHtml(editorSupport.promptText || "") +
+    "</textarea></div>" +
+    '<div class="assist-actions assist-actions-wide">' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="clear-prompt" title="Limpar prompt" aria-label="Limpar prompt">&#8635;</button>' +
+    '<select data-field="assist-model">' +
+    modelOptions +
+    "</select>" +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="open-assist-config" title="Configurar API" aria-label="Configurar API">&#128273;</button>' +
+    '<button class="open-mini" type="button" data-action="apply-assist" title="Gerar microssequência" aria-label="Gerar microssequência"' +
+    (editorSupport.isSubmitting ? " disabled aria-disabled=\"true\"" : "") +
+    ">&#9654;</button>" +
+    "</div></section>" +
+    assistWarning +
+    assistStatus +
+    "</main></section>"
+  );
+}
+
 export function renderLessonScreen({ project, view, selection, course, moduleValue, lesson, microsequence, cards, microsequenceMode, editorSupport }) {
   if (view === "courses") {
-    return renderHomeScreen({ project, progress: editorSupport.progress, selection });
+    return renderHomeScreen({
+      project,
+      progress: editorSupport.progress,
+      selection,
+      featuredCourseKey: editorSupport.draftCourseKey
+    });
   }
 
   if (view === "course") {
+    if (course?.key === editorSupport.draftCourseKey) {
+      return renderDraftCourseScreen({
+        course,
+        draftMicrosequences: editorSupport.draftMicrosequences,
+        selectedModelLabel: editorSupport.selectedModelLabel,
+        hasApiKey: editorSupport.hasApiKey
+      });
+    }
+
     return renderCourseScreen({ course, progress: editorSupport.progress });
   }
 
@@ -787,6 +967,10 @@ export function renderLessonScreen({ project, view, selection, course, moduleVal
 
   if (view === "microsequence-assist") {
     return renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selection, editorSupport });
+  }
+
+  if (view === "draft-generator") {
+    return renderDraftGeneratorScreen({ editorSupport });
   }
 
   if (view === "card-editor") {

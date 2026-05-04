@@ -5,6 +5,13 @@ function clone(value) {
   return structuredClone(value);
 }
 
+export const DRAFT_COURSE_KEY = "course-novas-microssequencias";
+export const DRAFT_MODULE_KEY = "module-fila-geracao";
+export const DRAFT_LESSON_KEY = "lesson-rascunhos-api";
+export const DRAFT_PLACEHOLDER_MICROSEQUENCE_KEY = "microsequence-fila-vazia";
+export const DRAFT_PLACEHOLDER_TITLE = "Fila vazia";
+export const DRAFT_PLACEHOLDER_OBJECTIVE = "Use a geração por API para criar a primeira microssequência.";
+
 function fail(message) {
   throw new Error(message);
 }
@@ -192,6 +199,97 @@ function createStarterCourse({
     ...(description ? { description } : {}),
     modules: [createStarterModule()]
   };
+}
+
+function createDraftPlaceholderMicrosequence() {
+  return {
+    key: DRAFT_PLACEHOLDER_MICROSEQUENCE_KEY,
+    title: DRAFT_PLACEHOLDER_TITLE,
+    objective: DRAFT_PLACEHOLDER_OBJECTIVE,
+    cards: [
+      {
+        key: "card-fila-vazia",
+        intent: "text",
+        title: "Geração pendente",
+        data: createDefaultCardData({
+          title: "Geração pendente",
+          text: "Abra a tela de geração e peça uma nova microssequência para começar a fila."
+        })
+      }
+    ]
+  };
+}
+
+function createDraftCourse() {
+  return {
+    key: DRAFT_COURSE_KEY,
+    title: "Novas microssequências",
+    description: "Fila de rascunhos gerados por API antes da consolidação em cursos definitivos.",
+    modules: [
+      {
+        key: DRAFT_MODULE_KEY,
+        title: "Fila de geração",
+        description: "Rascunhos aguardando revisão.",
+        lessons: [
+          {
+            key: DRAFT_LESSON_KEY,
+            title: "Rascunhos por API",
+            description: "Microssequências geradas para revisão card a card.",
+            microsequences: [createDraftPlaceholderMicrosequence()]
+          }
+        ]
+      }
+    ]
+  };
+}
+
+export function isDraftPlaceholderMicrosequence(microsequence) {
+  if (!microsequence) {
+    return false;
+  }
+
+  return (
+    microsequence.key === DRAFT_PLACEHOLDER_MICROSEQUENCE_KEY ||
+    (microsequence.title === DRAFT_PLACEHOLDER_TITLE && microsequence.objective === DRAFT_PLACEHOLDER_OBJECTIVE) ||
+    (microsequence.title === "Nova microssequência" && microsequence.objective === "Organizar o próximo bloco didático")
+  );
+}
+
+export function ensureDraftCourse(document) {
+  const nextDocument = clone(document);
+  const courses = Array.isArray(nextDocument.courses) ? nextDocument.courses : [];
+  const existingCourse = courses.find((item) => item.key === DRAFT_COURSE_KEY);
+
+  if (!existingCourse) {
+    nextDocument.courses.push(createDraftCourse());
+    return ensureValidDocument(nextDocument);
+  }
+
+  let changed = false;
+  if (!Array.isArray(existingCourse.modules) || !existingCourse.modules.length) {
+    existingCourse.modules = createDraftCourse().modules;
+    changed = true;
+  }
+
+  const draftModule = existingCourse.modules.find((item) => item.key === DRAFT_MODULE_KEY);
+  if (!draftModule) {
+    existingCourse.modules.unshift(createDraftCourse().modules[0]);
+    changed = true;
+  } else if (!Array.isArray(draftModule.lessons) || !draftModule.lessons.length) {
+    draftModule.lessons = createDraftCourse().modules[0].lessons;
+    changed = true;
+  } else {
+    const draftLesson = draftModule.lessons.find((item) => item.key === DRAFT_LESSON_KEY);
+    if (!draftLesson) {
+      draftModule.lessons.unshift(createDraftCourse().modules[0].lessons[0]);
+      changed = true;
+    } else if (!Array.isArray(draftLesson.microsequences) || !draftLesson.microsequences.length) {
+      draftLesson.microsequences = [createDraftPlaceholderMicrosequence()];
+      changed = true;
+    }
+  }
+
+  return changed ? ensureValidDocument(nextDocument) : document;
 }
 
 export function updateCourse(document, input) {
@@ -609,6 +707,12 @@ export function createEditorSession(storage) {
   }
 
   return {
+    ensureDraftCourse() {
+      const nextDocument = ensureDraftCourse(storage.loadProject());
+      storage.saveProject(nextDocument);
+      return nextDocument;
+    },
+
     updateCourse(input) {
       const nextDocument = updateCourse(storage.loadProject(), input);
       storage.saveProject(nextDocument);

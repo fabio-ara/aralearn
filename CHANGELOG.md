@@ -133,3 +133,21 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 ### Tests
 
 - cobertura automatizada para persistência da configuração da API e para substituição completa dos cards de uma microssequência
+
+## [0.9.3] - 2026-05-04
+
+### Added
+
+- curso especial destacado na home para concentrar rascunhos de microssequências geradas por API
+- tela dedicada de geração de microssequência antes da revisão, com pedido amplo, tags explícitas e seletor de modelo
+- garantia estrutural no núcleo editorial para manter sempre o curso especial de rascunhos disponível
+
+### Changed
+
+- separação do fluxo em duas etapas: geração no curso especial e revisão no painel da microssequência
+- simplificação do painel da microssequência para foco exclusivo em revisão de cards, sem misturar geração inicial no mesmo contexto
+- destaque visual do curso de rascunhos na home e transformação da tela desse curso em fila de microssequências geradas
+
+### Tests
+
+- cobertura automatizada para garantir a criação do curso especial de rascunhos no documento editorial

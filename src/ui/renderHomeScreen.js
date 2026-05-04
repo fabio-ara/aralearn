@@ -37,12 +37,13 @@ function countCompletedCardsInCourse(course, progress) {
   }, 0);
 }
 
-function buildHomeCoursePreviews(project, progress) {
+function buildHomeCoursePreviews(project, progress, featuredCourseKey = "") {
   return (project.courses || []).map((course) => {
     return {
       key: course.key,
       title: course.title || "Curso",
       description: course.description || "",
+      isFeatured: course.key === featuredCourseKey,
       moduleCount: (course.modules || []).length,
       lessonCount: countLessons(course),
       completedCount: countCompletedCardsInCourse(course, progress),
@@ -68,13 +69,16 @@ function renderCoursesTopbar(currentCourseKey = "") {
   );
 }
 
-export function renderHomeScreen({ project, progress, selection }) {
+export function renderHomeScreen({ project, progress, selection, featuredCourseKey = "" }) {
   const currentCourseKey = selection?.courseKey || ((project.courses || [])[0]?.key ?? "");
-  const courses = buildHomeCoursePreviews(project, progress)
+  const courses = buildHomeCoursePreviews(project, progress, featuredCourseKey)
     .map((course) => {
       return (
-        '<article class="clean-card course-card progress-card">' +
+        '<article class="clean-card course-card progress-card' +
+        (course.isFeatured ? " course-card-featured" : "") +
+        '">' +
         '<div class="course-copy">' +
+        (course.isFeatured ? '<p class="tiny course-badge">Fila de geração</p>' : "") +
         '<h3 class="card-title">' +
         escapeHtml(course.title || "Curso") +
         "</h3>" +

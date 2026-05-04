@@ -4,10 +4,14 @@ import fs from "node:fs";
 
 import { validateIntentV1Document } from "../src/contract/validateIntentV1.js";
 import {
+  DRAFT_COURSE_KEY,
+  DRAFT_LESSON_KEY,
+  DRAFT_MODULE_KEY,
   createCardInMicrosequence,
   createEditorSession,
   createMicrosequence,
   deleteCardInMicrosequence,
+  ensureDraftCourse,
   moveCardWithinMicrosequence,
   replaceMicrosequenceCards,
   updateCourse,
@@ -213,6 +217,17 @@ test("substitui os cards da microssequência por resultado estruturado da API", 
   assert.equal(microsequence.cards[0].title, "Intuição");
   assert.equal(microsequence.cards[0].data.text, "Vetores representam direção e intensidade.");
   assert.equal(microsequence.cards[1].data.blocks[0].kind, "heading");
+});
+
+test("garante curso especial de rascunhos para geração por API", () => {
+  const document = readNormalizedProject("./docs/examples/aralearn-intent-v1.valid.json");
+  const nextDocument = ensureDraftCourse(document);
+
+  const draftCourse = nextDocument.courses.find((item) => item.key === DRAFT_COURSE_KEY);
+  assert.ok(draftCourse);
+  assert.equal(draftCourse.modules[0].key, DRAFT_MODULE_KEY);
+  assert.equal(draftCourse.modules[0].lessons[0].key, DRAFT_LESSON_KEY);
+  assert.equal(draftCourse.modules[0].lessons[0].microsequences.length, 1);
 });
 
 test("sessão de edição persiste alterações simples no storage do projeto", () => {
