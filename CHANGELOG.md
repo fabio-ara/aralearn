@@ -107,7 +107,7 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 ### Changed
 
 - refatoração do painel da microssequência para reduzir texto estrutural e concentrar ações em ícones
-- remoção do comentário técnico intermediário para a API; o pedido do usuário voltou a ser o único texto de instrução do painel
+- remoção do comentário técnico intermediário do painel assistido, deixando a instrução principal mais direta
 - remoção da retomada embutida na tela principal; o histórico de versões do card passou a ficar acessível por ação dedicada
 - renomeação das ações assistidas para `Editar card`, `Escolher tags` e `Gerar cards`
 - redução visual do campo `Objetivo` para tratá-lo como metadado leve da microssequência
@@ -120,8 +120,8 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 ### Added
 
-- configuração local da integração Gemini no navegador, com persistência da chave da API e do modelo selecionado
-- camada inicial de integração real com a Gemini Developer API por `fetch`, usando saída estruturada em JSON
+- configuração local da integração por API para LLM no navegador, com persistência da chave e do modelo selecionado
+- camada inicial de integração real com API para LLM por `fetch`, usando saída estruturada em JSON
 - operação editorial para substituir todos os cards de uma microssequência a partir de resultado estruturado da API
 
 ### Changed
@@ -156,7 +156,7 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 ### Added
 
-- rascunhos provisórios de microssequência, com cards plausíveis de Gemini, para avaliação visual da fila de rascunhos
+- rascunhos provisórios de microssequência, com cards plausíveis de LLM, para avaliação visual da fila de rascunhos
 
 ### Changed
 

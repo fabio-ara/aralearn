@@ -335,7 +335,7 @@ function createDraftSeedMicrosequences() {
   return [
     createDraftSeedMicrosequence({
       key: "microsequence-gemini-matrizes-intuicao",
-      title: "Rascunho Gemini · Matrizes como tabela de transformação",
+      title: "Rascunho LLM · Matrizes como tabela de transformação",
       objective: "Introduzir matrizes por interpretação visual simples antes da formalização.",
       tags: ["Conjuntos", "Funções", "Tabela"],
       cards: [
@@ -359,7 +359,7 @@ function createDraftSeedMicrosequences() {
     }),
     createDraftSeedMicrosequence({
       key: "microsequence-gemini-vetores-operacoes",
-      title: "Rascunho Gemini · Vetores e operações básicas",
+      title: "Rascunho LLM · Vetores e operações básicas",
       objective: "Apresentar vetor como objeto manipulável por soma e escala sem depender de geometria avançada.",
       tags: ["Álgebra linear", "Vetores", "Operações"],
       cards: [
@@ -383,7 +383,7 @@ function createDraftSeedMicrosequences() {
     }),
     createDraftSeedMicrosequence({
       key: "microsequence-gemini-modelo-v-rastreabilidade",
-      title: "Rascunho Gemini · Modelo em V e rastreabilidade",
+      title: "Rascunho LLM · Modelo em V e rastreabilidade",
       objective: "Conectar fases de especificação e teste por pares explícitos de verificação.",
       tags: ["Modelo cascata", "Modelo em V", "Testes"],
       cards: [

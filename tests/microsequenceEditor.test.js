@@ -312,7 +312,7 @@ test("garante curso especial de rascunhos para geração por API", () => {
   assert.equal(draftCourse.modules[0].key, DRAFT_MODULE_KEY);
   assert.equal(draftCourse.modules[0].lessons[0].key, DRAFT_LESSON_KEY);
   assert.equal(draftCourse.modules[0].lessons[0].microsequences.length, 3);
-  assert.match(draftCourse.modules[0].lessons[0].microsequences[0].title, /Rascunho Gemini/);
+  assert.match(draftCourse.modules[0].lessons[0].microsequences[0].title, /Rascunho LLM/);
   assert.deepEqual(draftCourse.modules[0].lessons[0].microsequences[0].tags, ["Conjuntos", "Funções", "Tabela"]);
 });
 
@@ -371,7 +371,7 @@ test("identifica placeholder de geração mas não oculta microssequência já m
 
   assert.equal(
     isDraftPlaceholderMicrosequence({
-      title: "Rascunho Gemini · Matrizes",
+      title: "Rascunho LLM · Matrizes",
       objective: "Introduzir matrizes em passos curtos"
     }),
     false

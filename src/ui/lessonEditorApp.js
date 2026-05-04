@@ -1070,7 +1070,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       } else {
         const chosenSlot = destinationSlots.find((item) => item.slotId === result.slotId);
         if (!chosenSlot) {
-          fail("O Gemini devolveu um slot inválido para reposicionamento. Informe o problema no pedido e tente novamente.");
+          fail("A LLM devolveu um slot inválido para reposicionamento. Informe o problema no pedido e tente novamente.");
         }
 
         applyMicrosequenceReposition(chosenSlot, result.renames);
