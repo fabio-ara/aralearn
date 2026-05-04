@@ -439,6 +439,7 @@ button {
 
 .lesson-context-chip {
   min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -446,6 +447,7 @@ button {
 .lesson-context-chip-start {
   text-align: left;
   margin-right: auto;
+  max-width: 48%;
 }
 
 .lesson-context-chip-end {
