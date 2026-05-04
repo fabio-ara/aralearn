@@ -227,7 +227,8 @@ test("garante curso especial de rascunhos para geração por API", () => {
   assert.ok(draftCourse);
   assert.equal(draftCourse.modules[0].key, DRAFT_MODULE_KEY);
   assert.equal(draftCourse.modules[0].lessons[0].key, DRAFT_LESSON_KEY);
-  assert.equal(draftCourse.modules[0].lessons[0].microsequences.length, 1);
+  assert.equal(draftCourse.modules[0].lessons[0].microsequences.length, 3);
+  assert.match(draftCourse.modules[0].lessons[0].microsequences[0].title, /Rascunho Gemini/);
 });
 
 test("sessão de edição persiste alterações simples no storage do projeto", () => {

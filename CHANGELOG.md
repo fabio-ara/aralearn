@@ -151,3 +151,17 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 ### Tests
 
 - cobertura automatizada para garantir a criação do curso especial de rascunhos no documento editorial
+
+## [0.9.4] - 2026-05-04
+
+### Added
+
+- rascunhos provisórios de microssequência, com cards plausíveis de Gemini, para avaliação visual da fila de rascunhos
+
+### Changed
+
+- a garantia do curso especial de rascunhos agora semeia exemplos quando a fila ainda está vazia ou só contém placeholder
+
+### Tests
+
+- ajuste da suíte editorial para verificar a presença dos rascunhos provisórios no curso especial

@@ -220,6 +220,104 @@ function createDraftPlaceholderMicrosequence() {
   };
 }
 
+function createDraftSeedMicrosequence({ key, title, objective, cards }) {
+  const usedCardKeys = new Set();
+
+  return {
+    key,
+    title,
+    objective,
+    cards: cards.map((entry, index) => {
+      const cardTitle = entry.title && entry.title.trim() ? entry.title.trim() : `Card ${index + 1}`;
+      const cardKey = uniqueKey(cardTitle, usedCardKeys, "card");
+      usedCardKeys.add(cardKey);
+      return {
+        key: cardKey,
+        intent: "text",
+        title: cardTitle,
+        data: createDefaultCardData({
+          title: cardTitle,
+          text: entry.text || ""
+        })
+      };
+    })
+  };
+}
+
+function createDraftSeedMicrosequences() {
+  return [
+    createDraftSeedMicrosequence({
+      key: "microsequence-gemini-matrizes-intuicao",
+      title: "Rascunho Gemini · Matrizes como tabela de transformação",
+      objective: "Introduzir matrizes por interpretação visual simples antes da formalização.",
+      cards: [
+        {
+          title: "Ideia inicial",
+          text: "Uma matriz pode ser vista primeiro como uma tabela organizada de números com função específica."
+        },
+        {
+          title: "Leitura por linhas",
+          text: "Cada linha pode ser lida como um conjunto coerente de valores que participa da mesma estrutura."
+        },
+        {
+          title: "Leitura por colunas",
+          text: "As colunas ajudam a comparar como uma mesma posição varia entre diferentes linhas."
+        },
+        {
+          title: "Uso didático",
+          text: "Antes de operar, o aluno precisa reconhecer que a forma da matriz já carrega informação."
+        }
+      ]
+    }),
+    createDraftSeedMicrosequence({
+      key: "microsequence-gemini-vetores-operacoes",
+      title: "Rascunho Gemini · Vetores e operações básicas",
+      objective: "Apresentar vetor como objeto manipulável por soma e escala sem depender de geometria avançada.",
+      cards: [
+        {
+          title: "Vetor como objeto",
+          text: "Um vetor pode representar direção, intensidade ou simplesmente uma coleção ordenada de valores."
+        },
+        {
+          title: "Soma de vetores",
+          text: "Somar vetores combina componentes correspondentes e preserva a estrutura posicional."
+        },
+        {
+          title: "Multiplicação por escalar",
+          text: "Multiplicar por escalar altera a intensidade do vetor sem mudar sua natureza de coleção ordenada."
+        },
+        {
+          title: "Ponte para aplicações",
+          text: "Essas operações são base para modelagem, gráficos, sistemas lineares e aprendizado de máquina."
+        }
+      ]
+    }),
+    createDraftSeedMicrosequence({
+      key: "microsequence-gemini-modelo-v-rastreabilidade",
+      title: "Rascunho Gemini · Modelo em V e rastreabilidade",
+      objective: "Conectar fases de especificação e teste por pares explícitos de verificação.",
+      cards: [
+        {
+          title: "Estrutura em espelho",
+          text: "O lado esquerdo do modelo organiza definição e projeto; o lado direito organiza verificação correspondente."
+        },
+        {
+          title: "Par requisito-teste",
+          text: "Cada artefato importante deve apontar para um tipo de teste que confirme sua consistência."
+        },
+        {
+          title: "Valor prático",
+          text: "A rastreabilidade facilita explicar por que um teste existe e o que exatamente ele protege."
+        },
+        {
+          title: "Limite do modelo",
+          text: "Quando o contexto muda demais, a rigidez dessa correspondência pode aumentar o custo de adaptação."
+        }
+      ]
+    })
+  ];
+}
+
 function createDraftCourse() {
   return {
     key: DRAFT_COURSE_KEY,
@@ -235,7 +333,7 @@ function createDraftCourse() {
             key: DRAFT_LESSON_KEY,
             title: "Rascunhos por API",
             description: "Microssequências geradas para revisão card a card.",
-            microsequences: [createDraftPlaceholderMicrosequence()]
+            microsequences: createDraftSeedMicrosequences()
           }
         ]
       }
@@ -253,6 +351,14 @@ export function isDraftPlaceholderMicrosequence(microsequence) {
     (microsequence.title === DRAFT_PLACEHOLDER_TITLE && microsequence.objective === DRAFT_PLACEHOLDER_OBJECTIVE) ||
     (microsequence.title === "Nova microssequência" && microsequence.objective === "Organizar o próximo bloco didático")
   );
+}
+
+function shouldSeedDraftLesson(microsequences) {
+  if (!Array.isArray(microsequences) || microsequences.length === 0) {
+    return true;
+  }
+
+  return microsequences.every((item) => isDraftPlaceholderMicrosequence(item));
 }
 
 export function ensureDraftCourse(document) {
@@ -283,8 +389,8 @@ export function ensureDraftCourse(document) {
     if (!draftLesson) {
       draftModule.lessons.unshift(createDraftCourse().modules[0].lessons[0]);
       changed = true;
-    } else if (!Array.isArray(draftLesson.microsequences) || !draftLesson.microsequences.length) {
-      draftLesson.microsequences = [createDraftPlaceholderMicrosequence()];
+    } else if (shouldSeedDraftLesson(draftLesson.microsequences)) {
+      draftLesson.microsequences = createDraftSeedMicrosequences();
       changed = true;
     }
   }
