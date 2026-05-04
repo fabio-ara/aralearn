@@ -174,3 +174,4 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 - simplificação da tela `Gerar microssequência`, removendo chips e instruções do topo e deixando as tags sem pré-seleção, com espaço fixo para até 5
 - refatoração da tela `Gerar microssequência` para usar o mesmo layout da revisão, com título, navegação `Card 1 de X`, prévia superior do card e painel de geração na parte inferior
 - ajuste fino da tela `Gerar microssequência`, com preview superior maior e tags selecionadas renderizadas como pills compactas em até 3 linhas
+- correção da tela `Gerar microssequência` para usar preview de card com altura fixa e rolagem externa da tela quando o conteúdo excede o WebView

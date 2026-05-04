@@ -1341,26 +1341,30 @@ button {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: clip;
   min-height: 0;
-  padding-bottom: 0;
+  padding-bottom: 12px;
 }
 
 .generator-preview-stage {
-  flex: 1 1 auto;
-  min-height: clamp(220px, 30dvh, 360px);
+  flex: 0 0 auto;
+  height: min(46dvh, 360px);
+  min-height: 300px;
+  max-height: 360px;
   overflow: hidden;
 }
 
 .generator-preview-stage .card-portrait-body {
-  min-height: clamp(220px, 30dvh, 360px);
+  height: 100%;
+  min-height: 0;
 }
 
 .microsequence-generator-panel {
   flex: 0 0 auto;
-  margin-top: auto;
-  max-height: min(40dvh, 360px);
-  overflow: auto;
+  margin-top: 0;
+  max-height: none;
+  overflow: visible;
 }
 
 .builder-layout,
