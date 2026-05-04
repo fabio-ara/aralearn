@@ -361,6 +361,9 @@ function renderDraftCourseScreen({ course, draftMicrosequences, selectedModelLab
         '<button class="icon-ghost tiny-icon" type="button" data-action="open-draft-review" data-microsequence-key="' +
         escapeHtml(microsequence.key) +
         '" title="Revisar microssequência" aria-label="Revisar microssequência">&#9998;</button>' +
+        '<button class="open-mini" type="button" data-action="play-microsequence" data-microsequence-key="' +
+        escapeHtml(microsequence.key) +
+        '" title="Começar microssequência" aria-label="Começar microssequência">&#9654;</button>' +
         "</div>" +
         "</article>"
       );

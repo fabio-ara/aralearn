@@ -283,7 +283,17 @@ export function createLessonEditorApp({ root, storage, editor }) {
   function openCourse(courseKey) {
     const course = findCourse(state.project, courseKey);
     if (!course) return;
+    const moduleValue = (course.modules || [])[0] || null;
+    const lesson = moduleValue && moduleValue.lessons ? moduleValue.lessons[0] || null : null;
+    const microsequence = lesson && lesson.microsequences ? lesson.microsequences[0] || null : null;
+    const card = microsequence && microsequence.cards ? microsequence.cards[0] || null : null;
+
     state.selection.courseKey = course.key;
+    state.selection.moduleKey = moduleValue ? moduleValue.key : null;
+    state.selection.lessonKey = lesson ? lesson.key : null;
+    state.selection.microsequenceKey = microsequence ? microsequence.key : null;
+    state.selection.cardKey = card ? card.key : null;
+    state.selection.cardIndex = 0;
     state.view = "course";
     state.cardEditorOpen = false;
     state.cardCommentOpen = false;

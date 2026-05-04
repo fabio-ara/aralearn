@@ -165,3 +165,7 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 ### Tests
 
 - ajuste da suíte editorial para verificar a presença dos rascunhos provisórios no curso especial
+
+### Fixed
+
+- restauração do botão `Play` na fila de rascunhos, com seleção correta do primeiro módulo, lição e card ao abrir um curso
