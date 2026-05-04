@@ -93,10 +93,11 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 ### Changed
 
-- refatoração corretiva do contrato `aralearn.intent.v1` para suportar múltiplos cursos reais em `courses[]`
+- reorganização estrutural do contrato `aralearn.intent.v1` para suportar múltiplos cursos reais em `courses[]`
 - refatoração da compilação, renderização e persistência para operar sobre a nova raiz multi-curso
-- refatoração da seleção e da home da casca local para abrir cursos reais do projeto, sem prévias falsas
+- refatoração da seleção e da home da casca local para abrir cursos reais do projeto, sem prévias artificiais
 - refatoração das operações editoriais para localizar e alterar módulos, lições, microssequências e cards dentro do curso correto
+- alinhamento da modelagem publicada ao domínio multi-curso adotado pela interface e pelo motor
 
 ### Tests
 
