@@ -368,6 +368,11 @@ button {
   justify-content: flex-start;
 }
 
+.didactic-tag-row-limited {
+  max-height: 70px;
+  overflow: hidden;
+}
+
 .didactic-tag {
   width: auto;
   max-width: 100%;

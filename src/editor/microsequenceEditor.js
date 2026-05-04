@@ -121,6 +121,26 @@ function assignOptionalTextField(record, fieldName, value) {
   }
 }
 
+function normalizeOptionalTags(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value)) {
+    fail('Campo opcional inválido: "tags".');
+  }
+
+  return value
+    .map((item) => {
+      if (typeof item !== "string") {
+        fail('Campo opcional inválido: "tags".');
+      }
+
+      return item.trim();
+    })
+    .filter(Boolean);
+}
+
 function buildCardPayload({ title, data }) {
   const normalizedTitle = title && typeof title === "string" ? title.trim() : "";
   if (data !== undefined) {
@@ -220,13 +240,14 @@ function createDraftPlaceholderMicrosequence() {
   };
 }
 
-function createDraftSeedMicrosequence({ key, title, objective, cards }) {
+function createDraftSeedMicrosequence({ key, title, objective, tags = [], cards }) {
   const usedCardKeys = new Set();
 
   return {
     key,
     title,
     objective,
+    ...(tags.length ? { tags: normalizeOptionalTags(tags) } : {}),
     cards: cards.map((entry, index) => {
       const cardTitle = entry.title && entry.title.trim() ? entry.title.trim() : `Card ${index + 1}`;
       const cardKey = uniqueKey(cardTitle, usedCardKeys, "card");
@@ -250,6 +271,7 @@ function createDraftSeedMicrosequences() {
       key: "microsequence-gemini-matrizes-intuicao",
       title: "Rascunho Gemini · Matrizes como tabela de transformação",
       objective: "Introduzir matrizes por interpretação visual simples antes da formalização.",
+      tags: ["Conjuntos", "Funções", "Tabela"],
       cards: [
         {
           title: "Ideia inicial",
@@ -273,6 +295,7 @@ function createDraftSeedMicrosequences() {
       key: "microsequence-gemini-vetores-operacoes",
       title: "Rascunho Gemini · Vetores e operações básicas",
       objective: "Apresentar vetor como objeto manipulável por soma e escala sem depender de geometria avançada.",
+      tags: ["Álgebra linear", "Vetores", "Operações"],
       cards: [
         {
           title: "Vetor como objeto",
@@ -296,6 +319,7 @@ function createDraftSeedMicrosequences() {
       key: "microsequence-gemini-modelo-v-rastreabilidade",
       title: "Rascunho Gemini · Modelo em V e rastreabilidade",
       objective: "Conectar fases de especificação e teste por pares explícitos de verificação.",
+      tags: ["Modelo cascata", "Modelo em V", "Testes"],
       cards: [
         {
           title: "Estrutura em espelho",
@@ -691,6 +715,15 @@ export function replaceMicrosequenceCards(document, input) {
 
   if (input.objective !== undefined) {
     microsequence.objective = normalizeText(input.objective, "objective");
+  }
+
+  if (input.tags !== undefined) {
+    const tags = normalizeOptionalTags(input.tags);
+    if (tags && tags.length) {
+      microsequence.tags = tags;
+    } else {
+      delete microsequence.tags;
+    }
   }
 
   const usedKeys = new Set();

@@ -181,6 +181,27 @@ function renderDidacticTags(moduleValue, lessonKey, microsequence) {
   );
 }
 
+function renderExplicitTags(tags, rowClass = "didactic-tag-row") {
+  const visibleTags = (tags || []).slice(0, 5);
+  if (!visibleTags.length) {
+    return "";
+  }
+
+  const tagMarkup = visibleTags
+    .map((tag) => {
+      return (
+        '<span class="didactic-tag dependency-tag-chip">' +
+        '<span class="didactic-tag-text">' +
+        escapeHtml(tag) +
+        "</span>" +
+        "</span>"
+      );
+    })
+    .join("");
+
+  return '<div class="' + escapeHtml(rowClass) + '">' + tagMarkup + "</div>";
+}
+
 function renderLightDependencyTags(dependencies) {
   return (dependencies || [])
     .slice(0, 4)
@@ -340,26 +361,10 @@ function renderMetaLine({ completed, total, parts = [] }) {
 }
 
 function renderDraftCourseScreen({ course, draftMicrosequences }) {
-  const draftModule = course.modules?.[0] || null;
-  const draftLesson = draftModule?.lessons?.[0] || null;
   const draftCards = (draftMicrosequences || [])
-    .map((microsequence, index) => {
+    .map((microsequence) => {
       const cardCount = countCardsInMicrosequence(microsequence);
-      const draftTags = draftModule && draftLesson
-        ? renderDidacticTags(
-            {
-              ...draftModule,
-              lessons: [
-                {
-                  ...draftLesson,
-                  microsequences: (draftMicrosequences || []).slice(0, index + 1)
-                }
-              ]
-            },
-            draftLesson.key,
-            microsequence
-          )
-        : "";
+      const draftTags = renderExplicitTags(microsequence.tags, "didactic-tag-row didactic-tag-row-limited");
       return (
         '<article class="clean-card microsequence-card progress-card draft-microsequence-card">' +
         '<div class="microsequence-copy">' +

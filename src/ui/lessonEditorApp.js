@@ -792,7 +792,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     }
   }
 
-  function applyMicrosequenceGeneration({ microsequenceTitle, objective, cards }) {
+  function applyMicrosequenceGeneration({ microsequenceTitle, objective, cards, tags = [] }) {
     const nextProject = editor.replaceMicrosequenceCards({
       courseKey: state.selection.courseKey,
       moduleKey: state.selection.moduleKey,
@@ -800,6 +800,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       microsequenceKey: state.selection.microsequenceKey,
       title: microsequenceTitle,
       objective,
+      tags,
       cards
     });
 
@@ -848,7 +849,10 @@ export function createLessonEditorApp({ root, storage, editor }) {
       });
 
       if (mode === "compose-microsequence") {
-        applyMicrosequenceGeneration(result);
+        applyMicrosequenceGeneration({
+          ...result,
+          tags: dependencyTitles
+        });
         state.assistDraft.lastRequest = {
           title: isBlankDraftGenerator ? "Microssequência gerada" : "Microssequência atualizada",
           description:

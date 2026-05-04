@@ -199,6 +199,7 @@ test("substitui os cards da microssequência por resultado estruturado da API", 
     microsequenceKey: "microsequence-apresentar-o-primeiro-conceito",
     title: "Vetores",
     objective: "Introduzir vetores em passos curtos",
+    tags: ["Álgebra linear", "Vetores"],
     cards: [
       {
         title: "Intuição",
@@ -214,6 +215,7 @@ test("substitui os cards da microssequência por resultado estruturado da API", 
   const microsequence = nextDocument.courses[0].modules[0].lessons[0].microsequences[0];
   assert.equal(microsequence.title, "Vetores");
   assert.equal(microsequence.objective, "Introduzir vetores em passos curtos");
+  assert.deepEqual(microsequence.tags, ["Álgebra linear", "Vetores"]);
   assert.equal(microsequence.cards.length, 2);
   assert.equal(microsequence.cards[0].title, "Intuição");
   assert.equal(microsequence.cards[0].data.text, "Vetores representam direção e intensidade.");
@@ -230,6 +232,7 @@ test("garante curso especial de rascunhos para geração por API", () => {
   assert.equal(draftCourse.modules[0].lessons[0].key, DRAFT_LESSON_KEY);
   assert.equal(draftCourse.modules[0].lessons[0].microsequences.length, 3);
   assert.match(draftCourse.modules[0].lessons[0].microsequences[0].title, /Rascunho Gemini/);
+  assert.deepEqual(draftCourse.modules[0].lessons[0].microsequences[0].tags, ["Conjuntos", "Funções", "Tabela"]);
 });
 
 test("migra metadados do curso especial para o texto atual", () => {
