@@ -88,3 +88,16 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 ### Tests
 
 - cobertura automatizada para remoção de card com preservação de card inicial quando a microssequência ficaria vazia
+
+## [0.9.0] - 2026-05-03
+
+### Changed
+
+- refatoração corretiva do contrato `aralearn.intent.v1` para suportar múltiplos cursos reais em `courses[]`
+- refatoração da compilação, renderização e persistência para operar sobre a nova raiz multi-curso
+- refatoração da seleção e da home da casca local para abrir cursos reais do projeto, sem prévias falsas
+- refatoração das operações editoriais para localizar e alterar módulos, lições, microssequências e cards dentro do curso correto
+
+### Tests
+
+- suíte automatizada atualizada para validar contrato, compilação, renderização, storage, paths e editor sob a nova raiz multi-curso

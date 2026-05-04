@@ -11,8 +11,8 @@ O repositório também já inclui a pipeline mínima do motor para carregar, val
 Há também uma camada inicial de renderização HTML baseada apenas no modelo compilado.
 Nesta etapa, a persistência local simples já fica atrás de uma camada própria, separando projeto e progresso.
 Também já existe uma camada inicial de edição manual de microssequências e cards, separada da renderização e da persistência.
-O projeto agora também conta com uma casca navegável provisória da interface local, cobrindo a hierarquia `curso -> módulo -> lição -> microssequência -> cards`.
-Essa casca já inclui leitura de cards, painel provisório da microssequência para interação com LLM por API e uma UI provisória de editor de cards, com criação e remoção de cards no próprio editor.
+O projeto agora também conta com uma casca navegável provisória da interface local, cobrindo múltiplos cursos reais e a hierarquia `curso -> módulo -> lição -> microssequência -> cards`.
+Essa casca já inclui leitura de cards, painel provisório da microssequência para interação com LLM por API e uma UI provisória de editor de cards, com ações estruturais concentradas em menus de ações.
 
 Importante: a interface atual existe para validação de fluxo e integração local. Ela ainda não representa a semântica final do projeto.
 
