@@ -2,32 +2,54 @@
 
 AraLearn é um aplicativo local-first para estudo, autoria e organização de microssequências de aprendizagem.
 
+## O que o projeto é
+
+O projeto reúne a mesma base local para autoria, organização e leitura de microssequências. O conteúdo fica estruturado em cursos, módulos, lições, microssequências e cards, com persistência local e contrato público próprio para troca de dados.
+
 ## Estado atual
 
-O repositório já define o contrato autoral `aralearn.intent.v1`, sua validação estrutural e a pipeline mínima do motor para carregar, normalizar, compilar e renderizar o conteúdo.
-A persistência local fica atrás de uma camada própria, separando projeto e progresso, e a edição manual de microssequências e cards já opera integrada a essa base.
-A interface local já cobre a hierarquia `curso -> módulo -> lição -> microssequência -> cards`, com leitura de cards, painel assistido por LLM via API e editor de cards em tela dedicada.
-O modelo editorial e a casca de navegação já foram reorganizados para refletir múltiplos cursos reais no mesmo projeto, alinhando a estrutura publicada ao domínio do AraLearn.
+- contrato público `aralearn.intent.v1`, com validação estrutural e exemplos JSON
+- pipeline mínima para carregar, normalizar, compilar e renderizar o conteúdo
+- persistência local separada entre projeto e progresso
+- edição manual de microssequências e cards integrada ao motor editorial
+- casca navegável cobrindo `curso -> módulo -> lição -> microssequência -> cards`
+- reorganização estrutural para refletir múltiplos cursos reais no mesmo projeto
+- painel assistido por LLM via API na microssequência, ainda em evolução
 
-Importante: a interface atual existe para validação de fluxo e integração local. Ela ainda está em evolução.
+## Como o conteúdo se organiza
 
-## Estrutura
+```text
+Projeto
+  -> Cursos
+    -> Módulos
+      -> Lições
+        -> Microssequências
+          -> Cards
+```
 
-- `docs/` documentação pública
-- `src/` código-fonte
-- `public/` arquivos estáticos públicos
-- `tests/` testes automatizados da fase atual
+Essa hierarquia é a mesma usada pelo contrato público, pelo motor interno e pela interface local.
 
 ## Documentação pública
 
-- `docs/aralearn.intent.v1.md`
-- `docs/examples/`
-- `src/core/`
-- `src/model/`
-- `src/render/`
-- `src/storage/`
-- `src/editor/`
-- `src/ui/`
+- [Visão geral da documentação](./docs/README.md)
+- [Contrato `aralearn.intent.v1`](./docs/aralearn.intent.v1.md)
+- [Exemplos JSON](./docs/examples/)
+- [Histórico de versões](./CHANGELOG.md)
+
+## Estrutura principal do repositório
+
+- `public/`: entrada web, assets e estilos da interface local
+- `src/`: contrato, motor, persistência, editor e UI
+- `tests/`: suíte automatizada
+- `scripts/`: utilitários de desenvolvimento, como servidor local
+- `docs/`: documentação pública e exemplos
+
+## Execução local
+
+```powershell
+npm install
+npm start
+```
 
 ## Validação
 
@@ -38,4 +60,4 @@ npm run validate:example
 
 ## Próximos passos
 
-As próximas iterações devem aprofundar o fluxo editorial, os contratos públicos e o acabamento da interface local.
+As próximas iterações devem aprofundar o fluxo editorial, consolidar os contratos públicos e amadurecer a interface local.
