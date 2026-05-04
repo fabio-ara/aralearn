@@ -1532,7 +1532,6 @@ export function createLessonEditorApp({ root, storage, editor }) {
     const cardTitleInput = root.querySelector("[data-field='card-title']");
     const cardCommentInput = root.querySelector("[data-field='card-comment']");
     const assistMicrosequenceTitleInput = root.querySelector("[data-field='assist-microsequence-title']");
-    const assistMicrosequenceObjectiveInput = root.querySelector("[data-field='assist-microsequence-objective']");
     if (cardTitleInput && context.card) {
       cardTitleInput.value = context.card.title || "";
       cardTitleInput.addEventListener("input", () => {
@@ -1545,16 +1544,13 @@ export function createLessonEditorApp({ root, storage, editor }) {
         state.cardCommentDraft = cardCommentInput.value;
       });
     }
-    if (assistMicrosequenceTitleInput || assistMicrosequenceObjectiveInput) {
-      const syncMicrosequenceDraft = () => {
+    if (assistMicrosequenceTitleInput) {
+      assistMicrosequenceTitleInput.addEventListener("input", () => {
         updateMicrosequenceDraft({
-          title: assistMicrosequenceTitleInput ? assistMicrosequenceTitleInput.value : context.microsequence?.title || "",
-          objective: assistMicrosequenceObjectiveInput ? assistMicrosequenceObjectiveInput.value : context.microsequence?.objective || ""
+          title: assistMicrosequenceTitleInput.value,
+          objective: context.microsequence?.objective || ""
         });
-      };
-
-      assistMicrosequenceTitleInput?.addEventListener("input", syncMicrosequenceDraft);
-      assistMicrosequenceObjectiveInput?.addEventListener("input", syncMicrosequenceDraft);
+      });
     }
 
     root.querySelectorAll("[data-field='block-label']").forEach((node) => {

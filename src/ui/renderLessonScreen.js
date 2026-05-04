@@ -715,7 +715,6 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
       );
     })
     .join("");
-  const activeCard = cards[safeIndex] || null;
   const assistStatus = editorSupport.lastRequest
     ? '<section class="microsequence-assist-panel">' +
       '<p class="tiny muted">' +
@@ -731,13 +730,6 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
       escapeHtml(editorSupport.assistError) +
       "</p></section>"
     : "";
-  const assistModelSummary = editorSupport.selectedModelLabel
-    ? '<span class="context-chip">' + escapeHtml(editorSupport.selectedModelLabel) + "</span>"
-    : "";
-  const assistKeySummary = editorSupport.hasApiKey
-    ? '<span class="context-chip">chave local pronta</span>'
-    : '<span class="context-chip">sem chave</span>';
-
   return (
     '<section class="screen">' +
     renderTopbar({
@@ -749,16 +741,6 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
       editIcon: "&#8943;"
     }) +
     '<main class="screen-content microsequence-assist-screen">' +
-    '<section class="context-band context-band-tight">' +
-    '<span class="context-chip">Lição: ' +
-    escapeHtml(lesson.title || lesson.key) +
-    "</span>" +
-    '<span class="context-chip">Microssequência · ' +
-    escapeHtml(microsequence.title || microsequence.key) +
-    "</span>" +
-    assistModelSummary +
-    assistKeySummary +
-    "</section>" +
     '<section class="microsequence-assist-panel">' +
     '<div class="field compact-field">' +
     "<label>Título da microssequência</label>" +
@@ -766,23 +748,11 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
     escapeHtml(microsequence.title || "") +
     '">' +
     "</div>" +
-    '<div class="field compact-field">' +
-    "<label>Objetivo</label>" +
-    '<input data-field="assist-microsequence-objective" class="assist-objective-input" type="text" value="' +
-    escapeHtml(microsequence.objective || "") +
-    '">' +
-    "</div>" +
     '<div class="assist-toolbar">' +
     '<button class="icon-ghost tiny-icon" type="button" data-action="open-version-history" title="Versões do card" aria-label="Versões do card">&#8635;</button>' +
     '<button class="icon-ghost tiny-icon" type="button" data-action="switch-microsequence-edit" title="Abrir editor de cards" aria-label="Abrir editor de cards">&#9998;</button>' +
     "</div>" +
     "</section>" +
-    '<section class="microsequence-assist-panel assist-card-panel">' +
-    '<div class="assist-card-head">' +
-    '<p class="tiny muted">Card ativo</p>' +
-    '<p class="muted assist-card-caption">' +
-    escapeHtml(activeCard ? activeCard.title || activeCard.key : "Sem card selecionado") +
-    "</p></div></section>" +
     '<section class="editor-step-nav">' +
     '<div class="editor-step-nav-head">' +
     '<button class="icon-ghost tiny-icon" type="button" data-action="editor-prev-card" ' +
