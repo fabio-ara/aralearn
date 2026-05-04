@@ -115,3 +115,21 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 ### Tests
 
 - limpeza da camada auxiliar de storage e atualização da suíte para remover o armazenamento obsoleto do comentário assistido
+
+## [0.9.2] - 2026-05-04
+
+### Added
+
+- configuração local da integração Gemini no navegador, com persistência da chave da API e do modelo selecionado
+- camada inicial de integração real com a Gemini Developer API por `fetch`, usando saída estruturada em JSON
+- operação editorial para substituir todos os cards de uma microssequência a partir de resultado estruturado da API
+
+### Changed
+
+- refatoração do painel da microssequência para um fluxo mais simples, focado em `Gerar cards` e `Revisar card`
+- transferência da escolha de modelo para a fileira final de ações do painel, com configuração da chave em overlay dedicado
+- materialização direta do retorno da API no projeto local, sem manter pedido apenas como mock textual
+
+### Tests
+
+- cobertura automatizada para persistência da configuração da API e para substituição completa dos cards de uma microssequência

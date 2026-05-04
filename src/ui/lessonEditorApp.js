@@ -3,6 +3,7 @@ import { renderCardEditorOverlay } from "./renderCardEditorOverlay.js";
 import { renderCardCommentOverlay } from "./renderCardCommentOverlay.js";
 import { renderCardVersionOverlay } from "./renderCardVersionOverlay.js";
 import { renderEntityEditorOverlay } from "./renderEntityEditorOverlay.js";
+import { renderAssistConfigOverlay } from "./renderAssistConfigOverlay.js";
 import {
   buildCardPathKey,
   collectAssistDependencies,
@@ -16,8 +17,10 @@ import {
   getFirstPath
 } from "./lessonEditorPaths.js";
 import {
+  readAssistConfigStorage,
   readCommentStorage,
   readHistoryStorage,
+  writeAssistConfigStorage,
   writeCommentStorage,
   writeHistoryStorage
 } from "./lessonEditorStorage.js";
@@ -27,9 +30,15 @@ import {
   normalizeCardBlocks,
   summarizeCardTextFromBlocks
 } from "../core/cardBlockModel.js";
+import { runGeminiAssist } from "../llm/geminiAssist.js";
 
 const MAX_ASSIST_DEPENDENCIES = 5;
 const MAX_CARD_SNAPSHOTS = 6;
+const ASSIST_MODEL_OPTIONS = [
+  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash-Lite" },
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash · até 2026-06-01" }
+];
 
 function fail(message) {
   throw new Error(message);
@@ -148,6 +157,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
   if (!storage || typeof storage.loadProject !== "function") fail("Storage inválido.");
   if (!editor) fail("Editor inválido.");
 
+  const initialAssistConfig = readAssistConfigStorage();
   const state = {
     project: storage.loadProject(),
     view: "courses",
@@ -156,16 +166,21 @@ export function createLessonEditorApp({ root, storage, editor }) {
     cardCommentOpen: false,
     versionHistoryOpen: false,
     entityEditor: null,
+    assistConfigOpen: false,
+    assistConfig: initialAssistConfig,
+    assistConfigDraft: { ...initialAssistConfig },
     microsequenceMode: "play",
     cardHistory: readHistoryStorage(),
     cardComments: readCommentStorage(),
     cardCommentDraft: "",
     assistDraft: {
-      selectedMode: "edit-card",
+      selectedMode: "compose-microsequence",
       promptText: "",
       dependencyKeys: [],
       pendingDependencyKey: "",
-      lastRequest: null
+      lastRequest: null,
+      isSubmitting: false,
+      errorMessage: ""
     }
   };
 
@@ -226,6 +241,44 @@ export function createLessonEditorApp({ root, storage, editor }) {
 
   function saveCardHistory() {
     writeHistoryStorage(state.cardHistory);
+  }
+
+  function getAssistModelLabel(model) {
+    return ASSIST_MODEL_OPTIONS.find((item) => item.value === model)?.label || model;
+  }
+
+  function persistAssistConfig() {
+    writeAssistConfigStorage(state.assistConfig);
+  }
+
+  function openAssistConfig() {
+    state.assistConfigDraft = { ...state.assistConfig };
+    state.assistConfigOpen = true;
+    render();
+  }
+
+  function closeAssistConfig() {
+    state.assistConfigOpen = false;
+    render();
+  }
+
+  function saveAssistConfig() {
+    state.assistConfig = {
+      model: state.assistConfigDraft.model || "gemini-2.5-flash-lite",
+      apiKey: typeof state.assistConfigDraft.apiKey === "string" ? state.assistConfigDraft.apiKey.trim() : ""
+    };
+    persistAssistConfig();
+    state.assistConfigOpen = false;
+    state.assistDraft.errorMessage = "";
+    render();
+  }
+
+  function setAssistModel(model) {
+    state.assistConfig.model = model || "gemini-2.5-flash-lite";
+    if (state.assistConfigOpen) {
+      state.assistConfigDraft.model = state.assistConfig.model;
+    }
+    persistAssistConfig();
   }
 
   function getCurrentCardHistory() {
@@ -511,6 +564,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardEditorOpen = false;
     state.cardCommentOpen = false;
     state.versionHistoryOpen = false;
+    state.assistConfigOpen = false;
     render();
   }
 
@@ -523,6 +577,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardEditorOpen = true;
     state.cardCommentOpen = false;
     state.versionHistoryOpen = false;
+    state.assistConfigOpen = false;
     state.entityEditor = null;
     render();
   }
@@ -531,6 +586,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.versionHistoryOpen = true;
     state.cardCommentOpen = false;
     state.cardEditorOpen = false;
+    state.assistConfigOpen = false;
     state.entityEditor = null;
     render();
   }
@@ -581,6 +637,78 @@ export function createLessonEditorApp({ root, storage, editor }) {
       render();
     } catch {
       // Mantém a UI operacional se a criação falhar por estado transitório.
+    }
+  }
+
+  function applyMicrosequenceGeneration({ microsequenceTitle, objective, cards }) {
+    const nextProject = editor.replaceMicrosequenceCards({
+      courseKey: state.selection.courseKey,
+      moduleKey: state.selection.moduleKey,
+      lessonKey: state.selection.lessonKey,
+      microsequenceKey: state.selection.microsequenceKey,
+      title: microsequenceTitle,
+      objective,
+      cards
+    });
+
+    setProject(nextProject);
+    const microsequence = findMicrosequence(
+      nextProject,
+      state.selection.courseKey,
+      state.selection.moduleKey,
+      state.selection.lessonKey,
+      state.selection.microsequenceKey
+    );
+    const firstCard = microsequence?.cards?.[0] || null;
+    state.selection.cardIndex = 0;
+    state.selection.cardKey = firstCard ? firstCard.key : null;
+    syncAssistDraft();
+  }
+
+  async function submitAssistRequest() {
+    const context = getRenderContext();
+    const dependencyTitles = context.dependencies
+      .filter((item) => state.assistDraft.dependencyKeys.includes(item.key))
+      .map((item) => item.title || item.key);
+
+    state.assistDraft.isSubmitting = true;
+    state.assistDraft.errorMessage = "";
+    render();
+
+    try {
+      const result = await runGeminiAssist({
+        apiKey: state.assistConfig.apiKey,
+        model: state.assistConfig.model,
+        mode: state.assistDraft.selectedMode,
+        microsequence: context.microsequence,
+        card: context.card,
+        dependencyTitles,
+        promptText: state.assistDraft.promptText
+      });
+
+      if (state.assistDraft.selectedMode === "compose-microsequence") {
+        recordCurrentCardSnapshot("Antes da geração", "assist");
+        applyMicrosequenceGeneration(result);
+        state.assistDraft.lastRequest = {
+          title: "Cards gerados",
+          description:
+            `${result.cards.length} cards aplicados em ${result.microsequenceTitle} com ${getAssistModelLabel(state.assistConfig.model)}.`,
+          timestamp: new Date().toISOString()
+        };
+      } else {
+        recordCurrentCardSnapshot("Antes da revisão", "assist");
+        applyCardContent(result);
+        state.assistDraft.lastRequest = {
+          title: "Card revisado",
+          description: `Card atualizado com ${getAssistModelLabel(state.assistConfig.model)}.`,
+          timestamp: new Date().toISOString()
+        };
+      }
+    } catch (error) {
+      state.assistDraft.errorMessage = error instanceof Error ? error.message : "Falha ao chamar a API.";
+    } finally {
+      state.assistDraft.isSubmitting = false;
+      render();
     }
   }
 
@@ -774,6 +902,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardEditorOpen = false;
     state.cardCommentOpen = false;
     state.versionHistoryOpen = false;
+    state.assistConfigOpen = false;
     state.entityEditor = null;
 
     if (state.view === "microsequence") {
@@ -1050,21 +1179,23 @@ export function createLessonEditorApp({ root, storage, editor }) {
           selectedDependencyKeys: state.assistDraft.dependencyKeys,
           pendingDependencyKey: state.assistDraft.pendingDependencyKey,
           selectedMode: state.assistDraft.selectedMode,
+          selectedModel: state.assistConfig.model,
+          selectedModelLabel: getAssistModelLabel(state.assistConfig.model),
+          modelOptions: ASSIST_MODEL_OPTIONS,
           promptText: state.assistDraft.promptText,
           lastRequest: state.assistDraft.lastRequest,
+          isSubmitting: state.assistDraft.isSubmitting,
+          assistError: state.assistDraft.errorMessage,
+          hasApiKey: Boolean(state.assistConfig.apiKey),
           historyCount: historyVersions.length,
           modeOptions: [
             {
-              value: "edit-card",
-              label: "Editar card"
-            },
-            {
-              value: "review-dependencies",
-              label: "Escolher tags"
-            },
-            {
               value: "compose-microsequence",
               label: "Gerar cards"
+            },
+            {
+              value: "edit-card",
+              label: "Revisar card"
             }
           ]
         }
@@ -1084,6 +1215,13 @@ export function createLessonEditorApp({ root, storage, editor }) {
       (state.versionHistoryOpen
         ? renderCardVersionOverlay({
             versions: historyVersions
+          })
+        : "") +
+      (state.assistConfigOpen
+        ? renderAssistConfigOverlay({
+            model: state.assistConfigDraft.model,
+            apiKey: state.assistConfigDraft.apiKey,
+            modelOptions: ASSIST_MODEL_OPTIONS
           })
         : "") +
       (entityEditorModel ? renderEntityEditorOverlay(entityEditorModel) : "") +
@@ -1302,6 +1440,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     });
 
     const assistMode = root.querySelector("[data-field='assist-mode']");
+    const assistModel = root.querySelector("[data-field='assist-model']");
     const assistDependencyPicker = root.querySelector("[data-field='assist-dependency-picker']");
     const assistPrompt = root.querySelector("[data-field='assist-prompt']");
     if (assistMode) {
@@ -1312,6 +1451,12 @@ export function createLessonEditorApp({ root, storage, editor }) {
     if (assistDependencyPicker) {
       assistDependencyPicker.addEventListener("change", () => {
         state.assistDraft.pendingDependencyKey = assistDependencyPicker.value;
+      });
+    }
+    if (assistModel) {
+      assistModel.addEventListener("change", () => {
+        setAssistModel(assistModel.value);
+        render();
       });
     }
     if (assistPrompt) {
@@ -1342,31 +1487,13 @@ export function createLessonEditorApp({ root, storage, editor }) {
       state.assistDraft.promptText = "";
       render();
     });
+    root.querySelector("[data-action='open-assist-config']")?.addEventListener("click", () => openAssistConfig());
     root.querySelector("[data-action='apply-assist']")?.addEventListener("click", () => {
-      const modeOption =
-        (
-          [
-            { value: "edit-card", label: "Editar card" },
-            { value: "review-dependencies", label: "Escolher tags" },
-            { value: "compose-microsequence", label: "Gerar cards" }
-          ].find((item) => item.value === state.assistDraft.selectedMode) || null
-        );
-      const selectedTitles = getAssistDependencies()
-        .filter((item) => state.assistDraft.dependencyKeys.includes(item.key))
-        .map((item) => item.title);
-
-      recordCurrentCardSnapshot("Antes do pedido", "assist");
-      state.assistDraft.lastRequest = {
-        title: modeOption ? modeOption.label : "Pedido",
-        description:
-          "Escopo: microssequência atual • Tags: " +
-          (selectedTitles.length ? selectedTitles.join(", ") : "sem dependências extras") +
-          (state.assistDraft.promptText.trim() ? " • Pedido pronto." : " • Falta escrever."),
-        timestamp: new Date().toISOString()
-      };
-      render();
+      void submitAssistRequest();
     });
     root.querySelector("[data-action='open-version-history']")?.addEventListener("click", () => openVersionHistory());
+    root.querySelector("[data-action='assist-config-close']")?.addEventListener("click", () => closeAssistConfig());
+    root.querySelector("[data-action='assist-config-save']")?.addEventListener("click", () => saveAssistConfig());
     root.querySelectorAll("[data-action='restore-version']").forEach((node) => {
       node.addEventListener("click", () => {
         const versionKey = node.getAttribute("data-version-key");
@@ -1375,6 +1502,19 @@ export function createLessonEditorApp({ root, storage, editor }) {
         restoreCardVersion(versionKey);
       });
     });
+
+    const assistConfigModel = root.querySelector("[data-field='assist-config-model']");
+    const assistConfigApiKey = root.querySelector("[data-field='assist-config-api-key']");
+    if (assistConfigModel) {
+      assistConfigModel.addEventListener("change", () => {
+        state.assistConfigDraft.model = assistConfigModel.value;
+      });
+    }
+    if (assistConfigApiKey) {
+      assistConfigApiKey.addEventListener("input", () => {
+        state.assistConfigDraft.apiKey = assistConfigApiKey.value;
+      });
+    }
 
     if (entityEditorModel) {
       const fields = {};

@@ -1787,3 +1787,16 @@ button {
   gap: 8px;
   align-items: center;
 }
+
+.assist-actions-wide {
+  grid-template-columns: 34px minmax(0, 1fr) 34px 48px;
+}
+
+.assist-actions-wide select {
+  min-width: 0;
+}
+
+.assist-status-panel.is-warning {
+  border-color: rgba(174, 94, 58, 0.9);
+  background: rgba(52, 24, 18, 0.92);
+}

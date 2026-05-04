@@ -442,6 +442,53 @@ export function deleteMicrosequence(document, input) {
   return ensureValidDocument(nextDocument);
 }
 
+export function replaceMicrosequenceCards(document, input) {
+  const nextDocument = clone(document);
+  const { lesson } = findLesson(nextDocument, input.moduleKey, input.lessonKey, input.courseKey);
+  const microsequence = findMicrosequence(lesson, input.microsequenceKey);
+
+  const nextCards = Array.isArray(input.cards) ? input.cards : [];
+  if (!nextCards.length) {
+    fail('Campo obrigatório inválido: "cards".');
+  }
+
+  if (input.title !== undefined) {
+    assignOptionalTextField(microsequence, "title", input.title);
+  }
+
+  if (input.objective !== undefined) {
+    microsequence.objective = normalizeText(input.objective, "objective");
+  }
+
+  const usedKeys = new Set();
+  microsequence.cards = nextCards.map((entry, index) => {
+    const title =
+      entry && typeof entry.title === "string" && entry.title.trim() ? entry.title.trim() : `Card ${index + 1}`;
+    const key =
+      entry && typeof entry.key === "string" && entry.key.trim()
+        ? entry.key.trim()
+        : uniqueKey(title, usedKeys, "card");
+
+    if (usedKeys.has(key)) {
+      fail(`Key de card duplicada: "${key}".`);
+    }
+
+    usedKeys.add(key);
+
+    return {
+      key,
+      intent: "text",
+      title,
+      data: createDefaultCardData({
+        title,
+        text: entry && typeof entry.text === "string" ? entry.text : ""
+      })
+    };
+  });
+
+  return ensureValidDocument(nextDocument);
+}
+
 export function createCardInMicrosequence(document, input) {
   const nextDocument = clone(document);
   const { lesson } = findLesson(nextDocument, input.moduleKey, input.lessonKey, input.courseKey);
@@ -630,6 +677,12 @@ export function createEditorSession(storage) {
 
     deleteMicrosequence(input) {
       const nextDocument = deleteMicrosequence(storage.loadProject(), input);
+      storage.saveProject(nextDocument);
+      return nextDocument;
+    },
+
+    replaceMicrosequenceCards(input) {
+      const nextDocument = replaceMicrosequenceCards(storage.loadProject(), input);
       storage.saveProject(nextDocument);
       return nextDocument;
     },

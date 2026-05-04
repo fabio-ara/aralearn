@@ -9,6 +9,7 @@ import {
   createMicrosequence,
   deleteCardInMicrosequence,
   moveCardWithinMicrosequence,
+  replaceMicrosequenceCards,
   updateCourse,
   updateCardInMicrosequence,
   updateLesson,
@@ -181,6 +182,37 @@ test("remove card e preserva card inicial quando a microssequência ficaria vazi
   assert.equal(cards[0].intent, "text");
   assert.equal(cards[0].data.blocks[0].kind, "heading");
   assert.equal(cards[0].data.blocks[1].kind, "popup");
+});
+
+test("substitui os cards da microssequência por resultado estruturado da API", () => {
+  const document = readNormalizedProject("./docs/examples/aralearn-intent-v1.valid.json");
+
+  const nextDocument = replaceMicrosequenceCards(document, {
+    courseKey: "course-curso-de-exemplo",
+    moduleKey: "module-fundamentos",
+    lessonKey: "lesson-primeira-licao",
+    microsequenceKey: "microsequence-apresentar-o-primeiro-conceito",
+    title: "Vetores",
+    objective: "Introduzir vetores em passos curtos",
+    cards: [
+      {
+        title: "Intuição",
+        text: "Vetores representam direção e intensidade."
+      },
+      {
+        title: "Operações",
+        text: "Soma e multiplicação por escalar transformam vetores."
+      }
+    ]
+  });
+
+  const microsequence = nextDocument.courses[0].modules[0].lessons[0].microsequences[0];
+  assert.equal(microsequence.title, "Vetores");
+  assert.equal(microsequence.objective, "Introduzir vetores em passos curtos");
+  assert.equal(microsequence.cards.length, 2);
+  assert.equal(microsequence.cards[0].title, "Intuição");
+  assert.equal(microsequence.cards[0].data.text, "Vetores representam direção e intensidade.");
+  assert.equal(microsequence.cards[1].data.blocks[0].kind, "heading");
 });
 
 test("sessão de edição persiste alterações simples no storage do projeto", () => {

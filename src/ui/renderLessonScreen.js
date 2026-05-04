@@ -641,8 +641,21 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
       );
     })
     .join("");
+  const modelOptions = (editorSupport.modelOptions || [])
+    .map((item) => {
+      return (
+        '<option value="' +
+        escapeHtml(item.value) +
+        '"' +
+        (item.value === editorSupport.selectedModel ? " selected" : "") +
+        ">" +
+        escapeHtml(item.label) +
+        "</option>"
+      );
+    })
+    .join("");
   const activeCard = cards[safeIndex] || null;
-  const assistRequest = editorSupport.lastRequest
+  const assistStatus = editorSupport.lastRequest
     ? '<section class="microsequence-assist-panel">' +
       '<p class="tiny muted">' +
       escapeHtml(editorSupport.lastRequest.title || "Último pedido") +
@@ -651,6 +664,18 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
       escapeHtml(editorSupport.lastRequest.description || "") +
       "</p></section>"
     : "";
+  const assistWarning = editorSupport.assistError
+    ? '<section class="microsequence-assist-panel assist-status-panel is-warning">' +
+      '<p class="muted assist-last-request">' +
+      escapeHtml(editorSupport.assistError) +
+      "</p></section>"
+    : "";
+  const assistModelSummary = editorSupport.selectedModelLabel
+    ? '<span class="context-chip">' + escapeHtml(editorSupport.selectedModelLabel) + "</span>"
+    : "";
+  const assistKeySummary = editorSupport.hasApiKey
+    ? '<span class="context-chip">chave local pronta</span>'
+    : '<span class="context-chip">sem chave</span>';
 
   return (
     '<section class="screen">' +
@@ -667,9 +692,12 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
     '<span class="context-chip">Lição: ' +
     escapeHtml(lesson.title || lesson.key) +
     "</span>" +
-    '<span class="context-chip">API · ' +
+    '<span class="context-chip">Microssequência · ' +
     escapeHtml(microsequence.title || microsequence.key) +
-    "</span></section>" +
+    "</span>" +
+    assistModelSummary +
+    assistKeySummary +
+    "</section>" +
     '<section class="microsequence-assist-panel">' +
     '<div class="field compact-field">' +
     "<label>Título da microssequência</label>" +
@@ -728,11 +756,18 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
     '<textarea data-field="assist-prompt" class="assist-prompt">' +
     escapeHtml(editorSupport.promptText || "") +
     "</textarea></div>" +
-    '<div class="assist-actions">' +
+    '<div class="assist-actions assist-actions-wide">' +
     '<button class="icon-ghost tiny-icon" type="button" data-action="clear-prompt" title="Limpar prompt" aria-label="Limpar prompt">&#8635;</button>' +
-    '<button class="open-mini" type="button" data-action="apply-assist" title="Enviar pedido" aria-label="Enviar pedido">&#9654;</button>' +
+    '<select data-field="assist-model">' +
+    modelOptions +
+    "</select>" +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="open-assist-config" title="Configurar API" aria-label="Configurar API">&#128273;</button>' +
+    '<button class="open-mini" type="button" data-action="apply-assist" title="Enviar pedido" aria-label="Enviar pedido"' +
+    (editorSupport.isSubmitting ? " disabled aria-disabled=\"true\"" : "") +
+    ">&#9654;</button>" +
     "</div></section>" +
-    assistRequest +
+    assistWarning +
+    assistStatus +
     "</main></section>"
   );
 }
