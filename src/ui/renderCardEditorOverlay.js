@@ -295,6 +295,10 @@ export function renderInlineCardEditor({ cards, card, selection }) {
     (nextDisabled ? 'disabled aria-disabled="true"' : "") +
     ' title="Próximo card" aria-label="Próximo card">&rarr;</button>' +
     "</div>" +
+    '<div class="editor-step-actions">' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="editor-create-card" title="Novo card" aria-label="Novo card">+</button>' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="editor-delete-card" title="Remover card" aria-label="Remover card">&times;</button>' +
+    "</div>" +
     '<div class="editor-step-strip">' +
     renderStepStrip(cards, activeIndex) +
     "</div></section>" +

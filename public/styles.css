@@ -514,6 +514,12 @@ button {
   text-align: center;
 }
 
+.editor-step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .editor-step-nav .icon-ghost.tiny-icon {
   min-width: 36px;
   min-height: 36px;

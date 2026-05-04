@@ -295,7 +295,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     render();
   }
 
-  function openMicrosequenceScreen(microsequenceKey, targetIndex = 0, mode = "play") {
+  function selectMicrosequenceCard(microsequenceKey, targetIndex = 0) {
     const microsequence = findMicrosequence(
       state.project,
       state.selection.courseKey,
@@ -312,6 +312,13 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.selection.microsequenceKey = microsequence.key;
     state.selection.cardIndex = safeIndex;
     state.selection.cardKey = card ? card.key : null;
+    return microsequence;
+  }
+
+  function openMicrosequenceScreen(microsequenceKey, targetIndex = 0, mode = "play") {
+    const microsequence = selectMicrosequenceCard(microsequenceKey, targetIndex);
+    if (!microsequence) return;
+
     state.view = "microsequence";
     state.microsequenceMode = mode;
     ensureCurrentCardSnapshot();
@@ -323,22 +330,8 @@ export function createLessonEditorApp({ root, storage, editor }) {
   }
 
   function openMicrosequenceAssistPage(microsequenceKey, targetIndex = 0) {
-    const microsequence = findMicrosequence(
-      state.project,
-      state.selection.courseKey,
-      state.selection.moduleKey,
-      state.selection.lessonKey,
-      microsequenceKey
-    );
+    const microsequence = selectMicrosequenceCard(microsequenceKey, targetIndex);
     if (!microsequence) return;
-
-    const cards = microsequence.cards || [];
-    const safeIndex = Math.max(0, Math.min(targetIndex, Math.max(0, cards.length - 1)));
-    const card = cards[safeIndex] || null;
-
-    state.selection.microsequenceKey = microsequence.key;
-    state.selection.cardIndex = safeIndex;
-    state.selection.cardKey = card ? card.key : null;
     state.view = "microsequence-assist";
     state.microsequenceMode = "play";
     ensureCurrentCardSnapshot();
@@ -350,22 +343,8 @@ export function createLessonEditorApp({ root, storage, editor }) {
   }
 
   function openCardEditorPage(microsequenceKey, targetIndex = 0) {
-    const microsequence = findMicrosequence(
-      state.project,
-      state.selection.courseKey,
-      state.selection.moduleKey,
-      state.selection.lessonKey,
-      microsequenceKey
-    );
+    const microsequence = selectMicrosequenceCard(microsequenceKey, targetIndex);
     if (!microsequence) return;
-
-    const cards = microsequence.cards || [];
-    const safeIndex = Math.max(0, Math.min(targetIndex, Math.max(0, cards.length - 1)));
-    const card = cards[safeIndex] || null;
-
-    state.selection.microsequenceKey = microsequence.key;
-    state.selection.cardIndex = safeIndex;
-    state.selection.cardKey = card ? card.key : null;
     state.view = "card-editor";
     state.microsequenceMode = "play";
     ensureCurrentCardSnapshot();
@@ -491,6 +470,76 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardCommentOpen = false;
     state.entityEditor = null;
     render();
+  }
+
+  function createCardAfterCurrent() {
+    const microsequenceKey = state.selection.microsequenceKey;
+    if (!microsequenceKey) return;
+
+    try {
+      const nextProject = editor.createCard({
+        moduleKey: state.selection.moduleKey,
+        lessonKey: state.selection.lessonKey,
+        microsequenceKey,
+        title: "Novo card",
+        intent: "text",
+        position: (Number.isInteger(state.selection.cardIndex) ? state.selection.cardIndex : 0) + 1
+      });
+
+      setProject(nextProject);
+      const microsequence = findMicrosequence(
+        nextProject,
+        state.selection.courseKey,
+        state.selection.moduleKey,
+        state.selection.lessonKey,
+        microsequenceKey
+      );
+      const cards = microsequence?.cards || [];
+      const nextIndex = Math.min(cards.length - 1, (state.selection.cardIndex || 0) + 1);
+      const nextCard = cards[nextIndex] || null;
+      state.selection.cardIndex = Math.max(0, nextIndex);
+      state.selection.cardKey = nextCard ? nextCard.key : null;
+      ensureCurrentCardSnapshot();
+      syncAssistDraft();
+      render();
+    } catch {
+      // Mantém a UI operacional se a criação falhar por estado transitório.
+    }
+  }
+
+  function deleteCurrentCard() {
+    const microsequenceKey = state.selection.microsequenceKey;
+    const cardKey = state.selection.cardKey;
+    if (!microsequenceKey || !cardKey) return;
+
+    try {
+      const previousIndex = Number.isInteger(state.selection.cardIndex) ? state.selection.cardIndex : 0;
+      const nextProject = editor.deleteCard({
+        moduleKey: state.selection.moduleKey,
+        lessonKey: state.selection.lessonKey,
+        microsequenceKey,
+        cardKey
+      });
+
+      setProject(nextProject);
+      const microsequence = findMicrosequence(
+        nextProject,
+        state.selection.courseKey,
+        state.selection.moduleKey,
+        state.selection.lessonKey,
+        microsequenceKey
+      );
+      const cards = microsequence?.cards || [];
+      const nextIndex = Math.max(0, Math.min(previousIndex, Math.max(0, cards.length - 1)));
+      const nextCard = cards[nextIndex] || null;
+      state.selection.cardIndex = nextIndex;
+      state.selection.cardKey = nextCard ? nextCard.key : null;
+      ensureCurrentCardSnapshot();
+      syncAssistDraft();
+      render();
+    } catch {
+      // Mantém a UI operacional se a remoção falhar por estado transitório.
+    }
   }
 
   function closeCardEditor() {
@@ -919,6 +968,8 @@ export function createLessonEditorApp({ root, storage, editor }) {
     root.querySelector("[data-action='editor-save']")?.addEventListener("click", () => closeCardEditor());
     root.querySelector("[data-action='editor-prev-card']")?.addEventListener("click", () => openCardByIndex(state.selection.cardIndex - 1));
     root.querySelector("[data-action='editor-next-card']")?.addEventListener("click", () => openCardByIndex(state.selection.cardIndex + 1));
+    root.querySelector("[data-action='editor-create-card']")?.addEventListener("click", () => createCardAfterCurrent());
+    root.querySelector("[data-action='editor-delete-card']")?.addEventListener("click", () => deleteCurrentCard());
 
     root.querySelectorAll("[data-action='open-card-index']").forEach((node) => {
       node.addEventListener("click", () => {

@@ -7,6 +7,7 @@ import {
   createCardInMicrosequence,
   createEditorSession,
   createMicrosequence,
+  deleteCardInMicrosequence,
   moveCardWithinMicrosequence,
   updateCourse,
   updateCardInMicrosequence,
@@ -154,6 +155,24 @@ test("atualiza card existente sem quebrar o contrato", () => {
   const card = nextDocument.course.modules[0].lessons[0].microsequences[0].cards[0];
   assert.equal(card.title, "Card revisado");
   assert.equal(card.data.text, "Texto revisto");
+});
+
+test("remove card e preserva card inicial quando a microssequência ficaria vazia", () => {
+  const document = readNormalizedProject("./docs/examples/aralearn-intent-v1.valid.json");
+
+  const nextDocument = deleteCardInMicrosequence(document, {
+    moduleKey: "module-fundamentos",
+    lessonKey: "lesson-primeira-licao",
+    microsequenceKey: "microsequence-apresentar-o-primeiro-conceito",
+    cardKey: "card-conceito-inicial"
+  });
+
+  const cards = nextDocument.course.modules[0].lessons[0].microsequences[0].cards;
+  assert.equal(cards.length, 1);
+  assert.equal(cards[0].title, "Novo card");
+  assert.equal(cards[0].intent, "text");
+  assert.equal(cards[0].data.blocks[0].kind, "heading");
+  assert.equal(cards[0].data.blocks[1].kind, "popup");
 });
 
 test("sessão de edição persiste alterações simples no storage do projeto", () => {

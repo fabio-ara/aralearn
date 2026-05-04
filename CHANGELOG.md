@@ -73,3 +73,18 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 - esta versão entrega casca e fluxo validável, mas ainda não representa a semântica final do projeto
 - detalhes de contrato e runtime ainda serão refinados nas próximas etapas do projeto
+
+## [0.8.0] - 2026-05-03
+
+### Added
+
+- ações explícitas no editor de cards para criar novo card logo após o card atual
+- ação explícita no editor de cards para remover o card atual sem invalidar a microssequência
+
+### Changed
+
+- seleção de card da casca local consolidada em uma rotina única para reduzir duplicação entre leitura, painel da microssequência e editor
+
+### Tests
+
+- cobertura automatizada para remoção de card com preservação de card inicial quando a microssequência ficaria vazia
