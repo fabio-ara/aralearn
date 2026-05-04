@@ -107,15 +107,13 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 ### Changed
 
-- refatoração do painel da microssequência para reduzir texto estrutural e concentrar ações em ícones
-- remoção do comentário técnico intermediário do painel assistido, deixando a instrução principal mais direta
-- remoção da retomada embutida na tela principal; o histórico local do card passou a ficar acessível por ação dedicada
-- renomeação das ações assistidas para `Editar card`, `Escolher tags` e `Gerar cards`
-- redução visual do campo `Objetivo` para tratá-lo como metadado leve da microssequência
+- consolidação do painel da microssequência em um fluxo mais enxuto, com ações assistidas padronizadas e menos texto estrutural
+- desacoplamento do histórico local do card em relação à tela principal
+- redução do peso visual do campo `Objetivo`, tratado como metadado leve da microssequência
 
 ### Tests
 
-- limpeza da camada auxiliar de storage e atualização da suíte para remover o armazenamento obsoleto do comentário assistido
+- atualização da suíte e remoção do armazenamento assistido obsoleto na camada auxiliar de storage
 
 ## [0.9.2] - 2026-05-04
 
@@ -127,8 +125,7 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 ### Changed
 
-- refatoração do painel da microssequência para um fluxo mais simples, focado em `Gerar cards` e `Revisar card`
-- transferência da escolha de modelo para a fileira final de ações do painel, com configuração da chave em overlay dedicado
+- reorganização do painel da microssequência para um fluxo assistido focado em geração e revisão de cards
 - materialização direta do retorno da API no projeto local, sem depender de resposta simulada
 
 ### Tests
@@ -140,14 +137,13 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 ### Added
 
 - curso especial destacado na home para concentrar rascunhos de microssequências geradas por API
-- tela dedicada de geração de microssequência antes da revisão, com pedido amplo, tags explícitas e seletor de modelo
+- tela dedicada de geração de microssequência com pedido amplo, tags explícitas e seletor de modelo
 - garantia estrutural no núcleo editorial para manter sempre o curso especial de rascunhos disponível
 
 ### Changed
 
 - separação do fluxo em duas etapas: geração no curso especial e revisão no painel da microssequência
-- simplificação do painel da microssequência para foco exclusivo em revisão de cards, sem misturar geração inicial no mesmo contexto
-- destaque visual do curso de rascunhos na home e transformação da tela desse curso em fila de microssequências geradas
+- especialização da tela do curso de rascunhos como fila de microssequências geradas
 
 ### Tests
 
@@ -161,19 +157,14 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 ### Changed
 
+- consolidação do layout compartilhado entre geração e revisão, com prévia superior, faixa de tags consistente e rolagem compatível com WebView
 - a garantia do curso especial de rascunhos agora semeia exemplos quando a fila ainda está vazia ou só contém item inicial vazio
 
 ### Tests
 
-- ajuste da suíte editorial para verificar a presença dos rascunhos provisórios no curso especial
+- ajuste da suíte editorial para verificar a presença dos rascunhos de exemplo no curso especial
 
 ### Fixed
 
-- restauração do botão `Play` na fila de rascunhos, com seleção correta do primeiro módulo, lição e card ao abrir um curso
-- correção de estouro horizontal no painel da microssequência em telas estreitas, com quebra adequada de chips e contenção dos campos do editor
-- simplificação da tela `Revisar microssequência`, removendo chips de contexto do topo, o campo `Objetivo` e o bloco `Card ativo`
-- simplificação da tela `Gerar microssequência`, removendo chips e instruções do topo e deixando as tags sem pré-seleção, com espaço fixo para até 5
-- refatoração da tela `Gerar microssequência` para usar o mesmo layout da revisão, com título, navegação `Card 1 de X`, prévia superior do card e painel de geração na parte inferior
-- ajuste fino da tela `Gerar microssequência`, com preview superior maior e tags selecionadas renderizadas como pills compactas em até 3 linhas
-- correção da tela `Gerar microssequência` para usar preview de card com altura fixa e rolagem externa da tela quando o conteúdo excede o WebView
-- correção da faixa de tags da geração para exibir de fato até 3 linhas visíveis e usar tags visuais reais, alinhadas ao restante da UI
+- correções de responsividade, seleção inicial e abertura da fila de rascunhos no curso especial
+- estabilização visual das telas assistidas, com contenção de overflow horizontal e harmonização da faixa de tags
