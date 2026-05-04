@@ -250,7 +250,7 @@ Intenções com renderização inicial:
 - `flow`
 - `image`
 
-As demais intenções previstas continuam válidas no contrato, mas podem usar placeholder até fases posteriores.
+As demais intenções previstas continuam válidas no contrato, mas podem usar implementação mínima até fases posteriores.
 
 ## Persistência local simples
 
