@@ -93,10 +93,11 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 ### Changed
 
-- refatoração corretiva do contrato `aralearn.intent.v1` para suportar múltiplos cursos reais em `courses[]`
+- reorganização estrutural do contrato `aralearn.intent.v1` para suportar múltiplos cursos reais em `courses[]`
 - refatoração da compilação, renderização e persistência para operar sobre a nova raiz multi-curso
-- refatoração da seleção e da home da casca local para abrir cursos reais do projeto, sem prévias falsas
+- refatoração da seleção e da home da casca local para abrir cursos reais do projeto, sem prévias artificiais
 - refatoração das operações editoriais para localizar e alterar módulos, lições, microssequências e cards dentro do curso correto
+- alinhamento da modelagem publicada ao domínio multi-curso adotado pela interface e pelo motor
 
 ### Tests
 
@@ -108,7 +109,7 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 - refatoração do painel da microssequência para reduzir texto estrutural e concentrar ações em ícones
 - remoção do comentário técnico intermediário do painel assistido, deixando a instrução principal mais direta
-- remoção da retomada embutida na tela principal; o histórico de versões do card passou a ficar acessível por ação dedicada
+- remoção da retomada embutida na tela principal; o histórico local do card passou a ficar acessível por ação dedicada
 - renomeação das ações assistidas para `Editar card`, `Escolher tags` e `Gerar cards`
 - redução visual do campo `Objetivo` para tratá-lo como metadado leve da microssequência
 
@@ -128,7 +129,7 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 - refatoração do painel da microssequência para um fluxo mais simples, focado em `Gerar cards` e `Revisar card`
 - transferência da escolha de modelo para a fileira final de ações do painel, com configuração da chave em overlay dedicado
-- materialização direta do retorno da API no projeto local, sem manter pedido apenas como mock textual
+- materialização direta do retorno da API no projeto local, sem depender de resposta simulada
 
 ### Tests
 
@@ -156,11 +157,11 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 
 ### Added
 
-- rascunhos provisórios de microssequência, com cards plausíveis de LLM, para avaliação visual da fila de rascunhos
+- rascunhos de microssequência, com cards de exemplo, para avaliação visual da fila de rascunhos
 
 ### Changed
 
-- a garantia do curso especial de rascunhos agora semeia exemplos quando a fila ainda está vazia ou só contém placeholder
+- a garantia do curso especial de rascunhos agora semeia exemplos quando a fila ainda está vazia ou só contém item inicial vazio
 
 ### Tests
 
