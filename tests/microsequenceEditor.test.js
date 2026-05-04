@@ -12,6 +12,7 @@ import {
   createMicrosequence,
   deleteCardInMicrosequence,
   ensureDraftCourse,
+  isDraftPlaceholderMicrosequence,
   moveCardWithinMicrosequence,
   replaceMicrosequenceCards,
   updateCourse,
@@ -229,6 +230,24 @@ test("garante curso especial de rascunhos para geração por API", () => {
   assert.equal(draftCourse.modules[0].lessons[0].key, DRAFT_LESSON_KEY);
   assert.equal(draftCourse.modules[0].lessons[0].microsequences.length, 3);
   assert.match(draftCourse.modules[0].lessons[0].microsequences[0].title, /Rascunho Gemini/);
+});
+
+test("identifica placeholder de geração mas não oculta microssequência já materializada", () => {
+  assert.equal(
+    isDraftPlaceholderMicrosequence({
+      title: "Nova microssequência",
+      objective: "Organizar o próximo bloco didático"
+    }),
+    true
+  );
+
+  assert.equal(
+    isDraftPlaceholderMicrosequence({
+      title: "Rascunho Gemini · Matrizes",
+      objective: "Introduzir matrizes em passos curtos"
+    }),
+    false
+  );
 });
 
 test("sessão de edição persiste alterações simples no storage do projeto", () => {

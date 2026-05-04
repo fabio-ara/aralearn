@@ -545,6 +545,17 @@ button {
   text-align: center;
 }
 
+.editor-step-empty {
+  min-height: 120px;
+  border-radius: 14px;
+  border: 1px dashed rgba(118, 94, 67, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
 .editor-step-actions {
   display: flex;
   justify-content: flex-end;
@@ -860,6 +871,10 @@ button {
 
 .runtime-card-sheet {
   min-height: 0;
+}
+
+.runtime-card-sheet-empty {
+  justify-content: flex-start;
 }
 
 .runtime-card-title {
@@ -1205,6 +1220,11 @@ button {
   display: grid;
   gap: 6px;
   min-width: 0;
+}
+
+.card-sheet-content-empty {
+  place-items: center;
+  text-align: center;
 }
 
 .field label {
