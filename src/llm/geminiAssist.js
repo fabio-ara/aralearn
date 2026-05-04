@@ -133,10 +133,9 @@ function getRepositionSchema() {
     properties: {
       courseKey: { type: "string" },
       moduleKey: { type: "string" },
-      lessonKey: { type: "string" },
-      reason: { type: "string" }
+      lessonKey: { type: "string" }
     },
-    required: ["courseKey", "moduleKey", "lessonKey", "reason"],
+    required: ["courseKey", "moduleKey", "lessonKey"],
     additionalProperties: false
   };
 }
@@ -179,13 +178,12 @@ function normalizeRepositionResult(value) {
   const courseKey = normalizeText(value?.courseKey);
   const moduleKey = normalizeText(value?.moduleKey);
   const lessonKey = normalizeText(value?.lessonKey);
-  const reason = normalizeText(value?.reason);
 
   if (!courseKey || !moduleKey || !lessonKey) {
     fail("Resposta inválida da API para reposicionamento da microssequência.");
   }
 
-  return { courseKey, moduleKey, lessonKey, reason };
+  return { courseKey, moduleKey, lessonKey };
 }
 
 async function parseGeminiResponse(response) {
