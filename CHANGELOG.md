@@ -101,3 +101,17 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 ### Tests
 
 - suíte automatizada atualizada para validar contrato, compilação, renderização, storage, paths e editor sob a nova raiz multi-curso
+
+## [0.9.1] - 2026-05-04
+
+### Changed
+
+- refatoração do painel da microssequência para reduzir texto estrutural e concentrar ações em ícones
+- remoção do comentário técnico intermediário para a API; o pedido do usuário voltou a ser o único texto de instrução do painel
+- remoção da retomada embutida na tela principal; o histórico de versões do card passou a ficar acessível por ação dedicada
+- renomeação das ações assistidas para `Editar card`, `Escolher tags` e `Gerar cards`
+- redução visual do campo `Objetivo` para tratá-lo como metadado leve da microssequência
+
+### Tests
+
+- limpeza da camada auxiliar de storage e atualização da suíte para remover o armazenamento obsoleto do comentário assistido

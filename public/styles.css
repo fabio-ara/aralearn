@@ -1236,6 +1236,34 @@ button {
   min-height: 28dvh;
 }
 
+.history-list {
+  display: grid;
+  gap: 8px;
+}
+
+.history-item {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(111, 88, 62, 0.88);
+  background: linear-gradient(180deg, rgba(34, 27, 20, 0.98), rgba(22, 17, 13, 0.99));
+  color: var(--text);
+  padding: 10px 12px;
+  text-align: left;
+  display: grid;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.history-item-title {
+  font-size: var(--type-sm);
+  font-weight: 700;
+}
+
+.history-item-meta {
+  color: var(--muted);
+  font-size: var(--type-xs);
+}
+
 .compact-field {
   gap: 4px;
 }
@@ -1673,21 +1701,6 @@ button {
   gap: 7px;
 }
 
-.assist-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.version-grid {
-  grid-template-columns: 1fr 34px;
-  align-items: end;
-}
-
-.version-restore-btn {
-  align-self: end;
-}
-
 .dependency-strip {
   display: grid;
   gap: 6px;
@@ -1702,6 +1715,22 @@ button {
   grid-template-columns: 1fr 34px;
   gap: 8px;
   margin-top: 6px;
+}
+
+.assist-toolbar,
+.assist-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.assist-toolbar {
+  justify-content: flex-end;
+}
+
+.assist-card-panel {
+  gap: 4px;
 }
 
 .dependency-tag {
@@ -1742,9 +1771,8 @@ button {
   min-height: 88px;
 }
 
-.assist-objective-textarea,
-.assist-card-comment-textarea {
-  min-height: 96px;
+.assist-objective-input {
+  min-height: 40px;
 }
 
 .assist-card-caption,
@@ -1754,7 +1782,8 @@ button {
 
 .assist-actions {
   display: grid;
-  grid-template-columns: 34px 1fr;
+  grid-template-columns: 34px 48px;
+  justify-content: end;
   gap: 8px;
   align-items: center;
 }

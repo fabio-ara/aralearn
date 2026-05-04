@@ -641,19 +641,6 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
       );
     })
     .join("");
-  const versionOptions = (editorSupport.versionOptions || [])
-    .map((item) => {
-      return (
-        '<option value="' +
-        escapeHtml(item.key) +
-        '"' +
-        (item.key === editorSupport.selectedVersionKey ? " selected" : "") +
-        ">" +
-        escapeHtml(item.label) +
-        "</option>"
-      );
-    })
-    .join("");
   const activeCard = cards[safeIndex] || null;
   const assistRequest = editorSupport.lastRequest
     ? '<section class="microsequence-assist-panel">' +
@@ -692,11 +679,21 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
     "</div>" +
     '<div class="field compact-field">' +
     "<label>Objetivo</label>" +
-    '<textarea data-field="assist-microsequence-objective" class="assist-objective-textarea">' +
+    '<input data-field="assist-microsequence-objective" class="assist-objective-input" type="text" value="' +
     escapeHtml(microsequence.objective || "") +
-    '</textarea></div>' +
-    '<button class="primary-btn compact-btn" type="button" data-action="switch-microsequence-edit">Abrir editor de cards</button>' +
+    '">' +
+    "</div>" +
+    '<div class="assist-toolbar">' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="open-version-history" title="Versões do card" aria-label="Versões do card">&#8635;</button>' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="switch-microsequence-edit" title="Abrir editor de cards" aria-label="Abrir editor de cards">&#9998;</button>' +
+    "</div>" +
     "</section>" +
+    '<section class="microsequence-assist-panel assist-card-panel">' +
+    '<div class="assist-card-head">' +
+    '<p class="tiny muted">Card ativo</p>' +
+    '<p class="muted assist-card-caption">' +
+    escapeHtml(activeCard ? activeCard.title || activeCard.key : "Sem card selecionado") +
+    "</p></div></section>" +
     '<section class="editor-step-nav">' +
     '<div class="editor-step-nav-head">' +
     '<button class="icon-ghost tiny-icon" type="button" data-action="editor-prev-card" ' +
@@ -715,28 +712,11 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
     renderEditorCardStrip(cards, safeIndex) +
     "</div></section>" +
     '<section class="microsequence-assist-panel">' +
-    '<p class="tiny muted">Comentário do card para a API</p>' +
-    '<p class="muted assist-card-caption">' +
-    escapeHtml(activeCard ? activeCard.title || activeCard.key : "Sem card selecionado") +
-    "</p>" +
-    '<div class="field compact-field">' +
-    '<textarea data-field="assist-card-comment" class="assist-card-comment-textarea">' +
-    escapeHtml(editorSupport.assistCardComment || "") +
-    "</textarea></div></section>" +
-    '<section class="microsequence-assist-panel">' +
     '<div class="field compact-field">' +
     "<label>Ação</label>" +
     '<select data-field="assist-mode">' +
     modeOptions +
     "</select></div>" +
-    '<div class="assist-grid version-grid">' +
-    '<div class="field compact-field">' +
-    "<label>Retomar</label>" +
-    '<select data-field="assist-version">' +
-    versionOptions +
-    "</select></div>" +
-    '<button class="icon-ghost version-restore-btn" type="button" data-action="restore-version" title="Retomar versão" aria-label="Retomar versão">&#8634;</button>' +
-    "</div>" +
     '<div class="field compact-field">' +
     "<label>Tags</label>" +
     dependencyPicker +
@@ -744,13 +724,13 @@ function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selecti
     selectedDependencyTags +
     "</div></div>" +
     '<div class="field compact-field">' +
-    "<label>Pedido para a API</label>" +
+    "<label>Pedido</label>" +
     '<textarea data-field="assist-prompt" class="assist-prompt">' +
     escapeHtml(editorSupport.promptText || "") +
     "</textarea></div>" +
     '<div class="assist-actions">' +
     '<button class="icon-ghost tiny-icon" type="button" data-action="clear-prompt" title="Limpar prompt" aria-label="Limpar prompt">&#8635;</button>' +
-    '<button class="primary-btn compact-btn" type="button" data-action="apply-assist">Enviar</button>' +
+    '<button class="open-mini" type="button" data-action="apply-assist" title="Enviar pedido" aria-label="Enviar pedido">&#9654;</button>' +
     "</div></section>" +
     assistRequest +
     "</main></section>"

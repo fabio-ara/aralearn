@@ -2,10 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  readAssistCommentStorage,
   readCommentStorage,
   readHistoryStorage,
-  writeAssistCommentStorage,
   writeCommentStorage,
   writeHistoryStorage
 } from "../src/ui/lessonEditorStorage.js";
@@ -28,15 +26,12 @@ test("lessonEditorStorage le e grava mapas auxiliares", () => {
 
   writeHistoryStorage({ a: [{ id: "1" }] }, storage);
   writeCommentStorage({ b: "nota" }, storage);
-  writeAssistCommentStorage({ c: "pedido" }, storage);
 
   assert.deepEqual(readHistoryStorage(storage), { a: [{ id: "1" }] });
   assert.deepEqual(readCommentStorage(storage), { b: "nota" });
-  assert.deepEqual(readAssistCommentStorage(storage), { c: "pedido" });
 });
 
 test("lessonEditorStorage tolera storage ausente ou JSON invalido", () => {
   assert.deepEqual(readHistoryStorage(null), {});
   assert.deepEqual(readCommentStorage({ getItem: () => "{" }), {});
-  assert.deepEqual(readAssistCommentStorage({ getItem: () => "\"texto\"" }), {});
 });
