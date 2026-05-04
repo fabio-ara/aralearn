@@ -232,6 +232,43 @@ test("garante curso especial de rascunhos para geração por API", () => {
   assert.match(draftCourse.modules[0].lessons[0].microsequences[0].title, /Rascunho Gemini/);
 });
 
+test("migra metadados do curso especial para o texto atual", () => {
+  const document = readNormalizedProject("./docs/examples/aralearn-intent-v1.valid.json");
+  document.courses.push({
+    key: DRAFT_COURSE_KEY,
+    title: "Novas microssequências",
+    description: "Texto antigo",
+    modules: [
+      {
+        key: DRAFT_MODULE_KEY,
+        title: "Outro título",
+        description: "Outra descrição",
+        lessons: [
+          {
+            key: DRAFT_LESSON_KEY,
+            title: "Outro nome",
+            description: "Outra fila",
+            microsequences: [
+              {
+                key: "microsequence-real",
+                title: "Rascunho real",
+                objective: "Objetivo",
+                cards: [{ key: "card-1", title: "Card 1", intent: "text", data: { text: "ok" } }]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  });
+
+  const nextDocument = ensureDraftCourse(document);
+  const draftCourse = nextDocument.courses.find((item) => item.key === DRAFT_COURSE_KEY);
+  assert.equal(draftCourse.description, "Rascunhos gerados por LLM via API pendente de consolidação em cursos definitivos.");
+  assert.equal(draftCourse.modules[0].title, "Fila de geração");
+  assert.equal(draftCourse.modules[0].lessons[0].title, "Rascunhos por API");
+});
+
 test("identifica placeholder de geração mas não oculta microssequência já materializada", () => {
   assert.equal(
     isDraftPlaceholderMicrosequence({

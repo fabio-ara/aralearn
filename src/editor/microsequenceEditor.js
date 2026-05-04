@@ -322,7 +322,7 @@ function createDraftCourse() {
   return {
     key: DRAFT_COURSE_KEY,
     title: "Novas microssequências",
-    description: "Fila de rascunhos gerados por API antes da consolidação em cursos definitivos.",
+    description: "Rascunhos gerados por LLM via API pendente de consolidação em cursos definitivos.",
     modules: [
       {
         key: DRAFT_MODULE_KEY,
@@ -365,33 +365,61 @@ export function ensureDraftCourse(document) {
   const nextDocument = clone(document);
   const courses = Array.isArray(nextDocument.courses) ? nextDocument.courses : [];
   const existingCourse = courses.find((item) => item.key === DRAFT_COURSE_KEY);
+  const defaultDraftCourse = createDraftCourse();
 
   if (!existingCourse) {
-    nextDocument.courses.push(createDraftCourse());
+    nextDocument.courses.push(defaultDraftCourse);
     return ensureValidDocument(nextDocument);
   }
 
   let changed = false;
+  if (existingCourse.title !== defaultDraftCourse.title) {
+    existingCourse.title = defaultDraftCourse.title;
+    changed = true;
+  }
+  if (existingCourse.description !== defaultDraftCourse.description) {
+    existingCourse.description = defaultDraftCourse.description;
+    changed = true;
+  }
   if (!Array.isArray(existingCourse.modules) || !existingCourse.modules.length) {
-    existingCourse.modules = createDraftCourse().modules;
+    existingCourse.modules = defaultDraftCourse.modules;
     changed = true;
   }
 
   const draftModule = existingCourse.modules.find((item) => item.key === DRAFT_MODULE_KEY);
   if (!draftModule) {
-    existingCourse.modules.unshift(createDraftCourse().modules[0]);
+    existingCourse.modules.unshift(defaultDraftCourse.modules[0]);
     changed = true;
   } else if (!Array.isArray(draftModule.lessons) || !draftModule.lessons.length) {
-    draftModule.lessons = createDraftCourse().modules[0].lessons;
+    draftModule.title = defaultDraftCourse.modules[0].title;
+    draftModule.description = defaultDraftCourse.modules[0].description;
+    draftModule.lessons = defaultDraftCourse.modules[0].lessons;
     changed = true;
   } else {
+    if (draftModule.title !== defaultDraftCourse.modules[0].title) {
+      draftModule.title = defaultDraftCourse.modules[0].title;
+      changed = true;
+    }
+    if (draftModule.description !== defaultDraftCourse.modules[0].description) {
+      draftModule.description = defaultDraftCourse.modules[0].description;
+      changed = true;
+    }
     const draftLesson = draftModule.lessons.find((item) => item.key === DRAFT_LESSON_KEY);
     if (!draftLesson) {
-      draftModule.lessons.unshift(createDraftCourse().modules[0].lessons[0]);
+      draftModule.lessons.unshift(defaultDraftCourse.modules[0].lessons[0]);
       changed = true;
     } else if (shouldSeedDraftLesson(draftLesson.microsequences)) {
       draftLesson.microsequences = createDraftSeedMicrosequences();
       changed = true;
+    } else {
+      if (draftLesson.title !== defaultDraftCourse.modules[0].lessons[0].title) {
+        draftLesson.title = defaultDraftCourse.modules[0].lessons[0].title;
+        changed = true;
+      }
+      if (draftLesson.description !== defaultDraftCourse.modules[0].lessons[0].description) {
+        draftLesson.description = defaultDraftCourse.modules[0].lessons[0].description;
+        changed = true;
+      }
     }
   }
 

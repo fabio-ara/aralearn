@@ -37,6 +37,10 @@ function countCompletedCardsInCourse(course, progress) {
   }, 0);
 }
 
+function formatCount(count, singular, plural) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 function buildHomeCoursePreviews(project, progress, featuredCourseKey = "") {
   return (project.courses || []).map((course) => {
     return {
@@ -78,21 +82,22 @@ export function renderHomeScreen({ project, progress, selection, featuredCourseK
         (course.isFeatured ? " course-card-featured" : "") +
         '">' +
         '<div class="course-copy">' +
-        (course.isFeatured ? '<p class="tiny course-badge">Fila de geração</p>' : "") +
-        '<h3 class="card-title">' +
-        escapeHtml(course.title || "Curso") +
-        "</h3>" +
-        (course.description ? '<p class="card-subtitle">' + escapeHtml(course.description) + "</p>" : "") +
+        (course.isFeatured
+          ? '<p class="course-badge course-badge-featured-title">' + escapeHtml(course.title || "Curso") + "</p>"
+          : '<h3 class="card-title">' + escapeHtml(course.title || "Curso") + "</h3>") +
+        (course.description
+          ? '<p class="card-subtitle' + (course.isFeatured ? " featured-course-description" : "") + '">' + escapeHtml(course.description) + "</p>"
+          : "") +
         '<p class="muted tiny progress-meta">' +
         "Progresso: " +
         String(course.completedCount) +
         "/" +
         String(course.totalCount) +
         " · " +
-        String(course.moduleCount) +
-        " módulos · " +
-        String(course.lessonCount) +
-        " lições</p>" +
+        formatCount(course.moduleCount, "módulo", "módulos") +
+        " · " +
+        formatCount(course.lessonCount, "lição", "lições") +
+        "</p>" +
         "</div>" +
         '<div class="course-actions">' +
         '<button class="icon-ghost corner-btn" type="button" data-action="edit-course" data-course-key="' +

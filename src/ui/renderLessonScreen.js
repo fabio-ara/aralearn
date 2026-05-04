@@ -94,6 +94,10 @@ function truncateText(value, maxLength = 120) {
   return value.slice(0, Math.max(0, maxLength - 1)).trimEnd() + "…";
 }
 
+function formatCount(count, singular, plural) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 function getLessonDescription(lesson) {
   const explicitDescription = normalizeInlineText(lesson.description);
   if (explicitDescription) {
@@ -354,7 +358,7 @@ function renderDraftCourseScreen({ course, draftMicrosequences, selectedModelLab
         renderMetaLine({
           completed: 0,
           total: cardCount,
-          parts: [String(cardCount) + " cards"]
+          parts: [formatCount(cardCount, "card", "cards")]
         }) +
         "</div>" +
         '<div class="microsequence-actions">' +
@@ -442,7 +446,7 @@ function renderCourseScreen({ course, progress }) {
             renderMetaLine({
               completed: lessonCompleted,
               total: lessonTotal,
-              parts: [String((lesson.microsequences || []).length) + " microssequências"]
+              parts: [formatCount((lesson.microsequences || []).length, "microssequência", "microssequências")]
             }) +
             "</div>" +
             '<div class="lesson-actions">' +
@@ -478,7 +482,7 @@ function renderCourseScreen({ course, progress }) {
         renderMetaLine({
           completed: moduleCompleted,
           total: moduleTotal,
-          parts: [String((moduleValue.lessons || []).length) + " lições"]
+          parts: [formatCount((moduleValue.lessons || []).length, "lição", "lições")]
         }) +
         '<ul class="lesson-list">' +
         (lessons || '<li class="lesson-item"><p class="muted tiny">Sem lições.</p></li>') +
@@ -532,7 +536,7 @@ function renderLessonScreenView({ lesson, moduleValue, progress }) {
         renderMetaLine({
           completed: microsequenceCompleted,
           total: cardCount,
-          parts: [String(cardCount) + " cards"]
+          parts: [formatCount(cardCount, "card", "cards")]
         }) +
         "</div>" +
         '<div class="microsequence-actions">' +
@@ -568,8 +572,7 @@ function renderLessonScreenView({ lesson, moduleValue, progress }) {
     "/" +
     String(lessonTotal) +
     " · " +
-    String((lesson.microsequences || []).length) +
-    " micr." +
+    formatCount((lesson.microsequences || []).length, "microssequência", "microssequências") +
     "</span>" +
     "</section>" +
     '<section class="microsequence-list">' +

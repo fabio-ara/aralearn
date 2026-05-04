@@ -285,6 +285,22 @@ button {
   text-transform: uppercase;
 }
 
+.course-badge-featured-title {
+  margin-bottom: 4px;
+  color: #f1cf8b;
+  font-family: "Aptos Display", "Georgia", serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.featured-course-description {
+  color: #ead8b7;
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
 .draft-course-hero {
   display: grid;
   gap: 10px;
