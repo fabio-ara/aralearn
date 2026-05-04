@@ -339,11 +339,27 @@ function renderMetaLine({ completed, total, parts = [] }) {
   );
 }
 
-function renderDraftCourseScreen({ course, draftMicrosequences, selectedModelLabel, hasApiKey }) {
+function renderDraftCourseScreen({ course, draftMicrosequences }) {
+  const draftModule = course.modules?.[0] || null;
+  const draftLesson = draftModule?.lessons?.[0] || null;
   const draftCards = (draftMicrosequences || [])
-    .map((microsequence) => {
+    .map((microsequence, index) => {
       const cardCount = countCardsInMicrosequence(microsequence);
-      const objective = normalizeInlineText(microsequence.objective || "");
+      const draftTags = draftModule && draftLesson
+        ? renderDidacticTags(
+            {
+              ...draftModule,
+              lessons: [
+                {
+                  ...draftLesson,
+                  microsequences: (draftMicrosequences || []).slice(0, index + 1)
+                }
+              ]
+            },
+            draftLesson.key,
+            microsequence
+          )
+        : "";
       return (
         '<article class="clean-card microsequence-card progress-card draft-microsequence-card">' +
         '<div class="microsequence-copy">' +
@@ -354,7 +370,7 @@ function renderDraftCourseScreen({ course, draftMicrosequences, selectedModelLab
         escapeHtml(microsequence.title || microsequence.key) +
         "</span>" +
         "</button>" +
-        (objective ? '<p class="card-subtitle lesson-description">' + escapeHtml(truncateText(objective, 140)) + "</p>" : "") +
+        draftTags +
         renderMetaLine({
           completed: 0,
           total: cardCount,
@@ -386,16 +402,15 @@ function renderDraftCourseScreen({ course, draftMicrosequences, selectedModelLab
     }) +
     '<main class="screen-content course-screen">' +
     '<section class="clean-card draft-course-hero">' +
-    '<p class="tiny course-badge">Curso especial</p>' +
-    '<h3 class="card-title">Gerar novas microssequências</h3>' +
+    '<div class="draft-course-hero-main">' +
+    '<div class="microsequence-copy">' +
+    '<h3 class="card-title card-title-featured">Gerar novas microssequências</h3>' +
     '<p class="card-subtitle">Use um pedido amplo, selecione tags explícitas e gere rascunhos antes de consolidar em cursos definitivos.</p>' +
-    '<div class="context-band context-band-tight">' +
-    (selectedModelLabel ? '<span class="context-chip">' + escapeHtml(selectedModelLabel) + "</span>" : "") +
-    '<span class="context-chip">' +
-    (hasApiKey ? "chave local pronta" : "sem chave") +
-    "</span>" +
     "</div>" +
-    '<button class="primary-btn draft-generate-btn" type="button" data-action="open-draft-generator">Gerar microssequência</button>' +
+    '<div class="microsequence-actions">' +
+    '<button class="open-mini" type="button" data-action="open-draft-generator" title="Gerar microssequência" aria-label="Gerar microssequência">&#9654;</button>' +
+    "</div>" +
+    "</div>" +
     "</section>" +
     '<section class="clean-card module-card progress-card">' +
     '<header class="module-head">' +
@@ -889,9 +904,7 @@ export function renderLessonScreen({ project, view, selection, course, moduleVal
     if (course?.key === editorSupport.draftCourseKey) {
       return renderDraftCourseScreen({
         course,
-        draftMicrosequences: editorSupport.draftMicrosequences,
-        selectedModelLabel: editorSupport.selectedModelLabel,
-        hasApiKey: editorSupport.hasApiKey
+        draftMicrosequences: editorSupport.draftMicrosequences
       });
     }
 

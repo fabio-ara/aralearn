@@ -294,9 +294,12 @@ button {
   gap: 10px;
 }
 
-.draft-generate-btn {
-  width: 100%;
-  min-height: 46px;
+.draft-course-hero-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .microsequence-main-button {
