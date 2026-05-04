@@ -1947,7 +1947,7 @@ button {
 }
 
 .assist-actions-wide {
-  grid-template-columns: 34px minmax(0, 1fr) 34px 48px;
+  grid-template-columns: 36px minmax(0, 1fr) 36px 36px;
   width: 100%;
 }
 
