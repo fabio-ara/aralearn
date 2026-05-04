@@ -687,19 +687,13 @@ function renderMicrosequenceWorkbenchScreen({
     .filter((item) => editorSupport.selectedDependencyKeys.includes(item.key))
     .map((item) => {
       return (
-        '<button class="' +
-        (hideCards ? "didactic-tag dependency-tag-chip dependency-chip-button" : "dependency-tag active") +
-        '" type="button" data-action="remove-dependency" data-dependency-key="' +
+        '<button class="didactic-tag dependency-tag-chip dependency-chip-button" type="button" data-action="remove-dependency" data-dependency-key="' +
         escapeHtml(item.key) +
         '">' +
-        '<span class="' +
-        (hideCards ? "didactic-tag-text dependency-chip-label" : "dependency-tag-label") +
-        '">' +
+        '<span class="didactic-tag-text dependency-chip-label">' +
         escapeHtml(item.title || item.key) +
         "</span>" +
-        '<span class="' +
-        (hideCards ? "dependency-chip-remove" : "dependency-tag-remove") +
-        '">&times;</span></button>'
+        '<span class="dependency-chip-remove">&times;</span></button>'
       );
     })
     .join("");
@@ -821,9 +815,7 @@ function renderMicrosequenceWorkbenchScreen({
     '<div class="field compact-field">' +
     "<label>Tags</label>" +
     dependencyPicker +
-    '<div class="' +
-    (hideCards ? "dependency-chip-row" : "dependency-strip") +
-    '">' +
+    '<div class="dependency-chip-row">' +
     selectedDependencyTags +
     "</div></div>" +
     '<div class="field compact-field">' +
