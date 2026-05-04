@@ -349,6 +349,7 @@ export function isDraftPlaceholderMicrosequence(microsequence) {
   return (
     microsequence.key === DRAFT_PLACEHOLDER_MICROSEQUENCE_KEY ||
     (microsequence.title === DRAFT_PLACEHOLDER_TITLE && microsequence.objective === DRAFT_PLACEHOLDER_OBJECTIVE) ||
+    ((!microsequence.title || !microsequence.title.trim()) && microsequence.objective === "Organizar o próximo bloco didático") ||
     (microsequence.title === "Nova microssequência" && microsequence.objective === "Organizar o próximo bloco didático")
   );
 }

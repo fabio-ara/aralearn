@@ -768,7 +768,7 @@ function renderMicrosequenceWorkbenchScreen({
     : '<article class="card-portrait-body card-portrait-sheet runtime-card-sheet runtime-card-sheet-empty">' +
       '<div class="runtime-card-title">Sem cards ainda</div>' +
       '<div class="card-sheet-content card-sheet-content-empty">' +
-      '<p class="runtime-paragraph">Envie o pedido para o Gemini materializar a microssequência.</p>' +
+      '<p class="runtime-paragraph">Envie o pedido à LLM para materializar uma microssequência.</p>' +
       "</div>" +
       "</article>";
 

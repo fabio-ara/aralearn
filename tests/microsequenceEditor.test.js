@@ -272,6 +272,13 @@ test("migra metadados do curso especial para o texto atual", () => {
 test("identifica placeholder de geração mas não oculta microssequência já materializada", () => {
   assert.equal(
     isDraftPlaceholderMicrosequence({
+      objective: "Organizar o próximo bloco didático"
+    }),
+    true
+  );
+
+  assert.equal(
+    isDraftPlaceholderMicrosequence({
       title: "Nova microssequência",
       objective: "Organizar o próximo bloco didático"
     }),

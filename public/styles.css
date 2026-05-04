@@ -1942,13 +1942,15 @@ button {
 .assist-actions {
   display: grid;
   grid-template-columns: 34px 48px;
-  justify-content: end;
+  width: 100%;
+  justify-content: stretch;
   gap: 8px;
   align-items: center;
 }
 
 .assist-actions-wide {
   grid-template-columns: 34px minmax(0, 1fr) 34px 48px;
+  width: 100%;
 }
 
 .assist-actions-wide select {

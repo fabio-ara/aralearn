@@ -231,6 +231,20 @@ export function createLessonEditorApp({ root, storage, editor }) {
 
     const existingPlaceholder = (draftContext.lesson.microsequences || []).find((item) => isDraftPlaceholderMicrosequence(item));
     if (existingPlaceholder) {
+      if ((existingPlaceholder.title || "").trim()) {
+        const nextProject = editor.updateMicrosequence({
+          courseKey: draftContext.course.key,
+          moduleKey: draftContext.moduleValue.key,
+          lessonKey: draftContext.lesson.key,
+          microsequenceKey: existingPlaceholder.key,
+          title: "",
+          objective: existingPlaceholder.objective || "Organizar o próximo bloco didático"
+        });
+        setProject(nextProject);
+        const nextDraftLesson = findLesson(nextProject, DRAFT_COURSE_KEY, DRAFT_MODULE_KEY, DRAFT_LESSON_KEY);
+        return (nextDraftLesson?.microsequences || []).find((item) => isDraftPlaceholderMicrosequence(item)) || null;
+      }
+
       return existingPlaceholder;
     }
 
@@ -238,7 +252,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       courseKey: draftContext.course.key,
       moduleKey: draftContext.moduleValue.key,
       lessonKey: draftContext.lesson.key,
-      title: "Nova microssequência",
+      title: "",
       objective: "Organizar o próximo bloco didático"
     });
     setProject(nextProject);
@@ -824,7 +838,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
         microsequence:
           state.view === "draft-generator"
             ? {
-                title: context.microsequence?.title || "Nova microssequência",
+                title: context.microsequence?.title || "",
                 objective: context.microsequence?.objective || "Gerar uma microssequência curta a partir de um pedido amplo."
               }
             : context.microsequence,
