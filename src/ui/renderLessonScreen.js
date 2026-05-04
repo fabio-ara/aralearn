@@ -579,7 +579,7 @@ function renderLessonScreenView({ lesson, moduleValue, progress }) {
     '<main class="screen-content lesson-structure-screen">' +
     '<section class="context-band lesson-context-band">' +
     '<span class="context-chip lesson-context-chip lesson-context-chip-start">' +
-    "Mod.: " + escapeHtml(moduleValue.title || moduleValue.key) +
+    "Mód.: " + escapeHtml(moduleValue.title || moduleValue.key) +
     "</span>" +
     '<span class="context-chip lesson-context-chip lesson-context-chip-end">' +
     "Progr.: " +
