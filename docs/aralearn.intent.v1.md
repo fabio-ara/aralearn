@@ -131,7 +131,7 @@ Regras:
 
 - deve ser estável no escopo adequado;
 - deve ser legível;
-- não precisa ser digitada manualmente pelo usuário;
+- não precisa ser digitada manualmente;
 - o validador pode gerar `key` quando ela estiver ausente;
 - deve ser única dentro do escopo de irmãos do mesmo tipo.
 
