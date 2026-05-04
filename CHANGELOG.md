@@ -169,3 +169,4 @@ Todas as mudanças relevantes deste projeto serão registradas aqui.
 ### Fixed
 
 - restauração do botão `Play` na fila de rascunhos, com seleção correta do primeiro módulo, lição e card ao abrir um curso
+- correção de estouro horizontal no painel da microssequência em telas estreitas, com quebra adequada de chips e contenção dos campos do editor

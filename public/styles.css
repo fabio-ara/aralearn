@@ -403,13 +403,17 @@ button {
 
 .badge,
 .context-chip {
+  min-width: 0;
+  max-width: 100%;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: rgba(0, 0, 0, 0.18);
   color: var(--muted);
   padding: 6px 10px;
   font-size: 0.76rem;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .context-band {
@@ -417,6 +421,7 @@ button {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 4px;
+  min-width: 0;
 }
 
 .lesson-context-band {
@@ -1199,6 +1204,7 @@ button {
 .field {
   display: grid;
   gap: 6px;
+  min-width: 0;
 }
 
 .field label {
@@ -1210,6 +1216,8 @@ button {
 .field textarea,
 .field select {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   border-radius: 10px;
   border: 1px solid var(--field-border-soft);
   background: var(--field-bg);
@@ -1326,6 +1334,7 @@ button {
   overflow-y: auto;
   overflow-x: clip;
   padding-bottom: 12px;
+  min-width: 0;
 }
 
 .builder-layout,
@@ -1725,6 +1734,8 @@ button {
   padding: 10px;
   display: grid;
   gap: 7px;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 .dependency-strip {
@@ -1741,6 +1752,7 @@ button {
   grid-template-columns: 1fr 34px;
   gap: 8px;
   margin-top: 6px;
+  min-width: 0;
 }
 
 .assist-toolbar,
@@ -1749,6 +1761,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 
 .assist-toolbar {
@@ -1806,6 +1819,17 @@ button {
   line-height: 1.45;
 }
 
+.assist-card-caption,
+.chip-muted {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assist-card-caption {
+  white-space: nowrap;
+}
+
 .assist-actions {
   display: grid;
   grid-template-columns: 34px 48px;
@@ -1820,6 +1844,22 @@ button {
 
 .assist-actions-wide select {
   min-width: 0;
+}
+
+.editor-step-nav-head {
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  min-width: 0;
+}
+
+@media (max-width: 430px) {
+  .microsequence-assist-screen,
+  .microsequence-assist-panel,
+  .editor-step-nav,
+  .context-band,
+  .assist-tag-picker,
+  .assist-actions {
+    min-width: 0;
+  }
 }
 
 .assist-status-panel.is-warning {
