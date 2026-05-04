@@ -66,6 +66,29 @@ function buildEditPrompt({ microsequence, card, dependencyTitles, promptText }) 
   ].join("\n");
 }
 
+function buildRepositionPrompt({ microsequence, dependencyTitles, promptText, destinationLessons }) {
+  const microsequenceTitle = normalizeText(microsequence?.title) || "Microssequência atual";
+  const objective = normalizeText(microsequence?.objective) || "sem objetivo definido";
+  const tags = dependencyTitles.length ? dependencyTitles.join(", ") : "sem tags";
+  const destinations = (destinationLessons || [])
+    .map((item) => `- ${item.courseTitle} > ${item.moduleTitle} > ${item.lessonTitle} | keys: ${item.courseKey} / ${item.moduleKey} / ${item.lessonKey}`)
+    .join("\n");
+
+  return [
+    `Microssequência: ${microsequenceTitle}`,
+    `Objetivo atual: ${objective}`,
+    `Tags explícitas: ${tags}`,
+    "Tarefa: escolher a lição mais apropriada para reposicionar esta microssequência.",
+    "Restrições:",
+    "- escolha apenas uma das lições listadas;",
+    "- use exatamente as keys fornecidas;",
+    "- baseie a decisão principalmente nas tags explícitas e no pedido do usuário;",
+    `Pedido do usuário: ${promptText}`,
+    "Lições disponíveis:",
+    destinations || "- nenhuma lição disponível"
+  ].join("\n");
+}
+
 function getComposeSchema() {
   return {
     type: "object",
@@ -104,6 +127,20 @@ function getEditSchema() {
   };
 }
 
+function getRepositionSchema() {
+  return {
+    type: "object",
+    properties: {
+      courseKey: { type: "string" },
+      moduleKey: { type: "string" },
+      lessonKey: { type: "string" },
+      reason: { type: "string" }
+    },
+    required: ["courseKey", "moduleKey", "lessonKey", "reason"],
+    additionalProperties: false
+  };
+}
+
 function normalizeComposeResult(value) {
   if (!value || typeof value !== "object" || !Array.isArray(value.cards) || !value.cards.length) {
     fail("Resposta inválida da API para geração da microssequência.");
@@ -138,6 +175,19 @@ function normalizeEditResult(value) {
   return { title, text };
 }
 
+function normalizeRepositionResult(value) {
+  const courseKey = normalizeText(value?.courseKey);
+  const moduleKey = normalizeText(value?.moduleKey);
+  const lessonKey = normalizeText(value?.lessonKey);
+  const reason = normalizeText(value?.reason);
+
+  if (!courseKey || !moduleKey || !lessonKey) {
+    fail("Resposta inválida da API para reposicionamento da microssequência.");
+  }
+
+  return { courseKey, moduleKey, lessonKey, reason };
+}
+
 async function parseGeminiResponse(response) {
   const data = await response.json().catch(() => null);
   if (!response.ok) {
@@ -170,6 +220,7 @@ export async function runGeminiAssist({
   microsequence,
   card,
   dependencyTitles = [],
+  destinationLessons = [],
   promptText
 }) {
   const trimmedKey = normalizeText(apiKey);
@@ -201,6 +252,14 @@ export async function runGeminiAssist({
       temperature: 0.3,
       maxOutputTokens: 2048
     });
+  } else if (mode === "reposition-microsequence") {
+    body = makeRequestBody({
+      systemInstruction,
+      prompt: buildRepositionPrompt({ microsequence, dependencyTitles, promptText: trimmedPrompt, destinationLessons }),
+      schema: getRepositionSchema(),
+      temperature: 0.2,
+      maxOutputTokens: 512
+    });
   } else if (mode === "edit-card") {
     body = makeRequestBody({
       systemInstruction,
@@ -226,5 +285,11 @@ export async function runGeminiAssist({
   );
 
   const parsed = await parseGeminiResponse(response);
-  return mode === "compose-microsequence" ? normalizeComposeResult(parsed) : normalizeEditResult(parsed);
+  if (mode === "compose-microsequence") {
+    return normalizeComposeResult(parsed);
+  }
+  if (mode === "reposition-microsequence") {
+    return normalizeRepositionResult(parsed);
+  }
+  return normalizeEditResult(parsed);
 }

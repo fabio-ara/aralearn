@@ -360,6 +360,16 @@ function renderMetaLine({ completed, total, parts = [] }) {
   );
 }
 
+function getAssistActionLabel(mode) {
+  if (mode === "edit-microsequence") {
+    return "Editar microssequência";
+  }
+  if (mode === "reposition-in-course") {
+    return "Reposicionar em um curso";
+  }
+  return "Gerar microssequência";
+}
+
 function renderDraftCourseScreen({ course, draftMicrosequences }) {
   const draftCards = (draftMicrosequences || [])
     .map((microsequence) => {
@@ -752,6 +762,19 @@ function renderMicrosequenceWorkbenchScreen({
       );
     })
     .join("");
+  const assistModeOptions = (editorSupport.assistModeOptions || [])
+    .map((item) => {
+      return (
+        '<option value="' +
+        escapeHtml(item.value) +
+        '"' +
+        (item.value === editorSupport.selectedAssistMode ? " selected" : "") +
+        ">" +
+        escapeHtml(item.label) +
+        "</option>"
+      );
+    })
+    .join("");
   const assistWarning = editorSupport.assistError
     ? '<section class="microsequence-assist-panel assist-status-panel is-warning">' +
       '<p class="muted assist-last-request">' +
@@ -767,6 +790,7 @@ function renderMicrosequenceWorkbenchScreen({
       escapeHtml(editorSupport.lastRequest.description || "") +
       "</p></section>"
     : "";
+  const actionLabel = getAssistActionLabel(editorSupport.selectedAssistMode);
   const cardStrip = hasCards
     ? renderEditorCardStrip(visibleCards, safeIndex)
     : '<div class="editor-step-empty">Os cards aparecerão aqui após o envio do prompt.</div>';
@@ -839,6 +863,13 @@ function renderMicrosequenceWorkbenchScreen({
     selectedDependencyTags +
     "</div></div>" +
     '<div class="field compact-field">' +
+    "<label>Intenção do usuário</label>" +
+    '<select data-field="assist-mode"' +
+    (editorSupport.assistModeLocked ? " disabled aria-disabled=\"true\"" : "") +
+    ">" +
+    assistModeOptions +
+    "</select></div>" +
+    '<div class="field compact-field">' +
     "<label>" +
     escapeHtml(promptLabel) +
     "</label>" +
@@ -852,9 +883,9 @@ function renderMicrosequenceWorkbenchScreen({
     "</select>" +
     '<button class="icon-ghost tiny-icon" type="button" data-action="open-assist-config" title="Configurar API" aria-label="Configurar API">&#128273;</button>' +
     '<button class="open-mini" type="button" data-action="apply-assist" title="' +
-    escapeHtml(sendTitle) +
+    escapeHtml(actionLabel || sendTitle) +
     '" aria-label="' +
-    escapeHtml(sendTitle) +
+    escapeHtml(actionLabel || sendTitle) +
     '"' +
     (editorSupport.isSubmitting ? " disabled aria-disabled=\"true\"" : "") +
     ">&#9654;</button>" +

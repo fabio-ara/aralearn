@@ -14,6 +14,7 @@ import {
   ensureDraftCourse,
   isDraftPlaceholderMicrosequence,
   moveCardWithinMicrosequence,
+  moveMicrosequence,
   replaceMicrosequenceCards,
   updateCourse,
   updateCardInMicrosequence,
@@ -220,6 +221,38 @@ test("substitui os cards da microssequência por resultado estruturado da API", 
   assert.equal(microsequence.cards[0].title, "Intuição");
   assert.equal(microsequence.cards[0].data.text, "Vetores representam direção e intensidade.");
   assert.equal(microsequence.cards[1].data.blocks[0].kind, "heading");
+});
+
+test("move microssequência para outra lição sem invalidar a origem", () => {
+  const document = readNormalizedProject("./docs/examples/aralearn-intent-v1.valid.json");
+  document.courses[0].modules[0].lessons.push({
+    key: "lesson-segunda-licao",
+    title: "Segunda lição",
+    microsequences: [
+      {
+        key: "microsequence-destino",
+        title: "Destino",
+        objective: "Receber novas microssequências",
+        cards: [{ key: "card-destino", title: "Card destino", intent: "text", data: { text: "ok" } }]
+      }
+    ]
+  });
+
+  const nextDocument = moveMicrosequence(document, {
+    courseKey: "course-curso-de-exemplo",
+    moduleKey: "module-fundamentos",
+    lessonKey: "lesson-primeira-licao",
+    microsequenceKey: "microsequence-apresentar-o-primeiro-conceito",
+    targetCourseKey: "course-curso-de-exemplo",
+    targetModuleKey: "module-fundamentos",
+    targetLessonKey: "lesson-segunda-licao"
+  });
+
+  const sourceLesson = nextDocument.courses[0].modules[0].lessons[0];
+  const targetLesson = nextDocument.courses[0].modules[0].lessons[1];
+  assert.equal(sourceLesson.microsequences.length, 1);
+  assert.equal(targetLesson.microsequences.length, 2);
+  assert.equal(targetLesson.microsequences[1].key, "microsequence-apresentar-o-primeiro-conceito");
 });
 
 test("garante curso especial de rascunhos para geração por API", () => {

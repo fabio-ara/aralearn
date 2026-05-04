@@ -699,6 +699,46 @@ export function deleteMicrosequence(document, input) {
   return ensureValidDocument(nextDocument);
 }
 
+export function moveMicrosequence(document, input) {
+  const nextDocument = clone(document);
+  if (
+    input.courseKey === input.targetCourseKey &&
+    input.moduleKey === input.targetModuleKey &&
+    input.lessonKey === input.targetLessonKey
+  ) {
+    return nextDocument;
+  }
+  const { lesson: sourceLesson } = findLesson(nextDocument, input.moduleKey, input.lessonKey, input.courseKey);
+  const { lesson: targetLesson } = findLesson(
+    nextDocument,
+    input.targetModuleKey,
+    input.targetLessonKey,
+    input.targetCourseKey
+  );
+  const microsequenceIndex = sourceLesson.microsequences.findIndex((item) => item.key === input.microsequenceKey);
+
+  if (microsequenceIndex < 0) {
+    fail(`Microssequência não encontrada: "${input.microsequenceKey}".`);
+  }
+
+  const [microsequence] = sourceLesson.microsequences.splice(microsequenceIndex, 1);
+
+  if (!sourceLesson.microsequences.length) {
+    sourceLesson.microsequences.push(createStarterMicrosequence());
+  }
+
+  const usedKeys = collectSiblingKeys(targetLesson.microsequences);
+  if (usedKeys.has(microsequence.key)) {
+    microsequence.key = uniqueKey(microsequence.title || microsequence.objective, usedKeys, "microsequence");
+  }
+
+  const targetPosition = Number.isInteger(input.targetPosition) ? input.targetPosition : targetLesson.microsequences.length;
+  const safeIndex = Math.max(0, Math.min(targetPosition, targetLesson.microsequences.length));
+  targetLesson.microsequences.splice(safeIndex, 0, microsequence);
+
+  return ensureValidDocument(nextDocument);
+}
+
 export function replaceMicrosequenceCards(document, input) {
   const nextDocument = clone(document);
   const { lesson } = findLesson(nextDocument, input.moduleKey, input.lessonKey, input.courseKey);
@@ -949,6 +989,12 @@ export function createEditorSession(storage) {
 
     deleteMicrosequence(input) {
       const nextDocument = deleteMicrosequence(storage.loadProject(), input);
+      storage.saveProject(nextDocument);
+      return nextDocument;
+    },
+
+    moveMicrosequence(input) {
+      const nextDocument = moveMicrosequence(storage.loadProject(), input);
       storage.saveProject(nextDocument);
       return nextDocument;
     },
