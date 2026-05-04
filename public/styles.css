@@ -1781,10 +1781,11 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  max-height: calc((26px * 3) + 12px);
-  overflow: auto;
+  max-height: 86px;
+  overflow-y: auto;
+  overflow-x: clip;
   align-content: flex-start;
-  padding-top: 6px;
+  padding: 6px 0 2px;
 }
 
 .assist-tag-picker {
@@ -1842,18 +1843,13 @@ button {
   min-height: 26px;
 }
 
-.dependency-chip {
-  width: auto;
-  max-width: 100%;
-  min-height: 26px;
-  border-radius: 999px;
-  border: 1px solid rgba(170, 134, 86, 0.72);
+.dependency-chip-button {
+  min-height: 24px;
+  padding-right: 8px;
+  gap: 6px;
   background: linear-gradient(180deg, rgba(67, 53, 37, 0.98), rgba(44, 34, 24, 0.99));
+  border-color: rgba(170, 134, 86, 0.72);
   color: #f5e6cb;
-  padding: 4px 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
   cursor: pointer;
 }
 
@@ -1867,6 +1863,8 @@ button {
 .dependency-chip-remove {
   flex: 0 0 auto;
   color: #f0d7a2;
+  font-size: 0.76rem;
+  line-height: 1;
 }
 
 .dependency-tag-label {

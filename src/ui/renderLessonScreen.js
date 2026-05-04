@@ -808,10 +808,10 @@ function renderDraftGeneratorScreen({ lesson, microsequence, cards, selection, e
     .filter((item) => editorSupport.selectedDependencyKeys.includes(item.key))
     .map((item) => {
       return (
-        '<button class="dependency-chip active" type="button" data-action="remove-dependency" data-dependency-key="' +
+        '<button class="didactic-tag dependency-tag-chip dependency-chip-button" type="button" data-action="remove-dependency" data-dependency-key="' +
         escapeHtml(item.key) +
         '">' +
-        '<span class="dependency-chip-label">' +
+        '<span class="didactic-tag-text dependency-chip-label">' +
         escapeHtml(item.title || item.key) +
         "</span>" +
         '<span class="dependency-chip-remove">&times;</span></button>'
