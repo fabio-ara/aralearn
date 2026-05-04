@@ -4,6 +4,7 @@ import { renderCardCommentOverlay } from "./renderCardCommentOverlay.js";
 import { renderCardVersionOverlay } from "./renderCardVersionOverlay.js";
 import { renderEntityEditorOverlay } from "./renderEntityEditorOverlay.js";
 import { renderAssistConfigOverlay } from "./renderAssistConfigOverlay.js";
+import { captureRenderState, restoreRenderState } from "./renderState.js";
 import {
   buildCardPathKey,
   collectAssistDependencies,
@@ -299,7 +300,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardCommentOpen = false;
     state.entityEditor = null;
     state.microsequenceMode = "play";
-    render();
+    render({ preserveState: false });
   }
 
   function openLesson(moduleKey, lessonKey) {
@@ -318,7 +319,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardCommentOpen = false;
     state.entityEditor = null;
     state.microsequenceMode = "play";
-    render();
+    render({ preserveState: false });
   }
 
   function saveCardHistory() {
@@ -336,7 +337,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
   function openAssistConfig() {
     state.assistConfigDraft = { ...state.assistConfig };
     state.assistConfigOpen = true;
-    render();
+    render({ preserveState: true });
   }
 
   function openDraftGenerationPage() {
@@ -365,12 +366,12 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.versionHistoryOpen = false;
     state.entityEditor = null;
     syncAssistDraft();
-    render();
+    render({ preserveState: false });
   }
 
   function closeAssistConfig() {
     state.assistConfigOpen = false;
-    render();
+    render({ preserveState: true });
   }
 
   function saveAssistConfig() {
@@ -381,7 +382,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     persistAssistConfig();
     state.assistConfigOpen = false;
     state.assistDraft.errorMessage = "";
-    render();
+    render({ preserveState: true });
   }
 
   function setAssistModel(model) {
@@ -509,7 +510,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       description: `Editor voltou para ${version.label.toLowerCase()}.`,
       timestamp: new Date().toISOString()
     };
-    render();
+    render({ preserveState: true });
   }
 
   function selectMicrosequenceCard(microsequenceKey, targetIndex = 0) {
@@ -543,7 +544,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardEditorOpen = false;
     state.cardCommentOpen = false;
     state.entityEditor = null;
-    render();
+    render({ preserveState: false });
   }
 
   function openMicrosequenceAssistPage(microsequenceKey, targetIndex = 0) {
@@ -556,7 +557,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardEditorOpen = false;
     state.cardCommentOpen = false;
     state.entityEditor = null;
-    render();
+    render({ preserveState: false });
   }
 
   function openCardEditorPage(microsequenceKey, targetIndex = 0) {
@@ -568,7 +569,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardEditorOpen = false;
     state.cardCommentOpen = false;
     state.entityEditor = null;
-    render();
+    render({ preserveState: false });
   }
 
   function openCardByIndex(targetIndex) {
@@ -611,7 +612,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
 
     ensureCurrentCardSnapshot();
     syncAssistDraft();
-    render();
+    render({ preserveState: true });
   }
 
   function stepCard(delta) {
@@ -643,12 +644,12 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.versionHistoryOpen = false;
     state.cardEditorOpen = false;
     state.entityEditor = null;
-    render();
+    render({ preserveState: true });
   }
 
   function closeCardComment() {
     state.cardCommentOpen = false;
-    render();
+    render({ preserveState: true });
   }
 
   function saveCardComment() {
@@ -663,7 +664,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
 
     writeCommentStorage(state.cardComments);
     state.cardCommentOpen = false;
-    render();
+    render({ preserveState: true });
   }
 
   function openEntityEditor(kind, target = {}) {
@@ -679,12 +680,12 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardCommentOpen = false;
     state.versionHistoryOpen = false;
     state.assistConfigOpen = false;
-    render();
+    render({ preserveState: true });
   }
 
   function closeEntityEditor() {
     state.entityEditor = null;
-    render();
+    render({ preserveState: true });
   }
 
   function openCardEditor() {
@@ -693,7 +694,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.versionHistoryOpen = false;
     state.assistConfigOpen = false;
     state.entityEditor = null;
-    render();
+    render({ preserveState: true });
   }
 
   function openVersionHistory() {
@@ -702,12 +703,12 @@ export function createLessonEditorApp({ root, storage, editor }) {
     state.cardEditorOpen = false;
     state.assistConfigOpen = false;
     state.entityEditor = null;
-    render();
+    render({ preserveState: true });
   }
 
   function closeVersionHistory() {
     state.versionHistoryOpen = false;
-    render();
+    render({ preserveState: true });
   }
 
   function createCardAtPosition(position) {
@@ -748,7 +749,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
 
     try {
       createCardAtPosition((Number.isInteger(state.selection.cardIndex) ? state.selection.cardIndex : 0) + 1);
-      render();
+      render({ preserveState: true });
     } catch {
       // Mantém a UI operacional se a criação falhar por estado transitório.
     }
@@ -831,7 +832,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
 
     state.assistDraft.isSubmitting = true;
     state.assistDraft.errorMessage = "";
-    render();
+    render({ preserveState: true });
 
     try {
       const result = await runGeminiAssist({
@@ -871,7 +872,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       state.assistDraft.errorMessage = error instanceof Error ? error.message : "Falha ao chamar a API.";
     } finally {
       state.assistDraft.isSubmitting = false;
-      render();
+      render({ preserveState: true });
     }
   }
 
@@ -905,7 +906,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       state.selection.cardKey = nextCard ? nextCard.key : null;
       ensureCurrentCardSnapshot();
       syncAssistDraft();
-      render();
+      render({ preserveState: true });
     } catch {
       // Mantém a UI operacional se a remoção falhar por estado transitório.
     }
@@ -913,7 +914,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
 
   function closeCardEditor() {
     state.cardEditorOpen = false;
-    render();
+    render({ preserveState: true });
   }
 
   function runEntityAction(actionKey) {
@@ -1055,7 +1056,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       }
 
       state.entityEditor = null;
-      render();
+      render({ preserveState: false });
     } catch {
       // Mantém a UI operacional se a ação estrutural falhar por estado transitório.
     }
@@ -1085,7 +1086,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       state.view = "courses";
     }
 
-    render();
+    render({ preserveState: false });
   }
 
   function updateEntityDraft(payload) {
@@ -1316,7 +1317,8 @@ export function createLessonEditorApp({ root, storage, editor }) {
     return { course, moduleValue, lesson, microsequence, cards, card, dependencies };
   }
 
-  function render() {
+  function render({ preserveState = true } = {}) {
+    const renderState = preserveState ? captureRenderState(root) : null;
     const context = getRenderContext();
     const assistCatalog = getAssistCatalog();
     const draftContext = getDraftLessonContext();
@@ -1387,6 +1389,10 @@ export function createLessonEditorApp({ root, storage, editor }) {
         : "") +
       (entityEditorModel ? renderEntityEditorOverlay(entityEditorModel) : "") +
       "</div>";
+
+    if (renderState) {
+      restoreRenderState(root, renderState);
+    }
 
     root.querySelector("[data-action='go-back']")?.addEventListener("click", () => goBack());
 
@@ -1605,7 +1611,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
       recordCurrentCardSnapshot("Manual", "manual");
       state.view = "microsequence-assist";
       state.microsequenceMode = "play";
-      render();
+      render({ preserveState: true });
     });
 
     const assistMode = root.querySelector("[data-field='assist-mode']");
@@ -1625,7 +1631,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
     if (assistModel) {
       assistModel.addEventListener("change", () => {
         setAssistModel(assistModel.value);
-        render();
+        render({ preserveState: true });
       });
     }
     if (assistPrompt) {
@@ -1639,7 +1645,7 @@ export function createLessonEditorApp({ root, storage, editor }) {
         if (!key) return;
         state.assistDraft.dependencyKeys = state.assistDraft.dependencyKeys.filter((item) => item !== key);
         syncAssistDraft();
-        render();
+        render({ preserveState: true });
       });
     });
     root.querySelector("[data-action='add-dependency']")?.addEventListener("click", () => {
@@ -1650,11 +1656,11 @@ export function createLessonEditorApp({ root, storage, editor }) {
       current.add(key);
       state.assistDraft.dependencyKeys = Array.from(current).slice(0, MAX_ASSIST_DEPENDENCIES);
       syncAssistDraft();
-        render();
+      render({ preserveState: true });
     });
     root.querySelector("[data-action='clear-prompt']")?.addEventListener("click", () => {
       state.assistDraft.promptText = "";
-      render();
+      render({ preserveState: true });
     });
     root.querySelector("[data-action='open-assist-config']")?.addEventListener("click", () => openAssistConfig());
     root.querySelector("[data-action='apply-assist']")?.addEventListener("click", () => {
@@ -1710,5 +1716,5 @@ export function createLessonEditorApp({ root, storage, editor }) {
 
   ensureCurrentCardSnapshot();
   syncAssistDraft();
-  render();
+  render({ preserveState: false });
 }

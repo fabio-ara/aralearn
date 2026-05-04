@@ -1349,9 +1349,9 @@ button {
 
 .generator-preview-stage {
   flex: 0 0 auto;
-  height: min(46dvh, 360px);
-  min-height: 300px;
-  max-height: 360px;
+  height: clamp(400px, 58dvh, 560px);
+  min-height: 400px;
+  max-height: 560px;
   overflow: hidden;
 }
 
