@@ -82,11 +82,9 @@ export function renderHomeScreen({ project, progress, selection, featuredCourseK
         (course.isFeatured ? " course-card-featured" : "") +
         '">' +
         '<div class="course-copy">' +
-        (course.isFeatured
-          ? '<p class="course-badge course-badge-featured-title">' + escapeHtml(course.title || "Curso") + "</p>"
-          : '<h3 class="card-title">' + escapeHtml(course.title || "Curso") + "</h3>") +
+        '<h3 class="card-title' + (course.isFeatured ? " card-title-featured" : "") + '">' + escapeHtml(course.title || "Curso") + "</h3>" +
         (course.description
-          ? '<p class="card-subtitle' + (course.isFeatured ? " featured-course-description" : "") + '">' + escapeHtml(course.description) + "</p>"
+          ? '<p class="card-subtitle">' + escapeHtml(course.description) + "</p>"
           : "") +
         '<p class="muted tiny progress-meta">' +
         "Progresso: " +
