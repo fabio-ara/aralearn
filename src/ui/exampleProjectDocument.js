@@ -1,3 +1,5 @@
+import { normalizeCardBlocks } from "../core/cardBlockModel.js";
+
 function buildCardBlocks(entry, index) {
   const text = entry.text || "";
   const sentenceParts = text.split(".").map((item) => item.trim()).filter(Boolean);
@@ -27,7 +29,11 @@ function buildCardBlocks(entry, index) {
     ]
   ];
 
-  return entry.blocks || templates[index % templates.length];
+  return normalizeCardBlocks({
+    title: entry.title,
+    text: entry.text,
+    blocks: entry.blocks || templates[index % templates.length]
+  });
 }
 
 function createCards(microsequenceKey, microsequenceTitle, entries) {
@@ -37,7 +43,6 @@ function createCards(microsequenceKey, microsequenceTitle, entries) {
       intent: "text",
       title: entry.title,
       data: {
-        text: entry.text || `Card ${index + 1} da microssequência ${microsequenceTitle}.`,
         blocks: buildCardBlocks(entry, index)
       }
     };

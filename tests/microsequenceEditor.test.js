@@ -43,6 +43,8 @@ test("cria microssequência nova dentro da lição sem gerar card solto", () => 
   assert.equal(lesson.microsequences[1].cards.length, 1);
   assert.equal(lesson.microsequences[1].cards[0].intent, "text");
   assert.equal(lesson.microsequences[1].cards[0].title, "Novo card");
+  assert.equal(lesson.microsequences[1].cards[0].data.blocks[0].kind, "heading");
+  assert.equal(lesson.microsequences[1].cards[0].data.blocks[1].kind, "popup");
 });
 
 test("edita título e objetivo da microssequência", () => {
@@ -106,6 +108,9 @@ test("cria card apenas dentro de microssequência existente", () => {
   const cards = nextDocument.course.modules[0].lessons[0].microsequences[0].cards;
   assert.equal(cards.length, 2);
   assert.equal(cards[1].intent, "ask");
+  assert.equal(cards[1].data.prompt, "Pergunta de teste");
+  assert.equal(cards[1].data.blocks[0].kind, "heading");
+  assert.equal(cards[1].data.blocks[1].kind, "popup");
 });
 
 test("move card dentro da mesma microssequência", () => {

@@ -1,4 +1,5 @@
 import { validateIntentV1Document } from "../contract/validateIntentV1.js";
+import { createDefaultCardData } from "../core/cardBlockModel.js";
 
 function clone(value) {
   return structuredClone(value);
@@ -111,6 +112,27 @@ function assignOptionalTextField(record, fieldName, value) {
   }
 }
 
+function buildCardPayload({ title, data }) {
+  const normalizedTitle = title && typeof title === "string" ? title.trim() : "";
+  if (data !== undefined) {
+    const nextData = clone(data);
+    const defaultData = createDefaultCardData({
+      title: normalizedTitle || "Novo card",
+      text: typeof nextData.text === "string" ? nextData.text : ""
+    });
+
+    return {
+      ...nextData,
+      blocks: Array.isArray(nextData.blocks) ? nextData.blocks : defaultData.blocks,
+      text: typeof nextData.text === "string" ? nextData.text : defaultData.text
+    };
+  }
+
+  return createDefaultCardData({
+    title: normalizedTitle || "Novo card"
+  });
+}
+
 export function updateCourse(document, input) {
   const nextDocument = clone(document);
   const course = findCourse(nextDocument, input.courseKey);
@@ -166,9 +188,9 @@ export function createMicrosequence(document, input) {
         key: starterCardKey,
         intent: "text",
         title: "Novo card",
-        data: {
-          text: ""
-        }
+        data: createDefaultCardData({
+          title: "Novo card"
+        })
       }
     ]
   };
@@ -221,7 +243,10 @@ export function createCardInMicrosequence(document, input) {
     key,
     intent,
     ...(title ? { title } : {}),
-    ...(input.data !== undefined ? { data: clone(input.data) } : {})
+    data: buildCardPayload({
+      title: title || "Novo card",
+      data: input.data
+    })
   };
 
   const position = Number.isInteger(input.position) ? input.position : microsequence.cards.length;
@@ -304,9 +329,9 @@ export function deleteCardInMicrosequence(document, input) {
       key: starterCardKey,
       intent: "text",
       title: "Novo card",
-      data: {
-        text: ""
-      }
+      data: createDefaultCardData({
+        title: "Novo card"
+      })
     });
   }
 

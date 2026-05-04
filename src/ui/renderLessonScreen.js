@@ -1,5 +1,6 @@
 import { renderInlineCardEditor } from "./renderCardEditorOverlay.js";
 import { renderHomeScreen } from "./renderHomeScreen.js";
+import { normalizeCardBlocks } from "../core/cardBlockModel.js";
 
 function escapeHtml(value) {
   return String(value)
@@ -192,11 +193,23 @@ function renderLightDependencyTags(dependencies) {
 }
 
 function normalizeBlocks(card) {
-  if (card && card.data && Array.isArray(card.data.blocks)) {
-    return card.data.blocks;
-  }
+  return normalizeCardBlocks({
+    title: card?.title || "",
+    text: card?.data?.text || "",
+    blocks: card?.data?.blocks || []
+  });
+}
 
-  return [];
+function renderMarkdownInline(text) {
+  return escapeHtml(text || "")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+    .replace(/\n/g, "<br>");
+}
+
+function renderMarkdownParagraph(text) {
+  return renderMarkdownInline(text);
 }
 
 function splitLabelToItems(label) {
@@ -207,38 +220,41 @@ function splitLabelToItems(label) {
     .slice(0, 4);
 }
 
-function renderRuntimeBlocks(card, fallbackText) {
-  const blocks = normalizeBlocks(card);
+function renderRuntimeBlockList(blocks, fallbackText) {
   if (!blocks.length) {
     return '<p class="runtime-paragraph">' + escapeHtml(fallbackText || "Sem conteúdo.") + "</p>";
   }
 
-  const cardTitle = normalizeInlineText(card && (card.title || card.key));
+  const cardTitle = "";
   const normalizedBlocks =
     blocks.length &&
     blocks[0] &&
     blocks[0].kind === "heading" &&
+    cardTitle &&
     normalizeInlineText(blocks[0].label).toLowerCase() === cardTitle.toLowerCase()
       ? blocks.slice(1)
       : blocks;
 
   return normalizedBlocks
     .map((block) => {
-      const label = escapeHtml(block.label || "");
+      const label = block.label || "";
       const kind = escapeHtml(block.kind || "paragraph");
 
       if (block.kind === "heading") {
-        return '<h3 class="runtime-block runtime-heading">' + label + "</h3>";
+        return '<h3 class="runtime-block runtime-heading">' + renderMarkdownInline(label) + "</h3>";
       }
 
       if (block.kind === "paragraph") {
-        return '<p class="runtime-block runtime-paragraph">' + label + "</p>";
+        return '<p class="runtime-block runtime-paragraph">' + renderMarkdownParagraph(label) + "</p>";
       }
 
       if (block.kind === "list") {
-        const items = splitLabelToItems(block.label);
+        const items = String(block.label || "")
+          .split(/\n|[;,]/)
+          .map((item) => item.trim())
+          .filter(Boolean);
         const listItems = (items.length ? items : [block.label || "Ponto de apoio"])
-          .map((item) => '<li>' + escapeHtml(item) + "</li>")
+          .map((item) => '<li>' + renderMarkdownInline(item) + "</li>")
           .join("");
         return '<div class="runtime-block runtime-list-block"><ul class="runtime-list">' + listItems + "</ul></div>";
       }
@@ -248,7 +264,7 @@ function renderRuntimeBlocks(card, fallbackText) {
           '<div class="runtime-block runtime-choice-block">' +
           '<div class="runtime-choice-label">Pergunta-guia</div>' +
           '<div class="runtime-choice-body">' +
-          label +
+          renderMarkdownParagraph(label) +
           "</div></div>"
         );
       }
@@ -257,12 +273,12 @@ function renderRuntimeBlocks(card, fallbackText) {
         return (
           '<div class="runtime-block runtime-table-block">' +
           '<div class="runtime-table-title">' +
-          label +
+          renderMarkdownInline(label) +
           "</div>" +
           '<div class="runtime-table-wrap"><table class="runtime-table">' +
           "<thead><tr><th>Parte</th><th>Foco</th></tr></thead>" +
           "<tbody>" +
-          "<tr><td>Base</td><td>" + label + "</td></tr>" +
+          "<tr><td>Base</td><td>" + renderMarkdownInline(label) + "</td></tr>" +
           "<tr><td>Uso</td><td>Aplicar na leitura do card atual</td></tr>" +
           "</tbody></table></div></div>"
         );
@@ -271,14 +287,40 @@ function renderRuntimeBlocks(card, fallbackText) {
       if (block.kind === "flowchart") {
         const items = splitLabelToItems(block.label);
         const flowItems = (items.length ? items : [block.label || "Etapa central"])
-          .map((item) => '<span class="runtime-flow-node">' + escapeHtml(item) + "</span>")
+          .map((item) => '<span class="runtime-flow-node">' + renderMarkdownInline(item) + "</span>")
           .join('<span class="runtime-flow-arrow">→</span>');
         return '<div class="runtime-block runtime-flow-block">' + flowItems + "</div>";
       }
 
-      return '<p class="runtime-block runtime-paragraph" data-kind="' + kind + '">' + label + "</p>";
+      if (block.kind === "popup") {
+        return (
+          '<details class="runtime-block runtime-popup-block" open>' +
+          '<summary class="runtime-popup-summary">' +
+          renderMarkdownInline(block.label || "Botão") +
+          "</summary>" +
+          '<div class="runtime-popup-body">' +
+          renderRuntimeBlockList(Array.isArray(block.children) ? block.children : [], "") +
+          "</div></details>"
+        );
+      }
+
+      return '<p class="runtime-block runtime-paragraph" data-kind="' + kind + '">' + renderMarkdownParagraph(label) + "</p>";
     })
     .join("");
+}
+
+function renderRuntimeBlocks(card, fallbackText) {
+  const blocks = normalizeBlocks(card);
+  const cardTitle = normalizeInlineText(card && (card.title || card.key));
+  const normalizedBlocks =
+    blocks.length &&
+    blocks[0] &&
+    blocks[0].kind === "heading" &&
+    normalizeInlineText(blocks[0].label).toLowerCase() === cardTitle.toLowerCase()
+      ? blocks.slice(1)
+      : blocks;
+
+  return renderRuntimeBlockList(normalizedBlocks, fallbackText);
 }
 
 function renderMetaLine({ completed, total, parts = [] }) {
@@ -485,6 +527,71 @@ function renderMicrosequenceScreen({ lesson, microsequence, cards, selection, mi
 
   const bodyText =
     activeCard && activeCard.data && typeof activeCard.data.text === "string" ? activeCard.data.text : "";
+  const lightDependencyTags = renderLightDependencyTags(editorSupport.dependencies || []);
+  const microsequenceIndex = Math.max(0, (lesson.microsequences || []).findIndex((item) => item.key === microsequence.key));
+  const cardProgressPercent = lessonStudyCount ? ((lessonStudyIndex + 1) / lessonStudyCount) * 100 : 0;
+
+  const cardBody =
+    '<article class="card-portrait-body card-portrait-sheet runtime-card-sheet">' +
+    '<div class="runtime-card-title">' +
+    escapeHtml(activeCard ? activeCard.title || activeCard.key : "Sem card") +
+    "</div>" +
+    '<div class="card-sheet-content">' +
+    renderRuntimeBlocks(activeCard, bodyText) +
+    "</div>" +
+    "</article>";
+
+  const leadingPanel =
+    lightDependencyTags
+      ? '<div class="study-context-tags compact-study-tags">' + lightDependencyTags + "</div>"
+      : "";
+
+  return (
+    '<section class="screen study-reader-screen">' +
+    '<section class="study-reader-topbar">' +
+    '<button class="icon-ghost" type="button" data-action="go-home" title="Voltar para a lição" aria-label="Voltar para a lição">&#8962;</button>' +
+    '<button class="icon-ghost" type="button" data-action="prev-card" ' +
+    (prevDisabled ? 'disabled aria-disabled="true"' : "") +
+    ' title="Card anterior" aria-label="Card anterior">&larr;</button>' +
+    '<div class="study-reader-progress"><span style="width:' +
+    String(cardProgressPercent) +
+    '%"></span></div>' +
+    '<button class="icon-ghost" type="button" data-action="open-microsequence-assist" title="Painel da microssequência" aria-label="Painel da microssequência">&#9998;</button>' +
+    '<button class="icon-ghost" type="button" data-action="close-study" title="Fechar leitura" aria-label="Fechar leitura">&times;</button>' +
+    "</section>" +
+    '<main class="screen-content microsequence-screen">' +
+    '<section class="study-reader-context">' +
+    '<div class="study-reader-line">' +
+    '<span class="study-reader-context-line">' +
+    escapeHtml(lesson.title || lesson.key) +
+    " - " +
+    escapeHtml(microsequence.title || microsequence.key) +
+    "</span>" +
+    '<span class="study-reader-count">Card ' +
+    String(lessonStudyIndex + 1) +
+    " de " +
+    String(lessonStudyCount) +
+    "</span></div></section>" +
+    leadingPanel +
+    '<section class="card-portrait editor-card-portrait' +
+    " study-stage" +
+    '">' +
+    cardBody +
+    "</section>" +
+    "</main>" +
+    '<section class="study-reader-footer"><div class="study-action-dock"><div class="study-action-stack"><div class="study-next-wrap">' +
+    '<button class="icon-ghost study-comment-btn" type="button" data-action="open-card-comment" title="Anotação pessoal" aria-label="Anotação pessoal"><span class="comment-glyph" aria-hidden="true"></span></button>' +
+    '<button class="open-mini study-continue-btn" type="button" data-action="next-card" ' +
+    (nextDisabled ? 'disabled aria-disabled="true"' : "") +
+    ' title="Continuar" aria-label="Continuar">&#9654;</button>' +
+    "</div></div></div></section>" +
+    "</section>"
+  );
+}
+
+function renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selection, editorSupport }) {
+  const activeIndex = Number.isInteger(selection.cardIndex) ? selection.cardIndex : 0;
+  const safeIndex = Math.max(0, Math.min(activeIndex, Math.max(0, cards.length - 1)));
   const selectedDependencyTags = (editorSupport.dependencies || [])
     .filter((item) => editorSupport.selectedDependencyKeys.includes(item.key))
     .map((item) => {
@@ -495,8 +602,7 @@ function renderMicrosequenceScreen({ lesson, microsequence, cards, selection, mi
         '<span class="dependency-tag-label">' +
         escapeHtml(item.title || item.key) +
         "</span>" +
-        '<span class="dependency-tag-remove">&times;</span>' +
-        "</button>"
+        '<span class="dependency-tag-remove">&times;</span></button>'
       );
     })
     .join("");
@@ -514,15 +620,14 @@ function renderMicrosequenceScreen({ lesson, microsequence, cards, selection, mi
       );
     })
     .join("");
-  const dependencyPicker =
-    availableDependencyOptions
-      ? '<div class="assist-tag-picker">' +
-        '<select data-field="assist-dependency-picker">' +
-        availableDependencyOptions +
-        "</select>" +
-        '<button class="icon-ghost tiny-icon" type="button" data-action="add-dependency" title="Adicionar tag" aria-label="Adicionar tag">+</button>' +
-        "</div>"
-      : "";
+  const dependencyPicker = availableDependencyOptions
+    ? '<div class="assist-tag-picker">' +
+      '<select data-field="assist-dependency-picker">' +
+      availableDependencyOptions +
+      "</select>" +
+      '<button class="icon-ghost tiny-icon" type="button" data-action="add-dependency" title="Adicionar tag" aria-label="Adicionar tag">+</button>' +
+      "</div>"
+    : "";
   const modeOptions = (editorSupport.modeOptions || [])
     .map((item) => {
       return (
@@ -536,10 +641,6 @@ function renderMicrosequenceScreen({ lesson, microsequence, cards, selection, mi
       );
     })
     .join("");
-  const selectedMode =
-    (editorSupport.modeOptions || []).find((item) => item.value === editorSupport.selectedMode) ||
-    (editorSupport.modeOptions || [])[0] ||
-    null;
   const versionOptions = (editorSupport.versionOptions || [])
     .map((item) => {
       return (
@@ -553,125 +654,103 @@ function renderMicrosequenceScreen({ lesson, microsequence, cards, selection, mi
       );
     })
     .join("");
-  const promptValue = escapeHtml(editorSupport.promptText || "");
-  const lightDependencyTags = renderLightDependencyTags(editorSupport.dependencies || []);
-  const microsequenceIndex = Math.max(0, (lesson.microsequences || []).findIndex((item) => item.key === microsequence.key));
-  const cardProgressPercent = lessonStudyCount ? ((lessonStudyIndex + 1) / lessonStudyCount) * 100 : 0;
-
-  const cardBody =
-    microsequenceMode === "edit"
-      ? renderInlineCardEditor({ cards, card: activeCard, selection }) +
-        '<section class="microsequence-assist-panel">' +
-        '<div class="field compact-field">' +
-        "<label>Ação</label>" +
-        '<select data-field="assist-mode">' +
-        modeOptions +
-        "</select>" +
-        "</div>" +
-        '<div class="assist-grid version-grid">' +
-        '<div class="field compact-field">' +
-        "<label>Retomar</label>" +
-        '<select data-field="assist-version">' +
-        versionOptions +
-        "</select>" +
-        "</div>" +
-        '<button class="icon-ghost version-restore-btn" type="button" data-action="restore-version" title="Retomar versão" aria-label="Retomar versão">&#8634;</button>' +
-        "</div>" +
-        '<div class="field compact-field">' +
-        "<label>Tags</label>" +
-        dependencyPicker +
-        '<div class="dependency-strip">' +
-        selectedDependencyTags +
-        "</div>" +
-        "</div>" +
-        '<div class="field compact-field">' +
-        "<label>Pedido</label>" +
-        '<textarea data-field="assist-prompt" class="assist-prompt">' +
-        promptValue +
-        "</textarea>" +
-        "</div>" +
-        '<div class="assist-actions">' +
-        '<button class="icon-ghost tiny-icon" type="button" data-action="clear-prompt" title="Limpar prompt" aria-label="Limpar prompt">&#8635;</button>' +
-        '<button class="primary-btn compact-btn" type="button" data-action="apply-assist">' +
-        escapeHtml(selectedMode ? selectedMode.buttonLabel : "Enviar") +
-        "</button>" +
-        "</div>" +
-        "</section>"
-      : '<article class="card-portrait-body card-portrait-sheet runtime-card-sheet">' +
-        '<div class="runtime-card-title">' +
-        escapeHtml(activeCard ? activeCard.title || activeCard.key : "Sem card") +
-        "</div>" +
-        '<div class="card-sheet-content">' +
-        renderRuntimeBlocks(activeCard, bodyText) +
-        "</div>" +
-        "</article>";
-
-  const leadingPanel =
-    microsequenceMode === "edit"
-      ? ""
-      : (lightDependencyTags
-          ? '<div class="study-context-tags compact-study-tags">' + lightDependencyTags + "</div>"
-          : "");
+  const activeCard = cards[safeIndex] || null;
+  const assistRequest = editorSupport.lastRequest
+    ? '<section class="microsequence-assist-panel">' +
+      '<p class="tiny muted">' +
+      escapeHtml(editorSupport.lastRequest.title || "Último pedido") +
+      "</p>" +
+      '<p class="muted assist-last-request">' +
+      escapeHtml(editorSupport.lastRequest.description || "") +
+      "</p></section>"
+    : "";
 
   return (
-    '<section class="screen study-reader-screen">' +
-    (microsequenceMode === "edit"
-      ? renderTopbar({
-          title: microsequence.title || "Microssequência",
-          canGoBack: true,
-          editAction: "switch-microsequence-edit",
-          editTitle: "Editor de cards"
-        })
-      : '<section class="study-reader-topbar">' +
-        '<button class="icon-ghost" type="button" data-action="go-home" title="Voltar para a lição" aria-label="Voltar para a lição">&#8962;</button>' +
-        '<button class="icon-ghost" type="button" data-action="prev-card" ' +
-        (prevDisabled ? 'disabled aria-disabled="true"' : "") +
-        ' title="Card anterior" aria-label="Card anterior">&larr;</button>' +
-        '<div class="study-reader-progress"><span style="width:' +
-        String(cardProgressPercent) +
-        '%"></span></div>' +
-        '<button class="icon-ghost" type="button" data-action="switch-microsequence-edit" title="Editor de cards" aria-label="Editor de cards">&#9998;</button>' +
-        '<button class="icon-ghost" type="button" data-action="close-study" title="Fechar leitura" aria-label="Fechar leitura">&times;</button>' +
-        "</section>") +
-    '<main class="screen-content microsequence-screen">' +
-    (microsequenceMode === "edit"
-      ? '<section class="context-band context-band-tight">' +
-        '<span class="context-chip">Lição: ' +
-        escapeHtml(lesson.title || lesson.key) +
-        "</span>" +
-        '<span class="context-chip">Microsseq.: ' +
-        String(microsequenceIndex + 1) +
-        "/" +
-        String((lesson.microsequences || []).length) +
-        "</span></section>"
-      : '<section class="study-reader-context">' +
-        '<div class="study-reader-line">' +
-        '<span class="study-reader-context-line">' +
-        escapeHtml(lesson.title || lesson.key) +
-        " - " +
-        escapeHtml(microsequence.title || microsequence.key) +
-        "</span>" +
-        '<span class="study-reader-count">Card ' +
-        String(lessonStudyIndex + 1) +
-        " de " +
-        String(lessonStudyCount) +
-        "</span></div></section>") +
-    leadingPanel +
-    '<section class="card-portrait editor-card-portrait' +
-    (microsequenceMode === "edit" ? " edit-stage" : " study-stage") +
+    '<section class="screen">' +
+    renderTopbar({
+      title: "Painel da microssequência",
+      canGoBack: true,
+      backTitle: "Voltar para a lição",
+      editAction: "switch-microsequence-edit",
+      editTitle: "Abrir editor de cards"
+    }) +
+    '<main class="screen-content microsequence-assist-screen">' +
+    '<section class="context-band context-band-tight">' +
+    '<span class="context-chip">Lição: ' +
+    escapeHtml(lesson.title || lesson.key) +
+    "</span>" +
+    '<span class="context-chip">API · ' +
+    escapeHtml(microsequence.title || microsequence.key) +
+    "</span></section>" +
+    '<section class="microsequence-assist-panel">' +
+    '<div class="field compact-field">' +
+    "<label>Título da microssequência</label>" +
+    '<input data-field="assist-microsequence-title" type="text" value="' +
+    escapeHtml(microsequence.title || "") +
     '">' +
-    cardBody +
-    "</section>" +
-    "</main>" +
-    (microsequenceMode === "edit"
-      ? ""
-      : '<section class="study-reader-footer"><div class="study-action-dock"><div class="study-action-stack"><div class="study-next-wrap">' +
-        '<button class="icon-ghost study-comment-btn" type="button" data-action="open-card-comment" title="Anotação pessoal" aria-label="Anotação pessoal"><span class="comment-glyph" aria-hidden="true"></span></button>' +
-        '<button class="open-mini study-continue-btn" type="button" data-action="next-card" ' +
-        (nextDisabled ? 'disabled aria-disabled="true"' : "") +
-        ' title="Continuar" aria-label="Continuar">&#9654;</button>' +
-        "</div></div></div></section>") +
-    "</section>"
+    "</div>" +
+    '<div class="field compact-field">' +
+    "<label>Objetivo</label>" +
+    '<textarea data-field="assist-microsequence-objective" class="assist-objective-textarea">' +
+    escapeHtml(microsequence.objective || "") +
+    "</textarea></div></section>" +
+    '<section class="editor-step-nav">' +
+    '<div class="editor-step-nav-head">' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="editor-prev-card" ' +
+    (safeIndex <= 0 ? 'disabled aria-disabled="true"' : "") +
+    ' title="Card anterior" aria-label="Card anterior">&larr;</button>' +
+    '<p class="chip-muted">Card ' +
+    String(safeIndex + 1) +
+    " de " +
+    String(cards.length) +
+    "</p>" +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="editor-next-card" ' +
+    (safeIndex >= cards.length - 1 ? 'disabled aria-disabled="true"' : "") +
+    ' title="Próximo card" aria-label="Próximo card">&rarr;</button>' +
+    "</div>" +
+    '<div class="editor-step-strip">' +
+    renderEditorCardStrip(cards, safeIndex) +
+    "</div></section>" +
+    '<section class="microsequence-assist-panel">' +
+    '<p class="tiny muted">Comentário do card para a API</p>' +
+    '<p class="muted assist-card-caption">' +
+    escapeHtml(activeCard ? activeCard.title || activeCard.key : "Sem card selecionado") +
+    "</p>" +
+    '<div class="field compact-field">' +
+    '<textarea data-field="assist-card-comment" class="assist-card-comment-textarea">' +
+    escapeHtml(editorSupport.assistCardComment || "") +
+    "</textarea></div></section>" +
+    '<section class="microsequence-assist-panel">' +
+    '<div class="field compact-field">' +
+    "<label>Ação</label>" +
+    '<select data-field="assist-mode">' +
+    modeOptions +
+    "</select></div>" +
+    '<div class="assist-grid version-grid">' +
+    '<div class="field compact-field">' +
+    "<label>Retomar</label>" +
+    '<select data-field="assist-version">' +
+    versionOptions +
+    "</select></div>" +
+    '<button class="icon-ghost version-restore-btn" type="button" data-action="restore-version" title="Retomar versão" aria-label="Retomar versão">&#8634;</button>' +
+    "</div>" +
+    '<div class="field compact-field">' +
+    "<label>Tags</label>" +
+    dependencyPicker +
+    '<div class="dependency-strip">' +
+    selectedDependencyTags +
+    "</div></div>" +
+    '<div class="field compact-field">' +
+    "<label>Pedido para a API</label>" +
+    '<textarea data-field="assist-prompt" class="assist-prompt">' +
+    escapeHtml(editorSupport.promptText || "") +
+    "</textarea></div>" +
+    '<div class="assist-actions">' +
+    '<button class="icon-ghost tiny-icon" type="button" data-action="clear-prompt" title="Limpar prompt" aria-label="Limpar prompt">&#8635;</button>' +
+    '<button class="primary-btn compact-btn" type="button" data-action="apply-assist">Enviar</button>' +
+    "</div></section>" +
+    assistRequest +
+    "</main></section>"
   );
 }
 
@@ -686,6 +765,35 @@ export function renderLessonScreen({ project, view, selection, course, moduleVal
 
   if (view === "lesson") {
     return renderLessonScreenView({ lesson, moduleValue, selection, progress: editorSupport.progress });
+  }
+
+  if (view === "microsequence-assist") {
+    return renderMicrosequenceAssistScreen({ lesson, microsequence, cards, selection, editorSupport });
+  }
+
+  if (view === "card-editor") {
+    return (
+      '<section class="screen">' +
+      renderTopbar({
+        title: "Editor de card",
+        canGoBack: true,
+        backTitle: "Voltar para o painel da microssequência",
+        editAction: "save-inline-card",
+        editTitle: "Salvar card",
+        editIcon: "&#10003;"
+      }) +
+      '<main class="screen-content card-editor-screen">' +
+      '<section class="context-band context-band-tight">' +
+      '<span class="context-chip">Lição: ' +
+      escapeHtml(lesson.title || lesson.key) +
+      "</span>" +
+      '<span class="context-chip">Microsseq.: ' +
+      escapeHtml(microsequence.title || microsequence.key) +
+      "</span></section>" +
+      renderInlineCardEditor({ cards, card: cards[Math.max(0, Math.min(selection.cardIndex || 0, Math.max(0, cards.length - 1)))] || null, selection }) +
+      "</main>" +
+      "</section>"
+    );
   }
 
   return renderMicrosequenceScreen({ lesson, microsequence, cards, selection, microsequenceMode, editorSupport });
